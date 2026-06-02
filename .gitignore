@@ -1,0 +1,4 @@
+*.class
+savegame.db
+.vscode/
+*.code-workspace
