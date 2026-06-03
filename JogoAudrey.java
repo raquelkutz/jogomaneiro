@@ -10,9 +10,16 @@ public class JogoAudrey extends JFrame {
     private JogoPanel jogoPanel;
     private CutscenePanel cutscenePanel;
     private TelaCarregamento telaCarregamento;
+    private boolean jogoIniciado = false;
 
     public JogoAudrey() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                salvarESair();
+            }
+        });
         setTitle("Audrey Adventure");
         
         cardLayout = new CardLayout();
@@ -39,6 +46,7 @@ public class JogoAudrey extends JFrame {
     }
 
     public void iniciarJogo() {
+        jogoIniciado = true;
         GerenciadorAudio.tocarSomPlay();
         cardLayout.show(mainPanel, "carregamento");
         telaCarregamento.iniciarCarregamento();
@@ -72,6 +80,7 @@ public class JogoAudrey extends JFrame {
 
     public void continuarJogoSalvo() {
         if (Database.saveExiste()) {
+            jogoIniciado = true;
             recriarJogo();
             java.util.Properties props = Database.carregarEstado();
             if (props != null) {
@@ -83,7 +92,18 @@ public class JogoAudrey extends JFrame {
     }
 
     public void voltarAoMenuPrincipal() {
+        if (jogoIniciado && jogoPanel != null) {
+            jogoPanel.salvarEstado();
+        }
+        jogoIniciado = false;
         mostrarMenuPrincipal();
+    }
+
+    public void salvarESair() {
+        if (jogoIniciado && jogoPanel != null) {
+            jogoPanel.salvarEstado();
+        }
+        System.exit(0);
     }
 
     public void mostrarMenuPrincipal() {
@@ -328,7 +348,7 @@ class MenuPrincipal extends JPanel {
         add(btnSobre);
 
         btnSair = criarBotao("SAIR", 350, 580, 300, 70);
-        btnSair.addActionListener(e -> System.exit(0));
+        btnSair.addActionListener(e -> frame.salvarESair());
         add(btnSair);
         
         atualizarBotoes();
@@ -469,7 +489,7 @@ class MenuEmJogo extends JPanel {
         add(btnMenuPrincipal);
 
         btnSair = criarBotao("SAIR", 350, 600, 300, 70);
-        btnSair.addActionListener(e -> System.exit(0));
+        btnSair.addActionListener(e -> frame.salvarESair());
         add(btnSair);
     }
 
