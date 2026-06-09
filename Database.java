@@ -4,37 +4,34 @@ import java.io.FileOutputStream;
 import java.util.Properties;
 
 public class Database {
-    private static final String ARQUIVO_SAVE = "savegame.db";
-
-    public static boolean saveExiste() {
-        return new File(ARQUIVO_SAVE).exists();
+    private static String getArquivoSave(int slot) {
+        return "savegame" + slot + ".db";
     }
 
-    public static void salvarEstado(int indiceMapa, int audreyX, boolean temChave, boolean armarioEstaAberto, 
-                                    boolean nicolasJaFoiEncontrado, boolean livroJoiFoiPego, 
-                                    boolean temLivro, int faseDialogoNicolas) {
-        Properties props = new Properties();
-        
-        props.setProperty("indiceMapa", String.valueOf(indiceMapa));
-        props.setProperty("audreyX", String.valueOf(audreyX));
-        props.setProperty("temChave", String.valueOf(temChave));
-        props.setProperty("armarioEstaAberto", String.valueOf(armarioEstaAberto));
-        props.setProperty("nicolasJaFoiEncontrado", String.valueOf(nicolasJaFoiEncontrado));
-        props.setProperty("livroJoiFoiPego", String.valueOf(livroJoiFoiPego));
-        props.setProperty("temLivro", String.valueOf(temLivro));
-        props.setProperty("faseDialogoNicolas", String.valueOf(faseDialogoNicolas));
+    public static boolean saveExiste(int slot) {
+        return new File(getArquivoSave(slot)).exists();
+    }
 
-        try (FileOutputStream fos = new FileOutputStream(ARQUIVO_SAVE)) {
-            props.store(fos, "Audrey Adventure Save Game");
-            System.out.println("Jogo salvo com sucesso.");
+    public static boolean apagarSave(int slot) {
+        File f = new File(getArquivoSave(slot));
+        if (f.exists()) {
+            return f.delete();
+        }
+        return false;
+    }
+
+    public static void salvarEstado(int slot, Properties props) {
+        try (FileOutputStream fos = new FileOutputStream(getArquivoSave(slot))) {
+            props.store(fos, "Audrey Adventure Save Game Slot " + slot);
+            System.out.println("Jogo salvo com sucesso no slot " + slot + ".");
         } catch (Exception e) {
             System.err.println("Erro ao salvar o jogo: " + e.getMessage());
         }
     }
 
-    public static Properties carregarEstado() {
+    public static Properties carregarEstado(int slot) {
         Properties props = new Properties();
-        try (FileInputStream fis = new FileInputStream(ARQUIVO_SAVE)) {
+        try (FileInputStream fis = new FileInputStream(getArquivoSave(slot))) {
             props.load(fis);
             return props;
         } catch (Exception e) {

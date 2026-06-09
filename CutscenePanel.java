@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.*;
 import java.awt.event.*;
 import java.io.File;
 
@@ -9,21 +10,34 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private final int ALTURA = 750;
     
     private int cenaAtual = 0;
+    private int cutsceneAtualId = 0;
     
     private Font fontCrayonHand;
-    private Image[] imagens = new Image[12];
+    private Image[] imagens;
     
     // Botões
     private int botaoLargura = 180;
     private int botaoAltura = 50;
-    private int botaoProximoX = LARGURA - botaoLargura - 20;
-    private int botaoProximoY = ALTURA - 80;
-    
-    private int botaoAnteriorX = 20;
-    private int botaoAnteriorY = ALTURA - 80;
+    private int botaoProximoX, botaoProximoY;
+    private int botaoAnteriorX, botaoAnteriorY;
+    private int botaoPularX, botaoPularY;
+    private int botaoPularLargura = 130;
+    private int botaoPularAltura = 40;
+
+    private void atualizarPosicoesBotoes() {
+        int w = getWidth();
+        int h = getHeight();
+        botaoProximoX = w - botaoLargura - 20;
+        botaoProximoY = h - 80;
+        botaoAnteriorX = 20;
+        botaoAnteriorY = h - 80;
+        botaoPularX = w - 150;
+        botaoPularY = 20;
+    }
     
     private boolean botaoProximoHover = false;
     private boolean botaoAnteriorHover = false;
+    private boolean botaoPularHover = false;
 
     // Transição entre slides
     private boolean emTransicao = false;
@@ -32,11 +46,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private int proximaCena = 0;
     private int direcaoTransicao = 1; // 1 = avançar, -1 = voltar
     
-    private final String[] NOMES_IMAGENS = {
-        "slide1.png", "slide2.png", "slide3.png", "slide4.png",
-        "slide5.png", "slide6.png", "slide7.png", "slide8.png",
-        "slide9.png", "slide10.png", "slide11.png", "slide12.png"
-    };
+    private String[] nomesImagens = new String[0];
 
     public CutscenePanel(JogoAudrey frame) {
         this.frame = frame;
@@ -48,8 +58,28 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         setDoubleBuffered(true);
         
         carregarFonts();
-        carregarImagens();
         new Timer(16, this).start();
+    }
+    
+    public void iniciarCutscene(int id) {
+        this.cutsceneAtualId = id;
+        this.cenaAtual = 0;
+        this.emTransicao = false;
+        
+        if (id == 0) {
+            nomesImagens = new String[]{
+                "slide1.png", "slide2.png", "slide3.png", "slide4.png",
+                "slide5.png", "slide6.png", "slide7.png", "slide8.png",
+                "slide9.png", "slide10.png", "slide11.png", "slide12.png"
+            };
+        } else if (id == 1) {
+            nomesImagens = new String[]{"cutscene_sala_1.png", "cutscene_sala_2.png"};
+        } else if (id == 2) {
+            nomesImagens = new String[]{"cutscene_final_1.png", "cutscene_final_2.png"};
+        }
+        
+        imagens = new Image[nomesImagens.length];
+        carregarImagens();
     }
 
     private void carregarFonts() {
@@ -62,20 +92,23 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     }
 
     private void carregarImagens() {
-        for (int i = 0; i < NOMES_IMAGENS.length; i++) {
+        for (int i = 0; i < nomesImagens.length; i++) {
             try {
-                File arquivo = new File(NOMES_IMAGENS[i]);
+                File arquivo = new File(nomesImagens[i]);
                 if (arquivo.exists()) {
-                    imagens[i] = new ImageIcon(NOMES_IMAGENS[i]).getImage();
+                    imagens[i] = new ImageIcon(nomesImagens[i]).getImage();
                 } else {
                     // Tenta em subpasta cutscene
-                    arquivo = new File("cutscene/" + NOMES_IMAGENS[i]);
+                    arquivo = new File("cutscene/" + nomesImagens[i]);
                     if (arquivo.exists()) {
-                        imagens[i] = new ImageIcon("cutscene/" + NOMES_IMAGENS[i]).getImage();
+                        imagens[i] = new ImageIcon("cutscene/" + nomesImagens[i]).getImage();
+                    } else {
+                        // Placeholder se a imagem não existir
+                        imagens[i] = new ImageIcon("placeholder_cutscene.png").getImage();
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Erro ao carregar imagem: " + NOMES_IMAGENS[i]);
+                System.err.println("Erro ao carregar imagem: " + nomesImagens[i]);
             }
         }
     }
@@ -83,33 +116,31 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        atualizarPosicoesBotoes();
+        int w = getWidth();
+        int h = getHeight();
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-        // Fundo bege do notebook
-        g2d.setColor(new Color(240, 235, 220));
-        g2d.fillRect(0, 0, LARGURA, ALTURA);
+        // Fundo bege do notebook com gradiente
+        GradientPaint bgGrad = new GradientPaint(0, 0, new Color(248, 243, 228), w, h, new Color(238, 230, 212));
+        g2d.setPaint(bgGrad);
+        g2d.fillRect(0, 0, w, h);
 
-        Shape clipOriginal = g2d.getClip();
+        // Rabiscos de fundo
+        desenharRabiscosFundo(g2d, w, h);
 
         if (emTransicao) {
             float t = easing((float) progressoTransicao / PASSOS_TRANSICAO);
-
-            int offsetVelha = (direcaoTransicao == 1) ? (int)(-LARGURA * 0.3f * t) : (int)(LARGURA * 0.3f * t);
-            int offsetNova = (direcaoTransicao == 1) ? (int)(LARGURA * 0.3f * (1 - t)) : (int)(-LARGURA * 0.3f * (1 - t));
-            
-            float alphaNova = Math.max(0f, Math.min(1f, t));
+            int offsetVelha = (direcaoTransicao == 1) ? (int)(-w * 0.25f * t) : (int)(w * 0.25f * t);
+            int offsetNova  = (direcaoTransicao == 1) ? (int)(w * 0.25f * (1-t)) : (int)(-w * 0.25f * (1-t));
+            float alphaNova  = Math.max(0f, Math.min(1f, t));
             float alphaVelha = Math.max(0f, Math.min(1f, 1.0f - t));
-            
-            // Desenha a cena antiga saindo e apagando
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaVelha));
             desenharSlide(g2d, cenaAtual, offsetVelha);
-            
-            // Desenha a nova cena entrando e surgindo
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaNova));
             desenharSlide(g2d, proximaCena, offsetNova);
-            
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         } else {
             desenharSlide(g2d, cenaAtual, 0);
@@ -118,21 +149,68 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         desenharBotaoBaixo(g2d);
     }
 
-    /** Desenha o slide centralizado com offsetX horizontal */
+    /** Desenha o slide com moldura de caderno centralizado */
     private void desenharSlide(Graphics2D g2d, int indice, int offsetX) {
         if (indice < 0 || indice >= imagens.length || imagens[indice] == null) return;
-        int imgWidth  = imagens[indice].getWidth(this);
-        int imgHeight = imagens[indice].getHeight(this);
-        if (imgWidth <= 0 || imgHeight <= 0) return;
-        double escala = Math.min((double) LARGURA / imgWidth, (double) ALTURA / imgHeight);
-        int nw = (int)(imgWidth  * escala);
-        int nh = (int)(imgHeight * escala);
-        int x = offsetX + (LARGURA - nw) / 2;
-        int y = (ALTURA - nh) / 2;
-        g2d.drawImage(imagens[indice], x, y, nw, nh, this);
+        int w = getWidth();
+        int h = getHeight();
+        int imgL = imagens[indice].getWidth(this);
+        int imgH = imagens[indice].getHeight(this);
+        if (imgL <= 0 || imgH <= 0) return;
+
+        // Desenha a imagem preenchendo a tela, cobrindo o painel inteiro
+        double scale = Math.max((double)w / imgL, (double)h / imgH);
+        int finalW = (int)(imgL * scale);
+        int finalH = (int)(imgH * scale);
+        int imgX = offsetX + (w - finalW) / 2;
+        int imgY = (h - finalH) / 2;
+        
+        g2d.drawImage(imagens[indice], imgX, imgY, finalW, finalH, this);
+
+        // Fundo escuro atrás dos botões para garantir leitura
+        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.fillRect(0, h - 100, w, 100);
+        g2d.fillRect(w - 170, 10, 160, 60);
+
+        g2d.setStroke(new BasicStroke(2f));
     }
 
-    // drawFoldShadow foi removido pois a nova animação usa AlphaComposite
+    /** Rabiscos fofos de fundo (estilo caderno) */
+    private void desenharRabiscosFundo(Graphics2D g2d, int w, int h) {
+        Stroke s = new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+        g2d.setStroke(s);
+
+        g2d.setColor(new Color(210, 160, 180, 100));
+        cutEstrela4(g2d, (int)(w*0.03), (int)(h*0.07), 7);
+        cutEstrela4(g2d, (int)(w*0.96), (int)(h*0.88), 7);
+        cutEstrela4(g2d, (int)(w*0.97), (int)(h*0.06), 6);
+        cutEstrela4(g2d, (int)(w*0.02), (int)(h*0.90), 6);
+
+        g2d.setColor(new Color(180, 200, 170, 85));
+        for (int i = 0; i < 3; i++) {
+            g2d.fillOval(10, (int)(h*0.30) + i*22, 5, 5);
+            g2d.fillOval(w-16, (int)(h*0.55) + i*22, 5, 5);
+        }
+
+        g2d.setColor(new Color(200, 170, 180, 70));
+        GeneralPath wave = new GeneralPath();
+        wave.moveTo(18, h - 45);
+        for (int i = 0; i < 10; i++) {
+            wave.quadTo(18 + i*30 + 15, h - 58, 18 + (i+1)*30, h - 45);
+        }
+        g2d.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.draw(wave);
+
+        g2d.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    }
+
+    private void cutEstrela4(Graphics2D g2d, int cx, int cy, int r) {
+        int r2 = Math.max(2, r/3);
+        g2d.drawLine(cx-r, cy, cx+r, cy);
+        g2d.drawLine(cx, cy-r, cx, cy+r);
+        g2d.drawLine(cx-r2, cy-r2, cx+r2, cy+r2);
+        g2d.drawLine(cx-r2, cy+r2, cx+r2, cy-r2);
+    }
 
     /** Ease-in-out cúbico — mais suave que quadrático */
     private float easing(float t) {
@@ -142,21 +220,28 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     }
 
     private void desenharBotaoBaixo(Graphics2D g2d) {
+        // Cores padrão (Rosa Pastel, Verde Pastel, Rosa Escuro)
+        Color corFundo = new Color(255, 230, 235);
+        Color corFundoHover = new Color(255, 210, 220);
+        Color corBorda = new Color(180, 230, 180);
+        Color corBordaHover = new Color(150, 210, 150);
+        Color corTexto = new Color(120, 80, 100);
+
         // Botão ANTERIOR
         if (cenaAtual > 0) {
             String textoBotaoAnterior = "◄ ANTERIOR";
-            Color corBotaoAnterior = botaoAnteriorHover ? new Color(150, 100, 100) : new Color(120, 80, 80);
-            Color corBorda = new Color(100, 60, 60);
+            Color atualFundo = botaoAnteriorHover ? corFundoHover : corFundo;
+            Color atualBorda = botaoAnteriorHover ? corBordaHover : corBorda;
 
-            g2d.setColor(corBotaoAnterior);
-            g2d.fillRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, 10, 10);
+            g2d.setColor(atualFundo);
+            g2d.fillRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
 
-            g2d.setColor(corBorda);
-            g2d.setStroke(new BasicStroke(2));
-            g2d.drawRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, 10, 10);
+            g2d.setColor(atualBorda);
+            g2d.setStroke(new BasicStroke(3));
+            g2d.drawRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
 
             g2d.setFont(fontCrayonHand.deriveFont(16f));
-            g2d.setColor(new Color(255, 255, 255));
+            g2d.setColor(corTexto);
             FontMetrics fm = g2d.getFontMetrics();
             int textX = botaoAnteriorX + (botaoLargura - fm.stringWidth(textoBotaoAnterior)) / 2;
             int textY = botaoAnteriorY + ((botaoAltura - fm.getHeight()) / 2) + fm.getAscent();
@@ -164,23 +249,42 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         }
 
         // Botão PRÓXIMO / COMEÇAR
-        String textoBotao = cenaAtual < NOMES_IMAGENS.length - 1 ? "PRÓXIMO ►" : "COMEÇAR AVENTURA";
-        Color corBotao = botaoProximoHover ? new Color(100, 150, 100) : new Color(80, 120, 80);
-        Color corBorda = new Color(60, 100, 60);
+        String textoBotao = (imagens != null && cenaAtual < imagens.length - 1) ? "PRÓXIMO ►" : (cutsceneAtualId == 0 ? "COMEÇAR AVENTURA" : "VOLTAR AO JOGO");
+        Color atualFundoProx = botaoProximoHover ? corFundoHover : corFundo;
+        Color atualBordaProx = botaoProximoHover ? corBordaHover : corBorda;
 
-        g2d.setColor(corBotao);
-        g2d.fillRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, 10, 10);
+        g2d.setColor(atualFundoProx);
+        g2d.fillRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
 
-        g2d.setColor(corBorda);
-        g2d.setStroke(new BasicStroke(2));
-        g2d.drawRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, 10, 10);
+        g2d.setColor(atualBordaProx);
+        g2d.setStroke(new BasicStroke(3));
+        g2d.drawRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
 
         g2d.setFont(fontCrayonHand.deriveFont(16f));
-        g2d.setColor(new Color(255, 255, 255));
+        g2d.setColor(corTexto);
         FontMetrics fm = g2d.getFontMetrics();
         int textX = botaoProximoX + (botaoLargura - fm.stringWidth(textoBotao)) / 2;
         int textY = botaoProximoY + ((botaoAltura - fm.getHeight()) / 2) + fm.getAscent();
         g2d.drawString(textoBotao, textX, textY);
+
+        // Botão PULAR
+        String textoPular = "PULAR ⏭";
+        Color atualFundoPular = botaoPularHover ? corFundoHover : corFundo;
+        Color atualBordaPular = botaoPularHover ? corBordaHover : corBorda;
+
+        g2d.setColor(atualFundoPular);
+        g2d.fillRoundRect(botaoPularX, botaoPularY, botaoPularLargura, botaoPularAltura, botaoPularAltura, botaoPularAltura);
+
+        g2d.setColor(atualBordaPular);
+        g2d.setStroke(new BasicStroke(3));
+        g2d.drawRoundRect(botaoPularX, botaoPularY, botaoPularLargura, botaoPularAltura, botaoPularAltura, botaoPularAltura);
+
+        g2d.setFont(fontCrayonHand.deriveFont(16f));
+        g2d.setColor(corTexto);
+        FontMetrics fmPular = g2d.getFontMetrics();
+        int textXp = botaoPularX + (botaoPularLargura - fmPular.stringWidth(textoPular)) / 2;
+        int textYp = botaoPularY + ((botaoPularAltura - fmPular.getHeight()) / 2) + fmPular.getAscent();
+        g2d.drawString(textoPular, textXp, textYp);
     }
 
     @Override
@@ -198,7 +302,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
     private void avancarSlide() {
         if (emTransicao) return;
-        if (cenaAtual < NOMES_IMAGENS.length - 1) {
+        if (imagens != null && cenaAtual < imagens.length - 1) {
             GerenciadorAudio.tocarSomDialogo();
             proximaCena = cenaAtual + 1;
             direcaoTransicao = 1;
@@ -222,11 +326,12 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
     private void iniciarJogo() {
         GerenciadorAudio.tocarSomPlay();
-        frame.irParaJogoAposCutscene();
+        frame.voltarDeCutscene();
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
+        atualizarPosicoesBotoes();
         int mouseX = e.getX();
         int mouseY = e.getY();
 
@@ -244,10 +349,17 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             mouseY >= botaoAnteriorY && mouseY <= botaoAnteriorY + botaoAltura) {
             voltarSlide();
         }
+
+        // Verifica se clicou no botão PULAR
+        if (mouseX >= botaoPularX && mouseX <= botaoPularX + botaoPularLargura &&
+            mouseY >= botaoPularY && mouseY <= botaoPularY + botaoPularAltura) {
+            iniciarJogo();
+        }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
+        atualizarPosicoesBotoes();
         int mouseX = e.getX();
         int mouseY = e.getY();
 
@@ -260,11 +372,16 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
                                      mouseX >= botaoAnteriorX && mouseX <= botaoAnteriorX + botaoLargura &&
                                      mouseY >= botaoAnteriorY && mouseY <= botaoAnteriorY + botaoAltura);
         
-        if (novoHoverProximo != botaoProximoHover || novoHoverAnterior != botaoAnteriorHover) {
+        // Verifica se está sobre o botão PULAR
+        boolean novoHoverPular = (mouseX >= botaoPularX && mouseX <= botaoPularX + botaoPularLargura &&
+                                  mouseY >= botaoPularY && mouseY <= botaoPularY + botaoPularAltura);
+        
+        if (novoHoverProximo != botaoProximoHover || novoHoverAnterior != botaoAnteriorHover || novoHoverPular != botaoPularHover) {
             botaoProximoHover = novoHoverProximo;
             botaoAnteriorHover = novoHoverAnterior;
+            botaoPularHover = novoHoverPular;
             
-            if (novoHoverProximo || novoHoverAnterior) {
+            if (novoHoverProximo || novoHoverAnterior || novoHoverPular) {
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
             } else {
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -281,9 +398,10 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
     @Override
     public void mouseExited(MouseEvent e) {
-        if (botaoProximoHover || botaoAnteriorHover) {
+        if (botaoProximoHover || botaoAnteriorHover || botaoPularHover) {
             botaoProximoHover = false;
             botaoAnteriorHover = false;
+            botaoPularHover = false;
             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             repaint();
         }
