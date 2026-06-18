@@ -1685,13 +1685,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             // Desenhar NPCs da sala de aula
             if (indiceMapa == 2) {
                 if (imgRaquel != null) {
-                    g2d.drawImage(imgRaquel, 180, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA, this);
+                    g2d.drawImage(imgRaquel, 250, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA, this);
                 }
                 if (imgNicolas != null) {
-                    g2d.drawImage(imgNicolas, 480, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
+                    g2d.drawImage(imgNicolas, 500, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
                 }
                 if (imgCamila != null) {
-                    g2d.drawImage(imgCamila, 750, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
+                    g2d.drawImage(imgCamila, 680, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
                 }
             }
 
