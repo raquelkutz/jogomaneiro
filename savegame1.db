@@ -1,0 +1,34 @@
+#Audrey Adventure Save Game Slot 1
+#Wed Jun 17 12:15:18 BRT 2026
+armarioEstaAberto=false
+audreyX=613
+cutsceneFinalVista=false
+cutsceneSalaVista=false
+desenhoEntregue=false
+ep1FalouNpc1=false
+ep1FalouNpc2=true
+ep1FalouNpc3=true
+ep1InteragiuBiblioteca=true
+ep1InteragiuMural=false
+episodio1Concluido=false
+explorouCorredor=true
+faseDialogoEp1=0
+faseDialogoNicolas=0
+indiceMapa=1
+livroJoiFoiPego=false
+missaoArteAtiva=false
+missaoArteConcluida=false
+missaoDesenhoAtiva=false
+missaoFitnessAtiva=false
+missaoFitnessConcluida=false
+missaoLeituraAtiva=false
+missaoLeituraConcluida=false
+nicolasJaFoiEncontrado=false
+nivelArte=1
+nivelFitness=1
+nivelLeitura=1
+sala1Aberta=false
+temCadernoEsboco=false
+temChave=false
+temCronograma=false
+temLivro=false
