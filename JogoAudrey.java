@@ -1370,8 +1370,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private final int AUDREY_ALTURA = 430;
     private final int NPC_LARGURA = 440;
     private final int NPC_ALTURA = 500;
-    private final int SALA_NPC_LARGURA = 280;
-    private final int SALA_NPC_ALTURA = 350;
+    private final int SALA_NPC_LARGURA = 240;
+    private final int SALA_NPC_ALTURA = 430;
+    private final int SALA_NICOLAS_LARGURA = 260;
+    private final int SALA_NICOLAS_ALTURA = 470;
     private int audreyX = 100, audreyY = 730, velX = 0;
     private int frameAtual = 0, contadorAnimacao = 0;
 
@@ -1578,7 +1580,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         fundoBiblioteca = redimensionarFundo(new ImageIcon("bibliotecasala4.png").getImage(), LARGURA, ALTURA);
         fundoSalaAula1 = redimensionarFundo(new ImageIcon("saladeaula1.png").getImage(), LARGURA, ALTURA);
         imgArmarioAberto = new ImageIcon("imagemarmario.png").getImage();
-        imgNicolas = redimensionarImagem(new ImageIcon("nico__1_-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_NPC_ALTURA);
+        imgNicolas = redimensionarImagem(new ImageIcon("nico__1_-removebg-preview.png").getImage(), SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA);
         imgChave = new ImageIcon("chave.png").getImage();
         imgLivro = new ImageIcon("livro.png").getImage();
 
@@ -1685,10 +1687,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawImage(imgRaquel, 450, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
                 }
                 if (imgNicolas != null) {
-                    g2d.drawImage(imgNicolas, 650, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
+                    g2d.drawImage(imgNicolas, 630, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
                 }
                 if (imgCamila != null) {
-                    g2d.drawImage(imgCamila, 850, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
+                    g2d.drawImage(imgCamila, 830, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
                 }
             }
 

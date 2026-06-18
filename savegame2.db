@@ -1,22 +1,22 @@
 #Audrey Adventure Save Game Slot 2
-#Thu Jun 18 09:46:36 BRT 2026
+#Thu Jun 18 09:56:16 BRT 2026
 armarioEstaAberto=false
-audreyX=448
+audreyX=269
 cutsceneFinalVista=false
-cutsceneSalaVista=false
+cutsceneSalaVista=true
 desenhoEntregue=false
 ep1FalouNpc1=false
-ep1FalouNpc2=false
-ep1FalouNpc3=false
+ep1FalouNpc2=true
+ep1FalouNpc3=true
 ep1InteragiuBiblioteca=true
 ep1InteragiuMural=false
 episodio1Concluido=false
 explorouCorredor=true
-faseDialogoEp1=0
-faseDialogoGabi=0
-faseDialogoIvi=3
+faseDialogoEp1=1
+faseDialogoGabi=7
+faseDialogoIvi=7
 faseDialogoNicolas=0
-indiceMapa=3
+indiceMapa=2
 livroJoiFoiPego=false
 missaoArteAtiva=false
 missaoArteConcluida=false
@@ -29,7 +29,7 @@ nicolasJaFoiEncontrado=false
 nivelArte=1
 nivelFitness=1
 nivelLeitura=1
-sala1Aberta=false
+sala1Aberta=true
 temCadernoEsboco=false
 temChave=false
 temCronograma=false
