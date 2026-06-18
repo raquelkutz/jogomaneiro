@@ -1434,6 +1434,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean missaoDesenhoAtiva = false;
     private boolean desenhoEntregue = false;
     private boolean episodio1Concluido = false;
+    private boolean personagensNaBiblioteca = false;
+    private int contadorTeleporte = -1;
     
     private Image imgCamila;
 
@@ -1674,12 +1676,22 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
 
             // Desenhar NPCs do corredor
-            if (indiceMapa == 1) {
+            if (indiceMapa == 1 && !personagensNaBiblioteca) {
                 if (imgAlunoCorredor1 != null) {
                     g2d.drawImage(imgAlunoCorredor1, 550, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
                 }
                 if (imgAlunoCorredor2 != null) {
                     g2d.drawImage(imgAlunoCorredor2, 750, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
+                }
+            }
+
+            // Desenhar NPCs da biblioteca
+            if (indiceMapa == 6 && personagensNaBiblioteca) {
+                if (imgAlunoCorredor1 != null) {
+                    g2d.drawImage(imgAlunoCorredor1, 300, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
+                }
+                if (imgAlunoCorredor2 != null) {
+                    g2d.drawImage(imgAlunoCorredor2, 550, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
                 }
             }
 
@@ -2172,6 +2184,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
         }
 
+        if (contadorTeleporte >= 0) {
+            contadorTeleporte++;
+            if (contadorTeleporte >= 600 && !personagensNaBiblioteca) {
+                personagensNaBiblioteca = true;
+                contadorTeleporte = -1;
+            }
+        }
+
         if (!armarioEstaAberto) {
             audreyX += velX;
 
@@ -2260,6 +2280,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             } else if (indiceMapa == 2) {
                 if (!cutsceneSalaVista) {
                     cutsceneSalaVista = true;
+                    contadorTeleporte = 0;
                     if (!episodio1Concluido && sala1Aberta) {
                         estaEmDialogoNicolas = true;
                         if (faseDialogoEp1 == 0) {
