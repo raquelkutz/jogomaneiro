@@ -2309,13 +2309,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIREITA")) {
-            velX = 10;
+            velX = 13;
             olhandoDireita = true;
             estaMovendo = true;
         }
 
         if (code == Configuracoes.getInstance().getTecla("ESQUERDA")) {
-            velX = -10;
+            velX = -13;
             olhandoDireita = false;
             estaMovendo = true;
         }
