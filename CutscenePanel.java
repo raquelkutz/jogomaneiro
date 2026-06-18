@@ -122,6 +122,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         // Fundo bege do notebook com gradiente
         GradientPaint bgGrad = new GradientPaint(0, 0, new Color(248, 243, 228), w, h, new Color(238, 230, 212));

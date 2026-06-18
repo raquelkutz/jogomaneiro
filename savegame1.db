@@ -1,18 +1,18 @@
-#Audrey Adventure Save Game Slot 2
-#Thu Jun 18 09:56:16 BRT 2026
+#Audrey Adventure Save Game Slot 1
+#Thu Jun 18 10:40:08 BRT 2026
 armarioEstaAberto=false
-audreyX=269
+audreyX=152
 cutsceneFinalVista=false
 cutsceneSalaVista=true
-desenhoEntregue=false
+desenhoEntregue=true
 ep1FalouNpc1=false
 ep1FalouNpc2=true
 ep1FalouNpc3=true
-ep1InteragiuBiblioteca=true
+ep1InteragiuBiblioteca=false
 ep1InteragiuMural=false
-episodio1Concluido=false
+episodio1Concluido=true
 explorouCorredor=true
-faseDialogoEp1=1
+faseDialogoEp1=14
 faseDialogoGabi=7
 faseDialogoIvi=7
 faseDialogoNicolas=0

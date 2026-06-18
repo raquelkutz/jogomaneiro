@@ -1616,11 +1616,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     }
 
     private Image redimensionarImagem(Image img, int width, int height) {
-        return img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        return img.getScaledInstance(width, height, Image.SCALE_AREA_AVERAGING);
     }
 
     private Image redimensionarFundo(Image img, int targetWidth, int targetHeight) {
-        return img.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+        return img.getScaledInstance(targetWidth, targetHeight, Image.SCALE_AREA_AVERAGING);
     }
 
     @Override
@@ -1637,6 +1637,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             g2d.fillRect(0, 0, LARGURA, ALTURA);
             g2d.setComposite(AlphaComposite.SrcOver);
         }
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         int w = getWidth();
         int h = getHeight();
