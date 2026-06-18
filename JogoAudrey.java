@@ -1688,7 +1688,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawImage(imgRaquel, 350, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA, this);
                 }
                 if (imgNicolas != null) {
-                    g2d.drawImage(imgNicolas, 530, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
+                    g2d.drawImage(imgNicolas, 570, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
                 }
                 if (imgCamila != null) {
                     g2d.drawImage(imgCamila, 650, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
