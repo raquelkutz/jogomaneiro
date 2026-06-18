@@ -2239,6 +2239,15 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             } else if (indiceMapa == 2) {
                 if (!cutsceneSalaVista) {
                     cutsceneSalaVista = true;
+                    if (!episodio1Concluido && sala1Aberta) {
+                        estaEmDialogoNicolas = true;
+                        if (faseDialogoEp1 == 0) {
+                            GerenciadorAudio.tocarSomDialogo();
+                            nomePersonagem = "Audrey";
+                            textoDialogo = "Oi, com licença... Sou a Audrey, aluna nova.";
+                            faseDialogoEp1 = 1;
+                        }
+                    }
                 }
 
                 if (audreyX < 0) {
@@ -2493,8 +2502,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                             faseDialogoEp1 = 11;
                         } else {
                             nomePersonagem = "Nicollas e Camila";
-                            textoDialogo = "Mal posso esperar para ver seu desenho! Fale com a Raquel (à esquerda) quando terminar.";
-                            // Retorna sem avançar fase
+                            String[] falasEspera = {
+                                "Mal posso esperar para ver seu desenho!",
+                                "Como está ficando o esboço?"
+                            };
+                            textoDialogo = falasEspera[(int)(Math.random() * falasEspera.length)];
                             return;
                         }
                     } else if (faseDialogoEp1 == 11) {
