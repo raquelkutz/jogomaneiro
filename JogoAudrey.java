@@ -2378,7 +2378,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 if (!ep1FalouNpc3) {
                     if (faseDialogoIvi == 0) {
                         GerenciadorAudio.tocarSomDialogo();
-                        textoDialogo = "Audrey! Finalmente te conheço! A Gabi já falou super bem de você, sou a Ivi, prazer!";
+                        if (ep1FalouNpc2) {
+                            textoDialogo = "Audrey! Finalmente te conheço! A Gabi já falou super bem de você, sou a Ivi, prazer!";
+                        } else {
+                            textoDialogo = "Oi! Você é a Audrey, né? Sou a Ivi, muito prazer! Tudo bem?";
+                        }
                         faseDialogoIvi = 1;
                     } else if (faseDialogoIvi == 1) {
                         textoDialogo = "Tá gostando da escola até agora? O pessoal da Sala 1 é muito acolhedor, você vai ver.";
