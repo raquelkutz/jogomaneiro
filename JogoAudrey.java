@@ -1575,7 +1575,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         fundoBiblioteca = redimensionarFundo(new ImageIcon("bibliotecasala4.png").getImage(), LARGURA, ALTURA);
         fundoSalaAula1 = redimensionarFundo(new ImageIcon("saladeaula1.png").getImage(), LARGURA, ALTURA);
         imgArmarioAberto = new ImageIcon("imagemarmario.png").getImage();
-        imgNicolas = null;
+        imgNicolas = redimensionarImagem(new ImageIcon("nico__1_-removebg-preview.png").getImage(), NPC_LARGURA, NPC_ALTURA);
         imgChave = new ImageIcon("chave.png").getImage();
         imgLivro = new ImageIcon("livro.png").getImage();
 
@@ -1585,7 +1585,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         imgPortraitNicollas = null;
         imgPortraitGabi = carregarImagem("gabi_personagem-removebg-preview.png");
         imgPortraitIvi = carregarImagem("1000115243-removebg-preview.png");
-        imgCamila = null;
+        imgCamila = redimensionarImagem(new ImageIcon("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png").getImage(), NPC_LARGURA, NPC_ALTURA);
 
         framesAndar[0] = redimensionarImagem(new ImageIcon("1-removebg-preview3.png").getImage(), AUDREY_LARGURA,
                 AUDREY_ALTURA);
@@ -1672,6 +1672,16 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 }
                 if (imgAlunoCorredor2 != null) {
                     g2d.drawImage(imgAlunoCorredor2, 750, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
+                }
+            }
+
+            // Desenhar NPCs da sala de aula
+            if (indiceMapa == 2) {
+                if (imgNicolas != null) {
+                    g2d.drawImage(imgNicolas, 700, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
+                }
+                if (imgCamila != null) {
+                    g2d.drawImage(imgCamila, 950, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
                 }
             }
 
