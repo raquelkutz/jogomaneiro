@@ -1370,8 +1370,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private final int AUDREY_ALTURA = 430;
     private final int NPC_LARGURA = 440;
     private final int NPC_ALTURA = 500;
-    private final int SALA_NPC_LARGURA = 240;
-    private final int SALA_NPC_ALTURA = 430;
+    private final int SALA_NPC_LARGURA = 440;
+    private final int SALA_NPC_ALTURA = 500;
+    private final int SALA_RAQUEL_ALTURA = 460;
     private final int SALA_NICOLAS_LARGURA = 260;
     private final int SALA_NICOLAS_ALTURA = 470;
     private int audreyX = 100, audreyY = 730, velX = 0;
@@ -1591,7 +1592,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         imgPortraitGabi = carregarImagem("gabi_personagem-removebg-preview.png");
         imgPortraitIvi = carregarImagem("1000115243-removebg-preview.png");
         imgCamila = redimensionarImagem(new ImageIcon("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_NPC_ALTURA);
-        imgRaquel = redimensionarImagem(new ImageIcon("9_Sem_Título_20260615113034-removebg-preview__1_-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_NPC_ALTURA);
+        imgRaquel = redimensionarImagem(new ImageIcon("9_Sem_Título_20260615113034-removebg-preview__1_-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
 
         framesAndar[0] = redimensionarImagem(new ImageIcon("1-removebg-preview3.png").getImage(), AUDREY_LARGURA,
                 AUDREY_ALTURA);
@@ -1684,13 +1685,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             // Desenhar NPCs da sala de aula
             if (indiceMapa == 2) {
                 if (imgRaquel != null) {
-                    g2d.drawImage(imgRaquel, 450, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
+                    g2d.drawImage(imgRaquel, 180, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA, this);
                 }
                 if (imgNicolas != null) {
-                    g2d.drawImage(imgNicolas, 630, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
+                    g2d.drawImage(imgNicolas, 480, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
                 }
                 if (imgCamila != null) {
-                    g2d.drawImage(imgCamila, 830, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
+                    g2d.drawImage(imgCamila, 750, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
                 }
             }
 
