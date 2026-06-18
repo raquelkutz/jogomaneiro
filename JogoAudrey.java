@@ -2342,21 +2342,36 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             // NPC Gabi no Corredor 2
             if (indiceMapa == 1 && Math.abs(audreyX - 750) < 150 && Math.abs(audreyX - 550) >= 150) {
                 estaEmDialogoNicolas = true;
-                nomePersonagem = "Gabi";
                 if (!ep1FalouNpc2) {
                     if (faseDialogoGabi == 0) {
                         GerenciadorAudio.tocarSomDialogo();
+                        nomePersonagem = "Gabi";
                         textoDialogo = "Oi! Você é a Audrey, né? Eu sou a Gabi! Muito prazer te conhecer!";
                         faseDialogoGabi = 1;
                     } else if (faseDialogoGabi == 1) {
-                        textoDialogo = "Nossa, que legal ter alguém novo na escola! Já conheceu todo mundo?";
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "Oi, Gabi! Sou sim, muito prazer! Tô conhecendo a escola ainda.";
                         faseDialogoGabi = 2;
                     } else if (faseDialogoGabi == 2) {
-                        textoDialogo = "A sala do primeiro ano é ali na porta à direita. O pessoal já tá organizando o festival cultural, tá bem animado!";
+                        nomePersonagem = "Gabi";
+                        textoDialogo = "Nossa, que legal ter alguém novo na escola! Já conheceu todo mundo?";
                         faseDialogoGabi = 3;
                     } else if (faseDialogoGabi == 3) {
-                        textoDialogo = "Ah, e procura a Ivi também! Ela é super gente boa, vocês vão se dar bem!";
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "Ainda não, tô explorando aos poucos.";
                         faseDialogoGabi = 4;
+                    } else if (faseDialogoGabi == 4) {
+                        nomePersonagem = "Gabi";
+                        textoDialogo = "A sala do primeiro ano é ali na porta à direita. O pessoal já tá organizando o festival cultural, tá bem animado!";
+                        faseDialogoGabi = 5;
+                    } else if (faseDialogoGabi == 5) {
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "Legal! Vou dar uma olhada lá, obrigada!";
+                        faseDialogoGabi = 6;
+                    } else if (faseDialogoGabi == 6) {
+                        nomePersonagem = "Gabi";
+                        textoDialogo = "Ah, e procura a Ivi também! Ela é super gente boa, vocês vão se dar bem!";
+                        faseDialogoGabi = 7;
                     } else {
                         textoDialogo = "";
                         ep1FalouNpc2 = true;
@@ -2364,7 +2379,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         checarObjetivosEp1();
                     }
                 } else {
-                    if (faseDialogoGabi < 4) faseDialogoGabi = 4;
+                    if (faseDialogoGabi < 7) faseDialogoGabi = 7;
+                    nomePersonagem = "Gabi";
                     textoDialogo = "Fala com a Ivi também, ela é super gente boa!";
                 }
                 explorouCorredor = true;
@@ -2374,25 +2390,45 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             // NPC Ivi no Corredor 2
             if (indiceMapa == 1 && Math.abs(audreyX - 550) < 150) {
                 estaEmDialogoNicolas = true;
-                nomePersonagem = "Ivi";
                 if (!ep1FalouNpc3) {
                     if (faseDialogoIvi == 0) {
                         GerenciadorAudio.tocarSomDialogo();
                         if (ep1FalouNpc2) {
+                            nomePersonagem = "Ivi";
                             textoDialogo = "Audrey! Finalmente te conheço! A Gabi já falou super bem de você, sou a Ivi, prazer!";
                         } else {
+                            nomePersonagem = "Ivi";
                             textoDialogo = "Oi! Você é a Audrey, né? Sou a Ivi, muito prazer! Tudo bem?";
                         }
                         faseDialogoIvi = 1;
                     } else if (faseDialogoIvi == 1) {
-                        textoDialogo = "Tá gostando da escola até agora? O pessoal da Sala 1 é muito acolhedor, você vai ver.";
+                        nomePersonagem = "Audrey";
+                        if (ep1FalouNpc2) {
+                            textoDialogo = "Oi, Ivi! Que bom que a Gabi falou de mim! Tudo bem sim, e você?";
+                        } else {
+                            textoDialogo = "Oi, Ivi! Sou sim, muito prazer! Tudo bem sim, e você?";
+                        }
                         faseDialogoIvi = 2;
                     } else if (faseDialogoIvi == 2) {
-                        textoDialogo = "A Raquel, o Nicollas e a Camila já estão lá dentro. Entra lá e conhece o pessoal!";
+                        nomePersonagem = "Ivi";
+                        textoDialogo = "Tudo ótimo! Tá gostando da escola até agora? O pessoal da Sala 1 é muito legal.";
                         faseDialogoIvi = 3;
                     } else if (faseDialogoIvi == 3) {
-                        textoDialogo = "Qualquer coisa que precisar, pode contar comigo, viu? Bem-vinda de verdade!";
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "Tô sim! O pessoal parece bem acolhedor.";
                         faseDialogoIvi = 4;
+                    } else if (faseDialogoIvi == 4) {
+                        nomePersonagem = "Ivi";
+                        textoDialogo = "A Raquel, o Nicollas e a Camila já estão lá dentro. Entra lá e conhece o pessoal!";
+                        faseDialogoIvi = 5;
+                    } else if (faseDialogoIvi == 5) {
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "Vou sim, obrigada!";
+                        faseDialogoIvi = 6;
+                    } else if (faseDialogoIvi == 6) {
+                        nomePersonagem = "Ivi";
+                        textoDialogo = "Qualquer coisa que precisar, pode contar comigo, viu? Bem-vinda de verdade!";
+                        faseDialogoIvi = 7;
                     } else {
                         textoDialogo = "";
                         ep1FalouNpc3 = true;
@@ -2400,7 +2436,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         checarObjetivosEp1();
                     }
                 } else {
-                    if (faseDialogoIvi < 4) faseDialogoIvi = 4;
+                    if (faseDialogoIvi < 7) faseDialogoIvi = 7;
+                    nomePersonagem = "Ivi";
                     textoDialogo = "A sala de aula do seu ano fica na porta atrás de você!";
                 }
                 explorouCorredor = true;
