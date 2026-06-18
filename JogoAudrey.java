@@ -1666,9 +1666,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
 
             // Desenhar NPCs do corredor
-            if (indiceMapa == 0 && imgAlunoCorredor1 != null) {
-                g2d.drawImage(imgAlunoCorredor1, 550, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
-            }
             if (indiceMapa == 1) {
                 if (imgAlunoCorredor1 != null) {
                     g2d.drawImage(imgAlunoCorredor1, 550, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
