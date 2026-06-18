@@ -2017,7 +2017,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para abrir", audreyX - 10, audreyY - 430, Color.CYAN);
             }
 
-            if (indiceMapa == 1) {
+            if (indiceMapa == 1 && !personagensNaBiblioteca) {
                 if (Math.abs(audreyX - 550) < 150) {
                     desenharTextoComSombra(g2d, "Pressione [" + teclaF + "] para falar com a Ivi", audreyX - 10, audreyY - 430,
                             Color.YELLOW);
@@ -2052,6 +2052,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             
             if (indiceMapa == 6 && Math.abs(audreyX - 50) < 150) {
                 desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para sair da biblioteca", audreyX - 10, audreyY - 430, Color.RED);
+            }
+
+            if (indiceMapa == 6 && personagensNaBiblioteca) {
+                if (Math.abs(audreyX - 300) < 150) {
+                    desenharTextoComSombra(g2d, "Pressione [" + teclaF + "] para falar com a Ivi", audreyX - 10, audreyY - 430, Color.YELLOW);
+                } else if (Math.abs(audreyX - 550) < 150) {
+                    desenharTextoComSombra(g2d, "Pressione [" + teclaF + "] para falar com a Gabi", audreyX - 10, audreyY - 430, Color.YELLOW);
+                }
             }
         }
 
@@ -2184,7 +2192,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
         }
 
-        if (contadorTeleporte >= 0) {
+        if (contadorTeleporte >= 0 && indiceMapa == 2) {
             contadorTeleporte++;
             if (contadorTeleporte >= 600 && !personagensNaBiblioteca) {
                 personagensNaBiblioteca = true;
@@ -2327,6 +2335,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 nomePersonagem = "";
             }
 
+            if (indiceMapa == 6 && Math.abs(audreyX - 300) > 200 && Math.abs(audreyX - 550) > 200) {
+                if (!estaEmDialogoNicolas) {
+                    textoDialogo = "";
+                    nomePersonagem = "";
+                }
+            }
+
             if (estaMovendo) {
                 contadorAnimacao++;
                 if (contadorAnimacao > 10) {
@@ -2387,7 +2402,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             // NPC Gabi no Corredor 2
-            if (indiceMapa == 1 && Math.abs(audreyX - 750) < 150 && Math.abs(audreyX - 550) >= 150) {
+            if (indiceMapa == 1 && !personagensNaBiblioteca && Math.abs(audreyX - 750) < 150 && Math.abs(audreyX - 550) >= 150) {
                 estaEmDialogoNicolas = true;
                 if (!ep1FalouNpc2) {
                     if (faseDialogoGabi == 0) {
@@ -2435,7 +2450,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             // NPC Ivi no Corredor 2
-            if (indiceMapa == 1 && Math.abs(audreyX - 550) < 150) {
+            if (indiceMapa == 1 && !personagensNaBiblioteca && Math.abs(audreyX - 550) < 150) {
                 estaEmDialogoNicolas = true;
                 if (!ep1FalouNpc3) {
                     if (faseDialogoIvi == 0) {
@@ -2739,6 +2754,40 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 if (!ep1InteragiuBiblioteca) {
                     ep1InteragiuBiblioteca = true;
                     checarObjetivosEp1();
+                }
+            }
+            // Gabi na biblioteca
+            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 550) < 150 && textoDialogo.isEmpty()) {
+                if (!ep1FalouNpc2) {
+                    GerenciadorAudio.tocarSomDialogo();
+                    estaEmDialogoNicolas = true;
+                    nomePersonagem = "Gabi";
+                    textoDialogo = "Ah, você veio! A Ivi e eu estamos aqui na biblioteca agora. A sala de aula é logo ali!";
+                    ep1FalouNpc2 = true;
+                    checarObjetivosEp1();
+                    return;
+                } else {
+                    estaEmDialogoNicolas = true;
+                    nomePersonagem = "Gabi";
+                    textoDialogo = "Estamos aqui na biblioteca estudando. Qualquer coisa é só chamar!";
+                    return;
+                }
+            }
+            // Ivi na biblioteca
+            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 300) < 150 && textoDialogo.isEmpty()) {
+                if (!ep1FalouNpc3) {
+                    GerenciadorAudio.tocarSomDialogo();
+                    estaEmDialogoNicolas = true;
+                    nomePersonagem = "Ivi";
+                    textoDialogo = "Oi Audrey! A Gabi e eu viemos pra biblioteca estudar. Já foi na sala de aula?";
+                    ep1FalouNpc3 = true;
+                    checarObjetivosEp1();
+                    return;
+                } else {
+                    estaEmDialogoNicolas = true;
+                    nomePersonagem = "Ivi";
+                    textoDialogo = "Tem uns livros muito bons aqui! Vem conferir depois.";
+                    return;
                 }
             }
             // Mural
