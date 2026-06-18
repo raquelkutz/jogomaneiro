@@ -1361,6 +1361,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private Image fundoCenario1, fundoCenario2, fundoCenario3, fundoGinasio, fundoSalaAula1, fundoBiblioteca, imgArmarioAberto, imgNicolas;
     private Image imgChave, imgLivro;
     private Image imgAlunoCorredor1, imgAlunoCorredor2;
+    private Image imgRaquel;
     private Image[] framesAndar = new Image[2];
     private Image imgParada;
     private Image imgPortraitAudrey, imgPortraitNicollas, imgPortraitGabi, imgPortraitIvi;
@@ -1586,6 +1587,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         imgPortraitGabi = carregarImagem("gabi_personagem-removebg-preview.png");
         imgPortraitIvi = carregarImagem("1000115243-removebg-preview.png");
         imgCamila = redimensionarImagem(new ImageIcon("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png").getImage(), NPC_LARGURA, NPC_ALTURA);
+        imgRaquel = redimensionarImagem(new ImageIcon("9_Sem_Título_20260615113034-removebg-preview__1_-removebg-preview.png").getImage(), NPC_LARGURA, NPC_ALTURA);
 
         framesAndar[0] = redimensionarImagem(new ImageIcon("1-removebg-preview3.png").getImage(), AUDREY_LARGURA,
                 AUDREY_ALTURA);
@@ -1677,6 +1679,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
             // Desenhar NPCs da sala de aula
             if (indiceMapa == 2) {
+                if (imgRaquel != null) {
+                    g2d.drawImage(imgRaquel, 500, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
+                }
                 if (imgNicolas != null) {
                     g2d.drawImage(imgNicolas, 700, audreyY - NPC_ALTURA, NPC_LARGURA, NPC_ALTURA, this);
                 }
