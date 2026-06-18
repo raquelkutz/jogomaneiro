@@ -1570,7 +1570,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private void carregarAssets() {
         fundoCenario1 = redimensionarFundo(new ImageIcon("corredor1.png").getImage(), LARGURA, ALTURA);
         fundoCenario2 = redimensionarFundo(new ImageIcon("corredor2_novo.jpg").getImage(), LARGURA, ALTURA);
-        fundoCenario3 = redimensionarFundo(new ImageIcon("corredor3.png").getImage(), LARGURA, ALTURA);
+        fundoCenario3 = redimensionarFundo(new ImageIcon("ChatGPT Image 18 de jun. de 2026, 09_18_24.png").getImage(), LARGURA, ALTURA);
         fundoGinasio = redimensionarFundo(new ImageIcon("ginasio.png").getImage(), LARGURA, ALTURA);
         fundoBiblioteca = redimensionarFundo(new ImageIcon("bibliotecasala4.png").getImage(), LARGURA, ALTURA);
         fundoSalaAula1 = redimensionarFundo(new ImageIcon("saladeaula1.png").getImage(), LARGURA, ALTURA);
