@@ -2508,7 +2508,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
             // Cena 2 na Sala 1
             if (indiceMapa == 2 && !episodio1Concluido && sala1Aberta) {
-                if (Math.abs(audreyX - posNicolasXSalaAula) < 300) {
+                if (Math.abs(audreyX - posNicolasXSalaAula) < 300 || faseDialogoEp1 > 0) {
                     estaEmDialogoNicolas = true;
                     if (faseDialogoEp1 == 0) {
                         GerenciadorAudio.tocarSomDialogo();
