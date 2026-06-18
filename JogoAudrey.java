@@ -1375,6 +1375,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private final int SALA_RAQUEL_ALTURA = 460;
     private final int SALA_NICOLAS_LARGURA = 260;
     private final int SALA_NICOLAS_ALTURA = 470;
+    private final int SALA_CAMILA_ALTURA = 440;
     private int audreyX = 100, audreyY = 730, velX = 0;
     private int frameAtual = 0, contadorAnimacao = 0;
 
@@ -1591,7 +1592,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         imgPortraitNicollas = null;
         imgPortraitGabi = carregarImagem("gabi_personagem-removebg-preview.png");
         imgPortraitIvi = carregarImagem("1000115243-removebg-preview.png");
-        imgCamila = redimensionarImagem(new ImageIcon("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_NPC_ALTURA);
+        imgCamila = redimensionarImagem(new ImageIcon("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_CAMILA_ALTURA);
         imgRaquel = redimensionarImagem(new ImageIcon("9_Sem_Título_20260615113034-removebg-preview__1_-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
 
         framesAndar[0] = redimensionarImagem(new ImageIcon("1-removebg-preview3.png").getImage(), AUDREY_LARGURA,
@@ -1688,10 +1689,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawImage(imgRaquel, 350, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA, this);
                 }
                 if (imgNicolas != null) {
-                    g2d.drawImage(imgNicolas, 570, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
+                    g2d.drawImage(imgNicolas, 590, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
                 }
                 if (imgCamila != null) {
-                    g2d.drawImage(imgCamila, 650, audreyY - SALA_NPC_ALTURA, SALA_NPC_LARGURA, SALA_NPC_ALTURA, this);
+                    g2d.drawImage(imgCamila, 680, audreyY - SALA_CAMILA_ALTURA, SALA_NPC_LARGURA, SALA_CAMILA_ALTURA, this);
                 }
             }
 
