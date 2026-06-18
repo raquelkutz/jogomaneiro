@@ -133,14 +133,33 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
         if (emTransicao) {
             float t = easing((float) progressoTransicao / PASSOS_TRANSICAO);
-            int offsetVelha = (direcaoTransicao == 1) ? (int)(-w * 0.25f * t) : (int)(w * 0.25f * t);
-            int offsetNova  = (direcaoTransicao == 1) ? (int)(w * 0.25f * (1-t)) : (int)(-w * 0.25f * (1-t));
-            float alphaNova  = Math.max(0f, Math.min(1f, t));
-            float alphaVelha = Math.max(0f, Math.min(1f, 1.0f - t));
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaVelha));
-            desenharSlide(g2d, cenaAtual, offsetVelha);
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaNova));
-            desenharSlide(g2d, proximaCena, offsetNova);
+
+            desenharSlide(g2d, cenaAtual, 0);
+
+            Shape oldClip = g2d.getClip();
+            if (direcaoTransicao == 1) {
+                int foldX = (int) (w * (1 - t));
+                g2d.setClip(foldX, 0, w - foldX, h);
+                desenharSlide(g2d, proximaCena, 0);
+                g2d.setClip(oldClip);
+
+                if (t > 0 && t < 1) {
+                    GradientPaint shadow = new GradientPaint(foldX, 0, new Color(0, 0, 0, 60), foldX + 15, 0, new Color(0, 0, 0, 0));
+                    g2d.setPaint(shadow);
+                    g2d.fillRect(foldX, 0, 15, h);
+                }
+            } else {
+                int foldX = (int) (w * t);
+                g2d.setClip(0, 0, foldX, h);
+                desenharSlide(g2d, proximaCena, 0);
+                g2d.setClip(oldClip);
+
+                if (t > 0 && t < 1) {
+                    GradientPaint shadow = new GradientPaint(foldX, 0, new Color(0, 0, 0, 0), foldX - 15, 0, new Color(0, 0, 0, 60));
+                    g2d.setPaint(shadow);
+                    g2d.fillRect(foldX - 15, 0, 15, h);
+                }
+            }
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         } else {
             desenharSlide(g2d, cenaAtual, 0);
@@ -220,25 +239,15 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     }
 
     private void desenharBotaoBaixo(Graphics2D g2d) {
-        // Cores padrão (Rosa Pastel, Verde Pastel, Rosa Escuro)
         Color corFundo = new Color(255, 230, 235);
         Color corFundoHover = new Color(255, 210, 220);
-        Color corBorda = new Color(180, 230, 180);
-        Color corBordaHover = new Color(150, 210, 150);
         Color corTexto = new Color(120, 80, 100);
 
         // Botão ANTERIOR
         if (cenaAtual > 0) {
             String textoBotaoAnterior = "◄ ANTERIOR";
-            Color atualFundo = botaoAnteriorHover ? corFundoHover : corFundo;
-            Color atualBorda = botaoAnteriorHover ? corBordaHover : corBorda;
-
-            g2d.setColor(atualFundo);
+            g2d.setColor(botaoAnteriorHover ? corFundoHover : corFundo);
             g2d.fillRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
-
-            g2d.setColor(atualBorda);
-            g2d.setStroke(new BasicStroke(3));
-            g2d.drawRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
 
             g2d.setFont(fontCrayonHand.deriveFont(16f));
             g2d.setColor(corTexto);
@@ -250,15 +259,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
         // Botão PRÓXIMO / COMEÇAR
         String textoBotao = (imagens != null && cenaAtual < imagens.length - 1) ? "PRÓXIMO ►" : (cutsceneAtualId == 0 ? "COMEÇAR AVENTURA" : "VOLTAR AO JOGO");
-        Color atualFundoProx = botaoProximoHover ? corFundoHover : corFundo;
-        Color atualBordaProx = botaoProximoHover ? corBordaHover : corBorda;
-
-        g2d.setColor(atualFundoProx);
+        g2d.setColor(botaoProximoHover ? corFundoHover : corFundo);
         g2d.fillRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
-
-        g2d.setColor(atualBordaProx);
-        g2d.setStroke(new BasicStroke(3));
-        g2d.drawRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
 
         g2d.setFont(fontCrayonHand.deriveFont(16f));
         g2d.setColor(corTexto);
@@ -269,15 +271,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
         // Botão PULAR
         String textoPular = "PULAR ⏭";
-        Color atualFundoPular = botaoPularHover ? corFundoHover : corFundo;
-        Color atualBordaPular = botaoPularHover ? corBordaHover : corBorda;
-
-        g2d.setColor(atualFundoPular);
+        g2d.setColor(botaoPularHover ? corFundoHover : corFundo);
         g2d.fillRoundRect(botaoPularX, botaoPularY, botaoPularLargura, botaoPularAltura, botaoPularAltura, botaoPularAltura);
-
-        g2d.setColor(atualBordaPular);
-        g2d.setStroke(new BasicStroke(3));
-        g2d.drawRoundRect(botaoPularX, botaoPularY, botaoPularLargura, botaoPularAltura, botaoPularAltura, botaoPularAltura);
 
         g2d.setFont(fontCrayonHand.deriveFont(16f));
         g2d.setColor(corTexto);
@@ -417,6 +412,15 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             avancarSlide();
+        } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            int opcao = JOptionPane.showConfirmDialog(this,
+                "Deseja voltar ao menu principal?",
+                "Menu",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+            if (opcao == JOptionPane.YES_OPTION) {
+                frame.voltarAoMenuPrincipal();
+            }
         }
     }
 

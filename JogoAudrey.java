@@ -2239,10 +2239,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             } else if (indiceMapa == 2) {
                 if (!cutsceneSalaVista) {
                     cutsceneSalaVista = true;
-                    velX = 0;
-                    estaMovendo = false;
-                    frame.irParaCutscene(1);
-                    return;
                 }
 
                 if (audreyX < 0) {
