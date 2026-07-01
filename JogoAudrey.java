@@ -440,6 +440,7 @@ class MenuPrincipal extends JPanel implements ActionListener {
     private Color corPrincipal;
     private float animAngulo = 0;
     private Timer animTimer;
+    private Image imgBanner;
 
     public MenuPrincipal(JogoAudrey frame) {
         this.frame = frame;
@@ -451,6 +452,11 @@ class MenuPrincipal extends JPanel implements ActionListener {
         criarComponentes();
         animTimer = new Timer(30, this);
         animTimer.start();
+        try {
+            imgBanner = new ImageIcon("banner_menu.jpg").getImage();
+        } catch (Exception ex) {
+            imgBanner = null;
+        }
     }
 
     private void carregarFonts() {
@@ -499,8 +505,8 @@ class MenuPrincipal extends JPanel implements ActionListener {
         int bw = Math.max(240, w / 4);
         int bh = Math.max(55, h / 12);
         int bx = (w - bw) / 2;
-        int startY = (int) (h * 0.32);
-        int gap = (int) (h * 0.10);
+        int startY = (int) (h * 0.52);
+        int gap = (int) (h * 0.09);
         JButton[] btns = { btnPlay, btnContinuar, btnConfig, btnSobre, btnSair };
         for (int i = 0; i < btns.length; i++) {
             if (btns[i] != null)
@@ -557,24 +563,25 @@ class MenuPrincipal extends JPanel implements ActionListener {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Fundo gradiente creme para rosa
-        GradientPaint gradient = new GradientPaint(0, 0, new Color(255, 245, 235), W, H, new Color(255, 230, 240));
+        // Fundo base (gradiente escuro) para preencher espaços vazios
+        GradientPaint gradient = new GradientPaint(0, 0, new Color(30, 20, 50), W, H, new Color(20, 10, 40));
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, W, H);
 
-        // Manchas de cor pastel (verde, amarelo, azul, lavanda)
-        g2d.setColor(new Color(200, 240, 210, 40));
-        g2d.fillOval(-100, -100, W/2, H/2);
-        g2d.setColor(new Color(255, 250, 200, 35));
-        g2d.fillOval(W*2/3, H/3, W/2, H/2);
-        g2d.setColor(new Color(200, 220, 255, 30));
-        g2d.fillOval(W/3, H*2/3, W/2, H/3);
-        g2d.setColor(new Color(230, 210, 255, 30));
-        g2d.fillOval(W/4, H/4, W/3, H/3);
+        // Imagem de fundo completa em tela cheia (preenche a tela toda sem cortar as bordas)
+        if (imgBanner != null) {
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2d.drawImage(imgBanner, 0, 0, W, H, this);
+        }
 
-        desenharCantosDecorativos(g2d, W, H);
-        desenharParticulasFundo(g2d, W, H);
-        desenharRabiscosMenu(g2d, W, H);
+        // Overlay escuro semitransparente para legibilidade
+        g2d.setColor(new Color(10, 5, 25, 140));
+        g2d.fillRect(0, 0, W, H);
+
+        // Desenhos voando (partículas, rabiscos) desativados para limpar o menu
+        // desenharCantosDecorativos(g2d, W, H);
+        // desenharParticulasFundo(g2d, W, H);
+        // desenharRabiscosMenu(g2d, W, H);
 
         // Banner decorativo atrás do título
         int titleY = (int) (H * 0.20);
@@ -583,20 +590,20 @@ class MenuPrincipal extends JPanel implements ActionListener {
         FontMetrics fm = g2d.getFontMetrics();
         int tx = (W - fm.stringWidth(titulo)) / 2;
         int bannerW = fm.stringWidth(titulo) + 100;
-        int bannerH = fm.getHeight() + 40;
+        int tituloBannerH = fm.getHeight() + 40;
         int bannerX = (W - bannerW) / 2;
         int bannerY = titleY - fm.getAscent() - 15;
 
         // Sombra do banner
-        g2d.setColor(new Color(180, 200, 180, 60));
-        g2d.fillRoundRect(bannerX + 5, bannerY + 5, bannerW, bannerH, 35, 35);
-        // Banner gradiente pastel
-        GradientPaint bannerGrad = new GradientPaint(bannerX, bannerY, new Color(255, 255, 245, 240), bannerX, bannerY + bannerH, new Color(240, 255, 245, 240));
+        g2d.setColor(new Color(0, 0, 0, 80));
+        g2d.fillRoundRect(bannerX + 4, bannerY + 4, bannerW, tituloBannerH, 35, 35);
+        // Banner escuro semitransparente (glassmorphism dark)
+        GradientPaint bannerGrad = new GradientPaint(bannerX, bannerY, new Color(20, 10, 50, 200), bannerX, bannerY + tituloBannerH, new Color(40, 20, 80, 180));
         g2d.setPaint(bannerGrad);
-        g2d.fillRoundRect(bannerX, bannerY, bannerW, bannerH, 35, 35);
-        g2d.setColor(new Color(180, 230, 180, 160));
+        g2d.fillRoundRect(bannerX, bannerY, bannerW, tituloBannerH, 35, 35);
+        g2d.setColor(new Color(150, 100, 255, 180));
         g2d.setStroke(new BasicStroke(2.5f));
-        g2d.drawRoundRect(bannerX, bannerY, bannerW, bannerH, 35, 35);
+        g2d.drawRoundRect(bannerX, bannerY, bannerW, tituloBannerH, 35, 35);
 
         // Glow externo do título
         g2d.setFont(fontTitulo.deriveFont(Font.BOLD, 74f));
@@ -617,8 +624,8 @@ class MenuPrincipal extends JPanel implements ActionListener {
         g2d.setColor(new Color(200, 160, 120, 150));
         g2d.drawString(titulo, tx + 3, titleY + 3);
 
-        GradientPaint titleGrad = new GradientPaint(tx, titleY - 60, new Color(255, 180, 100), tx, titleY + 10,
-                new Color(100, 200, 160));
+        GradientPaint titleGrad = new GradientPaint(tx, titleY - 60, new Color(220, 180, 255), tx, titleY + 10,
+                new Color(130, 220, 255));
         g2d.setPaint(titleGrad);
         g2d.drawString(titulo, tx, titleY);
 
@@ -638,16 +645,16 @@ class MenuPrincipal extends JPanel implements ActionListener {
         g2d.drawLine(edx - starR, edy, edx + starR, edy);
         g2d.drawLine(edx, edy - starR, edx, edy + starR);
 
-        // Painel translúcido atrás dos botões
-        int btnStartY = (int) (H * 0.32);
-        int btnEndY = btnStartY + 5 * (int) (H * 0.10) + 20;
+        // Painel dark glass atrás dos botões
+        int btnStartY = (int) (H * 0.52);
+        int btnEndY = btnStartY + 5 * (int) (H * 0.09) + 20;
         int cardW = Math.max(300, W / 3);
         int cardX = (W - cardW) / 2;
         int cardH = btnEndY - btnStartY + 40;
 
-        g2d.setColor(new Color(255, 255, 245, 90));
+        g2d.setColor(new Color(10, 5, 30, 160));
         g2d.fillRoundRect(cardX, btnStartY - 20, cardW, cardH, 35, 35);
-        g2d.setColor(new Color(180, 230, 180, 60));
+        g2d.setColor(new Color(120, 80, 200, 120));
         g2d.setStroke(new BasicStroke(1.5f));
         g2d.drawRoundRect(cardX, btnStartY - 20, cardW, cardH, 35, 35);
     }
