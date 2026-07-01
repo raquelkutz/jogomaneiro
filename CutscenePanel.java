@@ -16,27 +16,15 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private Image[] imagens;
     
     // Botões
-    private int botaoLargura = 180;
-    private int botaoAltura = 50;
-    private int botaoProximoX, botaoProximoY;
-    private int botaoAnteriorX, botaoAnteriorY;
     private int botaoPularX, botaoPularY;
     private int botaoPularLargura = 130;
     private int botaoPularAltura = 40;
-
     private void atualizarPosicoesBotoes() {
         int w = getWidth();
-        int h = getHeight();
-        botaoProximoX = w - botaoLargura - 20;
-        botaoProximoY = h - 80;
-        botaoAnteriorX = 20;
-        botaoAnteriorY = h - 80;
         botaoPularX = w - 150;
         botaoPularY = 20;
     }
     
-    private boolean botaoProximoHover = false;
-    private boolean botaoAnteriorHover = false;
     private boolean botaoPularHover = false;
 
     // Transição entre slides
@@ -45,6 +33,16 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private final int PASSOS_TRANSICAO = 30;
     private int proximaCena = 0;
     private int direcaoTransicao = 1; // 1 = avançar, -1 = voltar
+    
+    // Animação do botão "Começar aventura"
+    private int pulseFrame = 0;
+    private boolean botaoIniciarHover = false;
+    
+    // Fade transition
+    private boolean emFade = false;
+    private int fadeProgresso = 0;
+    private final int FADE_MAX = 40;
+    private boolean fadeAcaoExecutada = false;
     
     private String[] nomesImagens = new String[0];
 
@@ -135,38 +133,49 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         if (emTransicao) {
             float t = easing((float) progressoTransicao / PASSOS_TRANSICAO);
 
+            float scale = 1f - t * 0.03f;
+            int offsetX = (int) ((1 - scale) * w / 2);
+            g2d.translate(offsetX, 0);
+            g2d.scale(scale, 1);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f - t * 0.3f));
             desenharSlide(g2d, cenaAtual, 0);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+            g2d.scale(1 / scale, 1);
+            g2d.translate(-offsetX, 0);
 
+            int slideW = (int) (w * t);
+            int slideX = direcaoTransicao == 1 ? w - slideW : 0;
             Shape oldClip = g2d.getClip();
-            if (direcaoTransicao == 1) {
-                int foldX = (int) (w * (1 - t));
-                g2d.setClip(foldX, 0, w - foldX, h);
-                desenharSlide(g2d, proximaCena, 0);
-                g2d.setClip(oldClip);
+            g2d.setClip(slideX, 0, slideW, h);
+            desenharSlide(g2d, proximaCena, 0);
+            g2d.setClip(oldClip);
 
-                if (t > 0 && t < 1) {
-                    GradientPaint shadow = new GradientPaint(foldX, 0, new Color(0, 0, 0, 60), foldX + 15, 0, new Color(0, 0, 0, 0));
-                    g2d.setPaint(shadow);
-                    g2d.fillRect(foldX, 0, 15, h);
-                }
-            } else {
-                int foldX = (int) (w * t);
-                g2d.setClip(0, 0, foldX, h);
-                desenharSlide(g2d, proximaCena, 0);
-                g2d.setClip(oldClip);
-
-                if (t > 0 && t < 1) {
-                    GradientPaint shadow = new GradientPaint(foldX, 0, new Color(0, 0, 0, 0), foldX - 15, 0, new Color(0, 0, 0, 60));
-                    g2d.setPaint(shadow);
-                    g2d.fillRect(foldX - 15, 0, 15, h);
-                }
+            if (t > 0.01f && t < 0.99f) {
+                int shadowX = direcaoTransicao == 1 ? slideX : slideX + slideW;
+                int dir = direcaoTransicao == 1 ? 1 : -1;
+                GradientPaint shadow = new GradientPaint(
+                    shadowX, 0, new Color(0, 0, 0, (int)(80 * t * (1 - t) * 4)),
+                    shadowX + dir * 30, 0, new Color(0, 0, 0, 0)
+                );
+                g2d.setPaint(shadow);
+                g2d.fillRect(Math.min(shadowX, shadowX + dir * 30), 0, 30, h);
             }
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         } else {
             desenharSlide(g2d, cenaAtual, 0);
         }
 
         desenharBotaoBaixo(g2d);
+
+        if (emFade) {
+            int alpha;
+            if (fadeProgresso < FADE_MAX) {
+                alpha = (int)(fadeProgresso * 255 / FADE_MAX);
+            } else {
+                alpha = 255 - (int)((fadeProgresso - FADE_MAX) * 255 / FADE_MAX);
+            }
+            g2d.setColor(new Color(0, 0, 0, Math.min(255, Math.max(0, alpha))));
+            g2d.fillRect(0, 0, w, h);
+        }
     }
 
     /** Desenha o slide com moldura de caderno centralizado */
@@ -187,10 +196,65 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         
         g2d.drawImage(imagens[indice], imgX, imgY, finalW, finalH, this);
 
-        // Fundo escuro atrás dos botões para garantir leitura
+        // Fundo escuro atrás do botão pular
         g2d.setColor(new Color(0, 0, 0, 100));
-        g2d.fillRect(0, h - 100, w, 100);
         g2d.fillRect(w - 170, 10, 160, 60);
+
+        // Animação no botão "Começar aventura" (último slide)
+        if (indice == imagens.length - 1) {
+            double s2 = Math.max((double)w / imgL, (double)h / imgH);
+            int fw = (int)(imgL * s2);
+            int fh = (int)(imgH * s2);
+            int ix = offsetX + (w - fw) / 2;
+            int iy = (h - fh) / 2;
+
+            int btnIX = 541, btnIY = 909, btnIW = 786, btnIH = 78;
+            int bx = ix + (int)(btnIX * s2);
+            int by = iy + (int)(btnIY * s2);
+            int bw = (int)(btnIW * s2);
+            int bh = (int)(btnIH * s2);
+            int arc = (int)(bh * 0.7);
+
+            float t = pulseFrame * 0.06f;
+            float p1 = (float) (Math.sin(t) * 0.5 + 0.5);
+            float p2 = (float) (Math.sin(t + 1.2) * 0.5 + 0.5);
+            float p3 = (float) (Math.sin(t + 2.4) * 0.5 + 0.5);
+
+            // Camada externa - brilho verde suave
+            int a1 = (int) (40 + p1 * 80);
+            g2d.setColor(new Color(80, 220, 80, a1));
+            g2d.setStroke(new BasicStroke(4 + p2 * 6, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.drawRoundRect(bx - 8, by - 8, bw + 16, bh + 16, arc + 4, arc + 4);
+
+            // Camada média - brilho verde-limão
+            int a2 = (int) (60 + p2 * 100);
+            g2d.setColor(new Color(160, 255, 100, a2));
+            g2d.setStroke(new BasicStroke(2 + p3 * 4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.drawRoundRect(bx - 4, by - 4, bw + 8, bh + 8, arc, arc);
+
+            // Camada interna - brilho branco suave
+            int a3 = (int) (80 + p1 * 120);
+            g2d.setColor(new Color(220, 255, 200, a3));
+            g2d.setStroke(new BasicStroke(1 + p2 * 2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.drawRoundRect(bx, by, bw, bh, arc, arc);
+
+            // Partículas flutuantes ao redor do botão
+            int cx = bx + bw / 2;
+            int cy = by + bh / 2;
+            int raioX = bw / 2 + 20;
+            int raioY = bh / 2 + 12;
+            g2d.setStroke(new BasicStroke(1));
+            for (int i = 0; i < 6; i++) {
+                float ang = (float) (t * 0.8 + i * 1.047);
+                float dist = 0.7f + (float) (Math.sin(t * 0.5 + i) * 0.3);
+                int px = cx + (int)(Math.cos(ang) * raioX * dist);
+                int py = cy + (int)(Math.sin(ang) * raioY * dist);
+                int sz = (int) (2 + p3 * 3);
+                int pa = (int) (100 + p1 * 120);
+                g2d.setColor(new Color(180, 255, 140, pa));
+                g2d.fillOval(px - sz / 2, py - sz / 2, sz, sz);
+            }
+        }
 
         g2d.setStroke(new BasicStroke(2f));
     }
@@ -244,32 +308,6 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         Color corFundoHover = new Color(255, 210, 220);
         Color corTexto = new Color(120, 80, 100);
 
-        // Botão ANTERIOR
-        if (cenaAtual > 0) {
-            String textoBotaoAnterior = "◄ ANTERIOR";
-            g2d.setColor(botaoAnteriorHover ? corFundoHover : corFundo);
-            g2d.fillRoundRect(botaoAnteriorX, botaoAnteriorY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
-
-            g2d.setFont(fontCrayonHand.deriveFont(16f));
-            g2d.setColor(corTexto);
-            FontMetrics fm = g2d.getFontMetrics();
-            int textX = botaoAnteriorX + (botaoLargura - fm.stringWidth(textoBotaoAnterior)) / 2;
-            int textY = botaoAnteriorY + ((botaoAltura - fm.getHeight()) / 2) + fm.getAscent();
-            g2d.drawString(textoBotaoAnterior, textX, textY);
-        }
-
-        // Botão PRÓXIMO / COMEÇAR
-        String textoBotao = (imagens != null && cenaAtual < imagens.length - 1) ? "PRÓXIMO ►" : (cutsceneAtualId == 0 ? "COMEÇAR AVENTURA" : "VOLTAR AO JOGO");
-        g2d.setColor(botaoProximoHover ? corFundoHover : corFundo);
-        g2d.fillRoundRect(botaoProximoX, botaoProximoY, botaoLargura, botaoAltura, botaoAltura, botaoAltura);
-
-        g2d.setFont(fontCrayonHand.deriveFont(16f));
-        g2d.setColor(corTexto);
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = botaoProximoX + (botaoLargura - fm.stringWidth(textoBotao)) / 2;
-        int textY = botaoProximoY + ((botaoAltura - fm.getHeight()) / 2) + fm.getAscent();
-        g2d.drawString(textoBotao, textX, textY);
-
         // Botão PULAR
         String textoPular = "PULAR ⏭";
         g2d.setColor(botaoPularHover ? corFundoHover : corFundo);
@@ -281,6 +319,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         int textXp = botaoPularX + (botaoPularLargura - fmPular.stringWidth(textoPular)) / 2;
         int textYp = botaoPularY + ((botaoPularAltura - fmPular.getHeight()) / 2) + fmPular.getAscent();
         g2d.drawString(textoPular, textXp, textYp);
+
+
     }
 
     @Override
@@ -293,6 +333,19 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
                 progressoTransicao = 0;
             }
         }
+        if (emFade) {
+            fadeProgresso++;
+            if (fadeProgresso >= FADE_MAX && !fadeAcaoExecutada) {
+                fadeAcaoExecutada = true;
+                iniciarJogo();
+            }
+            if (fadeProgresso >= FADE_MAX * 2) {
+                emFade = false;
+                fadeProgresso = 0;
+                fadeAcaoExecutada = false;
+            }
+        }
+        pulseFrame++;
         repaint();
     }
 
@@ -331,25 +384,50 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         int mouseX = e.getX();
         int mouseY = e.getY();
 
-        if (emTransicao) return;
-
-        // Verifica se clicou no botão PRÓXIMO
-        if (mouseX >= botaoProximoX && mouseX <= botaoProximoX + botaoLargura &&
-            mouseY >= botaoProximoY && mouseY <= botaoProximoY + botaoAltura) {
-            avancarSlide();
-        }
-
-        // Verifica se clicou no botão ANTERIOR
-        if (cenaAtual > 0 &&
-            mouseX >= botaoAnteriorX && mouseX <= botaoAnteriorX + botaoLargura &&
-            mouseY >= botaoAnteriorY && mouseY <= botaoAnteriorY + botaoAltura) {
-            voltarSlide();
-        }
+        if (emTransicao || emFade) return;
 
         // Verifica se clicou no botão PULAR
         if (mouseX >= botaoPularX && mouseX <= botaoPularX + botaoPularLargura &&
             mouseY >= botaoPularY && mouseY <= botaoPularY + botaoPularAltura) {
-            iniciarJogo();
+            if (!emFade) {
+                emFade = true;
+                fadeProgresso = 0;
+                fadeAcaoExecutada = false;
+            }
+            return;
+        }
+
+        // Último slide: só pode prosseguir clicando no botão "Começar aventura"
+        if (imagens != null && cenaAtual == imagens.length - 1) {
+            int w = getWidth();
+            int h = getHeight();
+            int imgL = imagens[cenaAtual].getWidth(this);
+            int imgH = imagens[cenaAtual].getHeight(this);
+            double s = Math.max((double)w / imgL, (double)h / imgH);
+            int imgX = (w - (int)(imgL * s)) / 2;
+            int imgY = (h - (int)(imgH * s)) / 2;
+
+            int btnIX = 541, btnIY = 909, btnIW = 786, btnIH = 78;
+            int btnX = imgX + (int)(btnIX * s);
+            int btnY = imgY + (int)(btnIY * s);
+            int btnW = (int)(btnIW * s);
+            int btnH = (int)(btnIH * s);
+            if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
+                if (!emFade) {
+                    emFade = true;
+                    fadeProgresso = 0;
+                    fadeAcaoExecutada = false;
+                }
+                return;
+            }
+            return; // impede navegação por clique no último slide
+        }
+
+        int meio = getWidth() / 2;
+        if (mouseX > meio) {
+            avancarSlide();
+        } else if (cenaAtual > 0) {
+            voltarSlide();
         }
     }
 
@@ -359,25 +437,30 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         int mouseX = e.getX();
         int mouseY = e.getY();
 
-        // Verifica se está sobre o botão PRÓXIMO
-        boolean novoHoverProximo = (mouseX >= botaoProximoX && mouseX <= botaoProximoX + botaoLargura &&
-                                    mouseY >= botaoProximoY && mouseY <= botaoProximoY + botaoAltura);
-        
-        // Verifica se está sobre o botão ANTERIOR
-        boolean novoHoverAnterior = (cenaAtual > 0 &&
-                                     mouseX >= botaoAnteriorX && mouseX <= botaoAnteriorX + botaoLargura &&
-                                     mouseY >= botaoAnteriorY && mouseY <= botaoAnteriorY + botaoAltura);
-        
-        // Verifica se está sobre o botão PULAR
         boolean novoHoverPular = (mouseX >= botaoPularX && mouseX <= botaoPularX + botaoPularLargura &&
                                   mouseY >= botaoPularY && mouseY <= botaoPularY + botaoPularAltura);
-        
-        if (novoHoverProximo != botaoProximoHover || novoHoverAnterior != botaoAnteriorHover || novoHoverPular != botaoPularHover) {
-            botaoProximoHover = novoHoverProximo;
-            botaoAnteriorHover = novoHoverAnterior;
+
+        boolean novoHoverIniciar = false;
+        if (imagens != null && cenaAtual == imagens.length - 1) {
+            int w = getWidth();
+            int h = getHeight();
+            int imgL = imagens[cenaAtual].getWidth(this);
+            int imgH = imagens[cenaAtual].getHeight(this);
+            double s = Math.max((double)w / imgL, (double)h / imgH);
+            int imgX = (w - (int)(imgL * s)) / 2;
+            int imgY = (h - (int)(imgH * s)) / 2;
+            int btnX = imgX + (int)(555 * s);
+            int btnY = imgY + (int)(910 * s);
+            int btnW = (int)(790 * s);
+            int btnH = (int)(78 * s);
+            novoHoverIniciar = (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH);
+        }
+
+        if (novoHoverPular != botaoPularHover || novoHoverIniciar != botaoIniciarHover) {
             botaoPularHover = novoHoverPular;
+            botaoIniciarHover = novoHoverIniciar;
             
-            if (novoHoverProximo || novoHoverAnterior || novoHoverPular) {
+            if (novoHoverPular || novoHoverIniciar) {
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
             } else {
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -394,10 +477,9 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
     @Override
     public void mouseExited(MouseEvent e) {
-        if (botaoProximoHover || botaoAnteriorHover || botaoPularHover) {
-            botaoProximoHover = false;
-            botaoAnteriorHover = false;
+        if (botaoPularHover || botaoIniciarHover) {
             botaoPularHover = false;
+            botaoIniciarHover = false;
             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             repaint();
         }
