@@ -220,21 +220,21 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             float p2 = (float) (Math.sin(t + 1.2) * 0.5 + 0.5);
             float p3 = (float) (Math.sin(t + 2.4) * 0.5 + 0.5);
 
-            // Camada externa - brilho verde suave
+            // Camada externa - brilho roxo escuro
             int a1 = (int) (40 + p1 * 80);
-            g2d.setColor(new Color(80, 220, 80, a1));
+            g2d.setColor(new Color(75, 65, 135, a1));
             g2d.setStroke(new BasicStroke(4 + p2 * 6, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2d.drawRoundRect(bx - 8, by - 8, bw + 16, bh + 16, arc + 4, arc + 4);
 
-            // Camada média - brilho verde-limão
+            // Camada média - brilho roxo claro
             int a2 = (int) (60 + p2 * 100);
-            g2d.setColor(new Color(160, 255, 100, a2));
+            g2d.setColor(new Color(120, 100, 200, a2));
             g2d.setStroke(new BasicStroke(2 + p3 * 4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2d.drawRoundRect(bx - 4, by - 4, bw + 8, bh + 8, arc, arc);
 
-            // Camada interna - brilho branco suave
+            // Camada interna - brilho lilás suave
             int a3 = (int) (80 + p1 * 120);
-            g2d.setColor(new Color(220, 255, 200, a3));
+            g2d.setColor(new Color(180, 160, 230, a3));
             g2d.setStroke(new BasicStroke(1 + p2 * 2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2d.drawRoundRect(bx, by, bw, bh, arc, arc);
 
@@ -251,7 +251,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
                 int py = cy + (int)(Math.sin(ang) * raioY * dist);
                 int sz = (int) (2 + p3 * 3);
                 int pa = (int) (100 + p1 * 120);
-                g2d.setColor(new Color(180, 255, 140, pa));
+                g2d.setColor(new Color(140, 120, 200, pa));
                 g2d.fillOval(px - sz / 2, py - sz / 2, sz, sz);
             }
         }
@@ -304,9 +304,9 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     }
 
     private void desenharBotaoBaixo(Graphics2D g2d) {
-        Color corFundo = new Color(255, 230, 235);
-        Color corFundoHover = new Color(255, 210, 220);
-        Color corTexto = new Color(120, 80, 100);
+        Color corFundo = new Color(45, 35, 95);
+        Color corFundoHover = new Color(75, 65, 135);
+        Color corTexto = Color.WHITE;
 
         // Botão PULAR
         String textoPular = "PULAR ⏭";

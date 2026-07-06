@@ -599,25 +599,25 @@ class TelaCarregamento extends JPanel implements ActionListener {
         RadialGradientPaint glow = new RadialGradientPaint(
                 LARGURA / 2f, ALTURA / 2f, 350,
                 new float[] { 0f, 1f },
-                new Color[] { new Color(255, 200, 200, 80), new Color(255, 255, 255, 0) } // Rosa brilhante
+                new Color[] { new Color(100, 80, 180, 80), new Color(255, 255, 255, 0) }
         );
         g2d.setPaint(glow);
         g2d.fillRect(0, 0, LARGURA, ALTURA);
 
         // Titulo
         g2d.setFont(fontTitulo);
-        String titulo = "ROBBIE QUEST";
+        String titulo = "HOBBY QUEST";
         FontMetrics fmT = g2d.getFontMetrics();
         int tx = (LARGURA - fmT.stringWidth(titulo)) / 2;
 
         // Sombra do titulo
-        g2d.setColor(new Color(200, 150, 180, 120)); // Rosa escuro pra sombra
+        g2d.setColor(new Color(30, 20, 70, 150));
         g2d.drawString(titulo, tx + 5, 255);
 
-        // Titulo com gradiente
+        // Titulo com gradiente (cores do menu)
         GradientPaint titleGrad = new GradientPaint(
-                tx, 180, new Color(255, 150, 180), // Rosa forte
-                tx + fmT.stringWidth(titulo), 250, new Color(180, 230, 180) // Verde claro
+                tx, 180, new Color(75, 65, 135),
+                tx + fmT.stringWidth(titulo), 250, new Color(140, 120, 200)
         );
         g2d.setPaint(titleGrad);
         g2d.drawString(titulo, tx, 250);
