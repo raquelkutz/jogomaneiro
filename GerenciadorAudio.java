@@ -5,6 +5,7 @@ public class GerenciadorAudio {
     private static Clip clipFundo;
 
     public static void tocarMusicaFundo() {
+        if (true) return; // Musica desativada temporariamente
         new Thread(() -> {
             try {
                 java.io.File audioFile = new java.io.File("bgm.wav");
@@ -49,6 +50,7 @@ public class GerenciadorAudio {
     }
 
     public static void retomarMusicaFundo() {
+        if (true) return; // Musica desativada temporariamente
         if (clipFundo != null && clipFundo.isOpen() && !clipFundo.isRunning()) {
             clipFundo.loop(Clip.LOOP_CONTINUOUSLY);
             clipFundo.start();

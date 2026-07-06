@@ -45,7 +45,7 @@ public class JogoAudrey extends JFrame {
                 confirmarSaida();
             }
         });
-        setTitle("Hobby Quest");
+        setTitle("hobby Quest");
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -78,7 +78,8 @@ public class JogoAudrey extends JFrame {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-                if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == Configuracoes.getInstance().getTecla("MENU")) {
+                if (e.getID() == KeyEvent.KEY_PRESSED
+                        && e.getKeyCode() == Configuracoes.getInstance().getTecla("MENU")) {
                     if (menuEmJogo != null && menuEmJogo.isShowing()) {
                         continuarJogo();
                         return true;
@@ -94,7 +95,7 @@ public class JogoAudrey extends JFrame {
 
     public void iniciarJogo(int slot) {
         this.slotAtual = slot;
-        recriarJogo(); // Garante que o painel será zerado para um novo jogo
+        recriarJogo(); // Garante que o painel sera zerado para um novo jogo
         jogoIniciado = true;
         GerenciadorAudio.tocarSomPlay();
         cardLayout.show(mainPanel, "carregamento");
@@ -114,12 +115,12 @@ public class JogoAudrey extends JFrame {
 
     public void voltarDeCutscene() {
         if (!jogoIniciado || jogoPanel == null) {
-            // É a primeira cutscene, recria o jogo
+            // E a primeira cutscene, recria o jogo
             recriarJogo();
             cardLayout.show(mainPanel, "jogo");
             jogoPanel.requestFocus();
         } else {
-            // É cutscene de meio de jogo
+            // E cutscene de meio de jogo
             cardLayout.show(mainPanel, "jogo");
             jogoPanel.requestFocus();
         }
@@ -176,30 +177,284 @@ public class JogoAudrey extends JFrame {
     }
 
     public void confirmarSaida() {
-        if (jogoIniciado && jogoPanel != null) {
-            int escolha = JOptionPane.showConfirmDialog(
-                    this,
-                    "Você está prestes a sair.\nDeseja salvar o progresso antes de fechar o jogo?",
-                    "Sair do Jogo",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE);
-
-            if (escolha == JOptionPane.YES_OPTION) {
-                if (slotAtual != -1) {
-                    jogoPanel.salvarEstado(slotAtual);
-                    JOptionPane.showMessageDialog(this, "Jogo salvo no Slot " + slotAtual + " com sucesso!\nAté logo!");
-                    System.exit(0);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Por favor, escolha um slot para salvar antes de sair.");
-                    mostrarMenuSlots(ACAO_SALVAR);
-                }
-            } else if (escolha == JOptionPane.NO_OPTION) {
-                System.exit(0); // Sai sem salvar
-            }
-            // Se cancelar (ou fechar popup), não faz nada e o jogo continua
-        } else {
+        if (!jogoIniciado || jogoPanel == null) {
             System.exit(0);
+            return;
         }
+
+        JDialog dialog = new JDialog(this, "Sair do Jogo", true);
+        dialog.setUndecorated(true);
+        dialog.setSize(420, 320);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel painel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                GradientPaint bg = new GradientPaint(0, 0, new Color(25, 15, 55), w, h, new Color(40, 20, 80));
+                g2.setPaint(bg);
+                g2.fillRoundRect(0, 0, w, h, 30, 30);
+                g2.setColor(new Color(120, 80, 220, 200));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawRoundRect(1, 1, w - 2, h - 2, 30, 30);
+                g2.setColor(new Color(100, 70, 180, 100));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawLine(30, 80, w - 30, 80);
+                g2.dispose();
+            }
+        };
+        painel.setOpaque(false);
+
+        JLabel lblTitulo = new JLabel("Sair do Jogo", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setForeground(new Color(220, 200, 255));
+        lblTitulo.setBounds(0, 20, 420, 40);
+        painel.add(lblTitulo);
+
+        JLabel lblPerg = new JLabel("<html><div style='text-align:center'>Deseja salvar o progresso<br>antes de fechar o jogo?</div></html>", SwingConstants.CENTER);
+        lblPerg.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblPerg.setForeground(new Color(180, 160, 230));
+        lblPerg.setBounds(0, 95, 420, 60);
+        painel.add(lblPerg);
+
+        // Botao Salvar e Sair
+        JButton btnSalvar = new JButton("SALVAR E SAIR") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(80, 180, 100) : new Color(50, 140, 70));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+                g2.setColor(new Color(120, 230, 140, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 18, 18);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 13));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnSalvar.setContentAreaFilled(false); btnSalvar.setBorderPainted(false); btnSalvar.setFocusPainted(false);
+        btnSalvar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSalvar.setBounds(20, 175, 170, 45);
+        btnSalvar.addActionListener(e -> {
+            dialog.dispose();
+            if (slotAtual != -1) { jogoPanel.salvarEstado(slotAtual); }
+            System.exit(0);
+        });
+        painel.add(btnSalvar);
+
+        // Botao Sair sem salvar
+        JButton btnSair = new JButton("SAIR SEM SALVAR") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(180, 60, 60) : new Color(140, 40, 40));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+                g2.setColor(new Color(230, 120, 120, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 18, 18);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 13));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnSair.setContentAreaFilled(false); btnSair.setBorderPainted(false); btnSair.setFocusPainted(false);
+        btnSair.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSair.setBounds(200, 175, 170, 45);
+        btnSair.addActionListener(e -> { dialog.dispose(); System.exit(0); });
+        painel.add(btnSair);
+
+        // Botao Cancelar
+        JButton btnCancelar = new JButton("CANCELAR") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(100, 60, 200) : new Color(70, 40, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+                g2.setColor(new Color(160, 130, 255, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 18, 18);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 13));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnCancelar.setContentAreaFilled(false); btnCancelar.setBorderPainted(false); btnCancelar.setFocusPainted(false);
+        btnCancelar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnCancelar.setBounds(110, 250, 200, 42);
+        btnCancelar.addActionListener(e -> dialog.dispose());
+        painel.add(btnCancelar);
+
+        dialog.setContentPane(painel);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        dialog.getRootPane().setOpaque(false);
+        dialog.setVisible(true);
+    }
+
+    public boolean mostrarConfirmacao(String titulo, String mensagem) {
+        final boolean[] resposta = {false};
+        JDialog dialog = new JDialog(this, titulo, true);
+        dialog.setUndecorated(true);
+        dialog.setSize(420, 260);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel painel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                GradientPaint bg = new GradientPaint(0, 0, new Color(25, 15, 55), w, h, new Color(40, 20, 80));
+                g2.setPaint(bg);
+                g2.fillRoundRect(0, 0, w, h, 30, 30);
+                g2.setColor(new Color(120, 80, 220, 200));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawRoundRect(1, 1, w - 2, h - 2, 30, 30);
+                g2.setColor(new Color(100, 70, 180, 100));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawLine(30, 60, w - 30, 60);
+                g2.dispose();
+            }
+        };
+        painel.setOpaque(false);
+
+        JLabel lblTitulo = new JLabel(titulo, SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setForeground(new Color(220, 200, 255));
+        lblTitulo.setBounds(0, 15, 420, 40);
+        painel.add(lblTitulo);
+
+        String msgHtml = "<html><div style='text-align:center'>" + mensagem.replace("\n", "<br>") + "</div></html>";
+        JLabel lblPerg = new JLabel(msgHtml, SwingConstants.CENTER);
+        lblPerg.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblPerg.setForeground(new Color(180, 160, 230));
+        lblPerg.setBounds(20, 70, 380, 80);
+        painel.add(lblPerg);
+
+        JButton btnSim = new JButton("SIM") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(180, 60, 60) : new Color(140, 40, 40));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+                g2.setColor(new Color(230, 120, 120, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 18, 18);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnSim.setContentAreaFilled(false); btnSim.setBorderPainted(false); btnSim.setFocusPainted(false);
+        btnSim.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSim.setBounds(50, 180, 140, 45);
+        btnSim.addActionListener(e -> {
+            resposta[0] = true;
+            dialog.dispose();
+        });
+        painel.add(btnSim);
+
+        JButton btnNao = new JButton("NÃO") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(100, 60, 200) : new Color(70, 40, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+                g2.setColor(new Color(160, 130, 255, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 18, 18);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnNao.setContentAreaFilled(false); btnNao.setBorderPainted(false); btnNao.setFocusPainted(false);
+        btnNao.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnNao.setBounds(230, 180, 140, 45);
+        btnNao.addActionListener(e -> dialog.dispose());
+        painel.add(btnNao);
+
+        dialog.setContentPane(painel);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        dialog.getRootPane().setOpaque(false);
+        dialog.setVisible(true);
+
+        return resposta[0];
+    }
+
+    public void mostrarMensagem(String titulo, String mensagem) {
+        JDialog dialog = new JDialog(this, titulo, true);
+        dialog.setUndecorated(true);
+        dialog.setSize(400, 240);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel painel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                GradientPaint bg = new GradientPaint(0, 0, new Color(25, 15, 55), w, h, new Color(40, 20, 80));
+                g2.setPaint(bg);
+                g2.fillRoundRect(0, 0, w, h, 30, 30);
+                g2.setColor(new Color(120, 80, 220, 200));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawRoundRect(1, 1, w - 2, h - 2, 30, 30);
+                g2.dispose();
+            }
+        };
+        painel.setOpaque(false);
+
+        JLabel lblTitulo = new JLabel(titulo, SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setForeground(new Color(220, 200, 255));
+        lblTitulo.setBounds(0, 15, 400, 40);
+        painel.add(lblTitulo);
+
+        String msgHtml = "<html><div style='text-align:center'>" + mensagem.replace("\n", "<br>") + "</div></html>";
+        JLabel lblPerg = new JLabel(msgHtml, SwingConstants.CENTER);
+        lblPerg.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblPerg.setForeground(new Color(180, 160, 230));
+        lblPerg.setBounds(20, 65, 360, 80);
+        painel.add(lblPerg);
+
+        JButton btnOk = new JButton("OK") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(100, 60, 200) : new Color(70, 40, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+                g2.setColor(new Color(160, 130, 255, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 18, 18);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                g2.dispose();
+            }
+        };
+        btnOk.setContentAreaFilled(false); btnOk.setBorderPainted(false); btnOk.setFocusPainted(false);
+        btnOk.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnOk.setBounds(130, 160, 140, 45);
+        btnOk.addActionListener(e -> dialog.dispose());
+        painel.add(btnOk);
+
+        dialog.setContentPane(painel);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        dialog.getRootPane().setOpaque(false);
+        dialog.setVisible(true);
     }
 
     public void mostrarMenuPrincipal() {
@@ -315,13 +570,20 @@ class TelaCarregamento extends JPanel implements ActionListener {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Fundo gradiente pastel
-        GradientPaint bg = new GradientPaint(
-                0, 0, new Color(255, 245, 235), // Creme claro
-                LARGURA, ALTURA, new Color(255, 230, 240) // Rosa suave
-        );
-        g2d.setPaint(bg);
+        // Fundo base igual ao MenuPrincipal
+        GradientPaint gradient = new GradientPaint(0, 0, new Color(30, 20, 50), LARGURA, ALTURA, new Color(20, 10, 40));
+        g2d.setPaint(gradient);
         g2d.fillRect(0, 0, LARGURA, ALTURA);
+
+        Image banner = frame.getMenuPrincipal().getImgBanner();
+        if (banner != null) {
+            g2d.drawImage(banner, 0, 0, LARGURA, ALTURA, this);
+        }
+
+        // Overlay escura superior para contraste
+        GradientPaint overlay = new GradientPaint(0, 0, new Color(0, 0, 0, 180), 0, ALTURA / 2f, new Color(0, 0, 0, 0));
+        g2d.setPaint(overlay);
+        g2d.fillRect(0, 0, LARGURA, ALTURA / 2);
 
         // Estrelas animadas de fundo
         for (int i = 0; i < 60; i++) {
@@ -342,17 +604,17 @@ class TelaCarregamento extends JPanel implements ActionListener {
         g2d.setPaint(glow);
         g2d.fillRect(0, 0, LARGURA, ALTURA);
 
-        // Título
+        // Titulo
         g2d.setFont(fontTitulo);
-        String titulo = "HOBBY QUEST";
+        String titulo = "ROBBIE QUEST";
         FontMetrics fmT = g2d.getFontMetrics();
         int tx = (LARGURA - fmT.stringWidth(titulo)) / 2;
 
-        // Sombra do título
+        // Sombra do titulo
         g2d.setColor(new Color(200, 150, 180, 120)); // Rosa escuro pra sombra
         g2d.drawString(titulo, tx + 5, 255);
 
-        // Título com gradiente
+        // Titulo com gradiente
         GradientPaint titleGrad = new GradientPaint(
                 tx, 180, new Color(255, 150, 180), // Rosa forte
                 tx + fmT.stringWidth(titulo), 250, new Color(180, 230, 180) // Verde claro
@@ -360,7 +622,7 @@ class TelaCarregamento extends JPanel implements ActionListener {
         g2d.setPaint(titleGrad);
         g2d.drawString(titulo, tx, 250);
 
-        // Subtítulo
+        // Subtitulo
         g2d.setFont(fontCrayonHand.deriveFont(22f));
         g2d.setColor(new Color(180, 140, 160)); // Rosa mais escuro e calmo
         String sub = "Preparando a aventura...";
@@ -424,7 +686,7 @@ class TelaCarregamento extends JPanel implements ActionListener {
         FontMetrics fmL = g2d.getFontMetrics();
         g2d.drawString(loading, (LARGURA - fmL.stringWidth(loading)) / 2, spinY + r + 30);
 
-        // Créditos rodapé
+        // Creditos rodape
         g2d.setFont(fontCrayonHand.deriveFont(13f));
         g2d.setColor(new Color(120, 100, 160));
         String credito = "Desenvolvido com Java Swing";
@@ -436,15 +698,21 @@ class TelaCarregamento extends JPanel implements ActionListener {
 class MenuPrincipal extends JPanel implements ActionListener {
     private JogoAudrey frame;
     private JButton btnPlay, btnContinuar, btnConfig, btnSobre, btnSair;
+    private JButton btnSuporte, btnPerfil;
     private Font fontCrayonHand, fontTitulo;
     private Color corPrincipal;
     private float animAngulo = 0;
     private Timer animTimer;
     private Image imgBanner;
+    private Image imgLogo;
+
+    public Image getImgBanner() {
+        return imgBanner;
+    }
 
     public MenuPrincipal(JogoAudrey frame) {
         this.frame = frame;
-        corPrincipal = new Color(255, 230, 235);
+        corPrincipal = new Color(45, 35, 95);
         setBackground(new Color(255, 245, 235));
         setLayout(null);
 
@@ -456,6 +724,11 @@ class MenuPrincipal extends JPanel implements ActionListener {
             imgBanner = new ImageIcon("banner_menu.jpg").getImage();
         } catch (Exception ex) {
             imgBanner = null;
+        }
+        try {
+            imgLogo = new ImageIcon("titulo.png").getImage();
+        } catch (Exception ex) {
+            imgLogo = null;
         }
     }
 
@@ -482,7 +755,7 @@ class MenuPrincipal extends JPanel implements ActionListener {
         btnContinuar.addActionListener(e -> frame.mostrarMenuSlots(JogoAudrey.ACAO_CONTINUAR));
         add(btnContinuar);
 
-        btnConfig = criarBotao("CONFIGURACOES");
+        btnConfig = criarBotao("CONFIGURAÇÕES");
         btnConfig.addActionListener(e -> frame.mostrarConfiguracoes("menuPrincipal"));
         add(btnConfig);
 
@@ -494,6 +767,60 @@ class MenuPrincipal extends JPanel implements ActionListener {
         btnSair.addActionListener(e -> frame.confirmarSaida());
         add(btnSair);
 
+        // Botao de suporte (?)
+        btnSuporte = new JButton("?") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean hover = getModel().isRollover();
+                g2.setColor(hover ? new Color(100, 60, 180, 220) : new Color(60, 40, 120, 200));
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.setColor(new Color(200, 180, 255));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawOval(1, 1, getWidth() - 2, getHeight() - 2);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 20));
+                FontMetrics fm2 = g2.getFontMetrics();
+                g2.drawString("?", (getWidth() - fm2.stringWidth("?")) / 2,
+                        (getHeight() + fm2.getAscent() - fm2.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btnSuporte.setContentAreaFilled(false);
+        btnSuporte.setBorderPainted(false);
+        btnSuporte.setFocusPainted(false);
+        btnSuporte.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSuporte.setToolTipText("Suporte / Ajuda");
+        btnSuporte.addActionListener(e -> mostrarSuporte());
+        add(btnSuporte);
+
+        // Botao de perfil (icone de usuario circular)
+        btnPerfil = new JButton() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean hover = getModel().isRollover();
+                g2.setColor(hover ? new Color(100, 60, 180, 220) : new Color(60, 40, 120, 200));
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.setColor(new Color(200, 180, 255));
+                int cx = getWidth() / 2, cy = getHeight() / 2;
+                g2.fillOval(cx - 8, cy - 13, 16, 16);
+                g2.fillArc(cx - 12, cy + 2, 24, 18, 0, 180);
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawOval(1, 1, getWidth() - 2, getHeight() - 2);
+                g2.dispose();
+            }
+        };
+        btnPerfil.setContentAreaFilled(false);
+        btnPerfil.setBorderPainted(false);
+        btnPerfil.setFocusPainted(false);
+        btnPerfil.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnPerfil.setToolTipText("Minha Conta");
+        btnPerfil.addActionListener(e -> mostrarPerfil());
+        add(btnPerfil);
+
         atualizarBotoes();
     }
 
@@ -504,22 +831,29 @@ class MenuPrincipal extends JPanel implements ActionListener {
         int h = getHeight();
         int bw = Math.max(240, w / 4);
         int bh = Math.max(55, h / 12);
-        int bx = (w - bw) / 2;
-        int startY = (int) (h * 0.52);
-        int gap = (int) (h * 0.09);
+        int bx = (int) (w * 0.05); // alinhado a esquerda
+        int startY = (int) (h * 0.35); // subiu para cima
+        int gap = (int) (h * 0.11); // espaçamento maior entre botoes
         JButton[] btns = { btnPlay, btnContinuar, btnConfig, btnSobre, btnSair };
         for (int i = 0; i < btns.length; i++) {
             if (btns[i] != null)
                 btns[i].setBounds(bx, startY + i * gap, bw, bh);
         }
+        // Botoes de canto superior direito
+        int btnSize = 44;
+        int margin = 16;
+        if (btnPerfil != null)
+            btnPerfil.setBounds(w - margin - btnSize, margin, btnSize, btnSize);
+        if (btnSuporte != null)
+            btnSuporte.setBounds(w - margin - btnSize*2 - 10, margin, btnSize, btnSize);
     }
 
     public void atualizarBotoes() {
         if (btnContinuar != null) {
             boolean existe = Database.saveExiste(1) || Database.saveExiste(2) || Database.saveExiste(3);
             btnContinuar.setEnabled(existe);
-            btnContinuar.setBackground(existe ? corPrincipal : new Color(240, 220, 225));
-            btnContinuar.setForeground(existe ? new Color(120, 80, 100) : Color.GRAY);
+            btnContinuar.setBackground(existe ? corPrincipal : new Color(30, 20, 50));
+            btnContinuar.setForeground(existe ? new Color(255, 255, 255) : new Color(100, 100, 120));
         }
     }
 
@@ -528,16 +862,16 @@ class MenuPrincipal extends JPanel implements ActionListener {
     }
 
     private void mostrarSobre() {
-        String mensagem = "Hobby Quest\n\n" +
+        String mensagem = "Robbie Quest\n\n" +
                 "Um jogo de aventura onde você ajuda Audrey\n" +
-                "a resolver mistérios e coletar itens especiais.\n\n" +
+                "a resolver misterios e coletar itens especiais.\n\n" +
                 "CONTROLES:\n" +
                 "A - Mover para esquerda\n" +
                 "D - Mover para direita\n" +
                 "E - Interagir com objetos e pegar itens\n" +
                 "F - Falar com personagens\n" +
-                "Q - Fechar diálogos e armário\n" +
-                "B - Abrir/Fechar inventário\n" +
+                "Q - Fechar dialogos e armário\n" +
+                "B - Abrir/Fechar inventario\n" +
                 "M - Mostrar/Esconder objetivos\n" +
                 "ESC - Abrir menu em jogo\n\n" +
                 "Desenvolvido com Java Swing";
@@ -547,6 +881,314 @@ class MenuPrincipal extends JPanel implements ActionListener {
                 mensagem,
                 "Sobre o Jogo",
                 JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void mostrarSuporte() {
+        JDialog dialog = new JDialog(frame, "Suporte", true);
+        dialog.setUndecorated(true);
+        dialog.setSize(420, 400);
+        dialog.setLocationRelativeTo(frame);
+
+        JPanel painel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                GradientPaint bg = new GradientPaint(0, 0, new Color(25, 15, 55), w, h, new Color(40, 20, 80));
+                g2.setPaint(bg);
+                g2.fillRoundRect(0, 0, w, h, 30, 30);
+                g2.setColor(new Color(120, 80, 220, 200));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawRoundRect(1, 1, w - 2, h - 2, 30, 30);
+                g2.setColor(new Color(100, 70, 180, 100));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawLine(30, 115, w - 30, 115);
+                g2.dispose();
+            }
+        };
+        painel.setOpaque(false);
+
+        // Icone ? no topo
+        JPanel icone = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int sz = getWidth();
+                g2.setColor(new Color(120, 80, 220, 80));
+                g2.fillOval(-6, -6, sz + 12, sz + 12);
+                GradientPaint av = new GradientPaint(0, 0, new Color(80, 50, 160), sz, sz, new Color(50, 30, 110));
+                g2.setPaint(av);
+                g2.fillOval(0, 0, sz, sz);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 36));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString("?", (sz - fm.stringWidth("?")) / 2, (sz + fm.getAscent() - fm.getDescent()) / 2);
+                g2.setColor(new Color(160, 120, 255));
+                g2.setStroke(new BasicStroke(3f));
+                g2.drawOval(2, 2, sz - 4, sz - 4);
+                g2.dispose();
+            }
+        };
+        icone.setOpaque(false);
+        icone.setBounds(160, 20, 100, 100);
+        painel.add(icone);
+
+        // Titulo
+        JLabel lblTitulo = new JLabel("Suporte / Ajuda", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitulo.setForeground(new Color(220, 200, 255));
+        lblTitulo.setBounds(0, 125, 420, 28);
+        painel.add(lblTitulo);
+
+        // Linhas de info
+        String[][] infos = {
+            {"Encontrou um problema?", new Color(170, 150, 255).toString()},
+        };
+
+        JLabel lblDesc = new JLabel("<html><div style='text-align:center;line-height:1.6'>"
+                + "Encontrou um problema ou tem dúvidas?<br>"
+                + "Entre em contato com o suporte:</div></html>", SwingConstants.CENTER);
+        lblDesc.setFont(new Font("Arial", Font.PLAIN, 13));
+        lblDesc.setForeground(new Color(170, 150, 220));
+        lblDesc.setBounds(20, 160, 380, 50);
+        painel.add(lblDesc);
+
+        // Card de email
+        JPanel cardEmail = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(60, 40, 120, 180));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
+                g2.setColor(new Color(100, 80, 200, 150));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
+                g2.dispose();
+            }
+        };
+        cardEmail.setOpaque(false);
+        cardEmail.setLayout(null);
+        cardEmail.setBounds(30, 220, 360, 50);
+
+        JLabel lblEmailIcon = new JLabel("✉  suporte@robbiequest.com", SwingConstants.CENTER);
+        lblEmailIcon.setFont(new Font("Arial", Font.BOLD, 14));
+        lblEmailIcon.setForeground(new Color(200, 180, 255));
+        lblEmailIcon.setBounds(0, 0, 360, 50);
+        cardEmail.add(lblEmailIcon);
+        painel.add(cardEmail);
+
+        JLabel lblDica = new JLabel("<html><div style='text-align:center'>"
+                + "Ao reportar um bug, descreva o que estava fazendo.</div></html>",
+                SwingConstants.CENTER);
+        lblDica.setFont(new Font("Arial", Font.PLAIN, 11));
+        lblDica.setForeground(new Color(120, 100, 160));
+        lblDica.setBounds(20, 278, 380, 30);
+        painel.add(lblDica);
+
+        JLabel lblVersao = new JLabel("Robbie Quest v1.0.0", SwingConstants.CENTER);
+        lblVersao.setFont(new Font("Arial", Font.PLAIN, 11));
+        lblVersao.setForeground(new Color(100, 90, 140));
+        lblVersao.setBounds(0, 313, 420, 18);
+        painel.add(lblVersao);
+
+        // Botao fechar
+        JButton btnFechar = new JButton("FECHAR") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean hover = getModel().isRollover();
+                g2.setColor(hover ? new Color(100, 60, 200) : new Color(70, 40, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(160, 130, 255, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString("FECHAR", (getWidth() - fm.stringWidth("FECHAR")) / 2,
+                        (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btnFechar.setContentAreaFilled(false);
+        btnFechar.setBorderPainted(false);
+        btnFechar.setFocusPainted(false);
+        btnFechar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnFechar.setBounds(140, 340, 140, 42);
+        btnFechar.addActionListener(e -> dialog.dispose());
+        painel.add(btnFechar);
+
+        dialog.setContentPane(painel);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        dialog.getRootPane().setOpaque(false);
+        dialog.setVisible(true);
+    }
+
+    private void mostrarPerfil() {
+        String usuario = System.getProperty("user.name", "Jogador");
+        boolean slot1 = Database.saveExiste(1);
+        boolean slot2 = Database.saveExiste(2);
+        boolean slot3 = Database.saveExiste(3);
+
+        JDialog dialog = new JDialog(frame, "Minha Conta", true);
+        dialog.setUndecorated(true);
+        dialog.setSize(400, 420);
+        dialog.setLocationRelativeTo(frame);
+
+        JPanel painel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                // Fundo gradiente roxo escuro
+                GradientPaint bg = new GradientPaint(0, 0, new Color(25, 15, 55), w, h, new Color(40, 20, 80));
+                g2.setPaint(bg);
+                g2.fillRoundRect(0, 0, w, h, 30, 30);
+                // Borda brilhante
+                g2.setColor(new Color(120, 80, 220, 200));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawRoundRect(1, 1, w - 2, h - 2, 30, 30);
+                // Linha divisória abaixo do avatar
+                g2.setColor(new Color(100, 70, 180, 100));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawLine(30, 195, w - 30, 195);
+                g2.dispose();
+            }
+        };
+        painel.setOpaque(false);
+
+        // Avatar circular
+        JPanel avatar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int sz = getWidth();
+                // Glow externo
+                g2.setColor(new Color(120, 80, 220, 80));
+                g2.fillOval(-6, -6, sz + 12, sz + 12);
+                // Fundo do avatar
+                GradientPaint av = new GradientPaint(0, 0, new Color(80, 50, 160), sz, sz, new Color(50, 30, 110));
+                g2.setPaint(av);
+                g2.fillOval(0, 0, sz, sz);
+                // Icone de usuario
+                g2.setColor(new Color(200, 180, 255));
+                int cx = sz / 2, cy = sz / 2;
+                g2.fillOval(cx - 18, cy - 25, 36, 36); // cabeca
+                g2.fillArc(cx - 26, cy + 10, 52, 38, 0, 180); // corpo
+                // Borda
+                g2.setColor(new Color(160, 120, 255));
+                g2.setStroke(new BasicStroke(3f));
+                g2.drawOval(2, 2, sz - 4, sz - 4);
+                g2.dispose();
+            }
+        };
+        avatar.setOpaque(false);
+        avatar.setBounds(150, 30, 100, 100);
+        painel.add(avatar);
+
+        // Nome do usuario
+        JLabel lblNome = new JLabel(usuario, SwingConstants.CENTER);
+        lblNome.setFont(new Font("Arial", Font.BOLD, 22));
+        lblNome.setForeground(new Color(220, 200, 255));
+        lblNome.setBounds(0, 140, 400, 30);
+        painel.add(lblNome);
+
+        JLabel lblSubtitulo = new JLabel("Robbie Quest — Jogador", SwingConstants.CENTER);
+        lblSubtitulo.setFont(new Font("Arial", Font.PLAIN, 13));
+        lblSubtitulo.setForeground(new Color(150, 130, 200));
+        lblSubtitulo.setBounds(0, 170, 400, 20);
+        painel.add(lblSubtitulo);
+
+        // Secao de saves
+        JLabel lblSaveTitulo = new JLabel("SAVES", SwingConstants.CENTER);
+        lblSaveTitulo.setFont(new Font("Arial", Font.BOLD, 14));
+        lblSaveTitulo.setForeground(new Color(180, 150, 255));
+        lblSaveTitulo.setBounds(0, 210, 400, 24);
+        painel.add(lblSaveTitulo);
+
+        String[] slots = {"Slot 1", "Slot 2", "Slot 3"};
+        boolean[] ativos = {slot1, slot2, slot3};
+        for (int i = 0; i < 3; i++) {
+            final boolean ativo = ativos[i];
+            JPanel slotPanel = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(ativo ? new Color(70, 50, 140, 180) : new Color(30, 20, 60, 120));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                    if (ativo) {
+                        g2.setColor(new Color(100, 80, 200, 150));
+                        g2.setStroke(new BasicStroke(1.5f));
+                        g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                    }
+                    g2.dispose();
+                }
+            };
+            slotPanel.setOpaque(false);
+            slotPanel.setLayout(null);
+            slotPanel.setBounds(30 + i * 115, 244, 105, 50);
+
+            JLabel slotNome = new JLabel(slots[i], SwingConstants.CENTER);
+            slotNome.setFont(new Font("Arial", Font.BOLD, 13));
+            slotNome.setForeground(ativo ? new Color(200, 180, 255) : new Color(100, 90, 140));
+            slotNome.setBounds(0, 4, 105, 20);
+            slotPanel.add(slotNome);
+
+            JLabel slotStatus = new JLabel(ativo ? "● Usado" : "○ Vazio", SwingConstants.CENTER);
+            slotStatus.setFont(new Font("Arial", Font.PLAIN, 11));
+            slotStatus.setForeground(ativo ? new Color(160, 255, 160) : new Color(100, 90, 130));
+            slotStatus.setBounds(0, 26, 105, 16);
+            slotPanel.add(slotStatus);
+
+            painel.add(slotPanel);
+        }
+
+        // Versao
+        JLabel lblVersao = new JLabel("Robbie Quest v1.0.0", SwingConstants.CENTER);
+        lblVersao.setFont(new Font("Arial", Font.PLAIN, 11));
+        lblVersao.setForeground(new Color(100, 90, 140));
+        lblVersao.setBounds(0, 310, 400, 20);
+        painel.add(lblVersao);
+
+        // Botao fechar estilizado
+        JButton btnFechar = new JButton("FECHAR") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean hover = getModel().isRollover();
+                g2.setColor(hover ? new Color(100, 60, 200) : new Color(70, 40, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(160, 130, 255, 180));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Arial", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString("FECHAR", (getWidth() - fm.stringWidth("FECHAR")) / 2,
+                        (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.dispose();
+            }
+        };
+        btnFechar.setContentAreaFilled(false);
+        btnFechar.setBorderPainted(false);
+        btnFechar.setFocusPainted(false);
+        btnFechar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnFechar.setBounds(130, 345, 140, 42);
+        btnFechar.addActionListener(e -> dialog.dispose());
+        painel.add(btnFechar);
+
+        dialog.setContentPane(painel);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        dialog.getRootPane().setOpaque(false);
+        dialog.setVisible(true);
     }
 
     @Override
@@ -563,12 +1205,13 @@ class MenuPrincipal extends JPanel implements ActionListener {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Fundo base (gradiente escuro) para preencher espaços vazios
+        // Fundo base (gradiente escuro) para preencher espacos vazios
         GradientPaint gradient = new GradientPaint(0, 0, new Color(30, 20, 50), W, H, new Color(20, 10, 40));
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, W, H);
 
-        // Imagem de fundo completa em tela cheia (preenche a tela toda sem cortar as bordas)
+        // Imagem de fundo completa em tela cheia (preenche a tela toda sem cortar as
+        // bordas)
         if (imgBanner != null) {
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             g2d.drawImage(imgBanner, 0, 0, W, H, this);
@@ -578,114 +1221,84 @@ class MenuPrincipal extends JPanel implements ActionListener {
         g2d.setColor(new Color(10, 5, 25, 140));
         g2d.fillRect(0, 0, W, H);
 
-        // Desenhos voando (partículas, rabiscos) desativados para limpar o menu
+        // Desenhos voando (particulas, rabiscos) desativados para limpar o menu
         // desenharCantosDecorativos(g2d, W, H);
         // desenharParticulasFundo(g2d, W, H);
         // desenharRabiscosMenu(g2d, W, H);
 
-        // Banner decorativo atrás do título
+        // Banner decorativo atras do titulo (substituido pela Logo)
         int titleY = (int) (H * 0.20);
-        g2d.setFont(fontTitulo);
-        String titulo = "Hobby Quest";
-        FontMetrics fm = g2d.getFontMetrics();
-        int tx = (W - fm.stringWidth(titulo)) / 2;
-        int bannerW = fm.stringWidth(titulo) + 100;
-        int tituloBannerH = fm.getHeight() + 40;
-        int bannerX = (W - bannerW) / 2;
-        int bannerY = titleY - fm.getAscent() - 15;
+        if (imgLogo != null) {
+            int logoW = imgLogo.getWidth(null);
+            int logoH = imgLogo.getHeight(null);
+            if (logoW > 0 && logoH > 0) {
+                int maxWidth = (int) (W * 0.50); // limita a metade esquerda da tela
+                int maxHeight = (int) (H * 0.55);
+                double scale = Math.min((double) maxWidth / logoW, (double) maxHeight / logoH);
+                logoW = (int) (logoW * scale);
+                logoH = (int) (logoH * scale);
+                // Centraliza a logo sobre os botoes (mesmo centro que os botoes)
+                int btnW = Math.max(240, W / 4);
+                int btnX = (int) (W * 0.05);
+                int logoCentro = btnX + btnW / 2;
+                int logoX = logoCentro - logoW / 2;
+                int logoY = 5; // bem no topo
+                g2d.drawImage(imgLogo, logoX, logoY, logoW, logoH, this);
+            }
+        } else {
+            // Fallback caso a imagem não exista
+            g2d.setFont(fontTitulo);
+            String titulo = "Robbie Quest";
+            FontMetrics fm = g2d.getFontMetrics();
+            int tx = (W - fm.stringWidth(titulo)) / 2;
+            int bannerW = fm.stringWidth(titulo) + 100;
+            int tituloBannerH = fm.getHeight() + 40;
+            int bannerX = (W - bannerW) / 2;
+            int bannerY = titleY - fm.getAscent() - 15;
+            g2d.setColor(new Color(20, 10, 50, 200));
+            g2d.fillRoundRect(bannerX, bannerY, bannerW, tituloBannerH, 35, 35);
+            g2d.setColor(new Color(220, 180, 255));
+            g2d.drawString(titulo, tx, titleY);
+        }
 
-        // Sombra do banner
-        g2d.setColor(new Color(0, 0, 0, 80));
-        g2d.fillRoundRect(bannerX + 4, bannerY + 4, bannerW, tituloBannerH, 35, 35);
-        // Banner escuro semitransparente (glassmorphism dark)
-        GradientPaint bannerGrad = new GradientPaint(bannerX, bannerY, new Color(20, 10, 50, 200), bannerX, bannerY + tituloBannerH, new Color(40, 20, 80, 180));
-        g2d.setPaint(bannerGrad);
-        g2d.fillRoundRect(bannerX, bannerY, bannerW, tituloBannerH, 35, 35);
-        g2d.setColor(new Color(150, 100, 255, 180));
-        g2d.setStroke(new BasicStroke(2.5f));
-        g2d.drawRoundRect(bannerX, bannerY, bannerW, tituloBannerH, 35, 35);
-
-        // Glow externo do título
-        g2d.setFont(fontTitulo.deriveFont(Font.BOLD, 74f));
-        fm = g2d.getFontMetrics();
-        tx = (W - fm.stringWidth(titulo)) / 2;
-
-        g2d.setColor(new Color(180, 220, 180, 40));
-        g2d.drawString(titulo, tx + 8, titleY + 8);
-        g2d.drawString(titulo, tx - 8, titleY - 8);
-        g2d.setColor(new Color(255, 200, 150, 50));
-        g2d.drawString(titulo, tx + 6, titleY - 6);
-        g2d.drawString(titulo, tx - 6, titleY + 6);
-
-        g2d.setColor(new Color(180, 210, 180, 70));
-        g2d.drawString(titulo, tx + 5, titleY + 5);
-        g2d.drawString(titulo, tx - 5, titleY - 5);
-
-        g2d.setColor(new Color(200, 160, 120, 150));
-        g2d.drawString(titulo, tx + 3, titleY + 3);
-
-        GradientPaint titleGrad = new GradientPaint(tx, titleY - 60, new Color(220, 180, 255), tx, titleY + 10,
-                new Color(130, 220, 255));
-        g2d.setPaint(titleGrad);
-        g2d.drawString(titulo, tx, titleY);
-
-        // Detalhes decorativos ao redor do título
-        float a = animAngulo;
-        g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        int starR = 8;
-        int esx = tx - 35 + (int)(Math.sin(a * 0.7) * 3);
-        int esy = titleY - fm.getAscent()/2 + (int)(Math.cos(a * 0.8) * 3);
-        g2d.setColor(new Color(255, 215, 100, 200));
-        g2d.drawLine(esx - starR, esy, esx + starR, esy);
-        g2d.drawLine(esx, esy - starR, esx, esy + starR);
-
-        int edx = tx + fm.stringWidth(titulo) + 35 + (int)(Math.sin(a * 0.9 + 1) * 3);
-        int edy = titleY - fm.getAscent()/2 + (int)(Math.cos(a * 1.0 + 1) * 3);
-        g2d.setColor(new Color(100, 200, 180, 200));
-        g2d.drawLine(edx - starR, edy, edx + starR, edy);
-        g2d.drawLine(edx, edy - starR, edx, edy + starR);
-
-        // Painel dark glass atrás dos botões
-        int btnStartY = (int) (H * 0.52);
+        // Painel dark glass atras dos botoes
+        int btnStartY = (int) (H * 0.44);
         int btnEndY = btnStartY + 5 * (int) (H * 0.09) + 20;
         int cardW = Math.max(300, W / 3);
         int cardX = (W - cardW) / 2;
         int cardH = btnEndY - btnStartY + 40;
 
-        g2d.setColor(new Color(10, 5, 30, 160));
-        g2d.fillRoundRect(cardX, btnStartY - 20, cardW, cardH, 35, 35);
-        g2d.setColor(new Color(120, 80, 200, 120));
-        g2d.setStroke(new BasicStroke(1.5f));
-        g2d.drawRoundRect(cardX, btnStartY - 20, cardW, cardH, 35, 35);
+        // Fundo transparente removido conforme pedido do usuario
+        // Borda removida conforme pedido do usuario
     }
 
     private void desenharCantosDecorativos(Graphics2D g2d, int w, int h) {
         g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         int marg = 22, tam = 32;
         Color[] cores = {
-            new Color(180, 230, 180, 140),
-            new Color(255, 215, 100, 140),
-            new Color(255, 180, 200, 140),
-            new Color(180, 210, 255, 140)
+                new Color(180, 230, 180, 140),
+                new Color(255, 215, 100, 140),
+                new Color(255, 180, 200, 140),
+                new Color(180, 210, 255, 140)
         };
 
         g2d.setColor(cores[0]);
-        g2d.drawArc(marg, marg, tam*2, tam*2, 180, 90);
+        g2d.drawArc(marg, marg, tam * 2, tam * 2, 180, 90);
         g2d.fillOval(marg - 3, marg - 3, 6, 6);
         g2d.fillOval(marg + tam - 3, marg + tam - 3, 6, 6);
 
         g2d.setColor(cores[1]);
-        g2d.drawArc(w - marg - tam*2, marg, tam*2, tam*2, 270, 90);
+        g2d.drawArc(w - marg - tam * 2, marg, tam * 2, tam * 2, 270, 90);
         g2d.fillOval(w - marg - 3, marg - 3, 6, 6);
         g2d.fillOval(w - marg - tam - 3, marg + tam - 3, 6, 6);
 
         g2d.setColor(cores[2]);
-        g2d.drawArc(marg, h - marg - tam*2, tam*2, tam*2, 90, 90);
+        g2d.drawArc(marg, h - marg - tam * 2, tam * 2, tam * 2, 90, 90);
         g2d.fillOval(marg - 3, h - marg - 3, 6, 6);
         g2d.fillOval(marg + tam - 3, h - marg - tam - 3, 6, 6);
 
         g2d.setColor(cores[3]);
-        g2d.drawArc(w - marg - tam*2, h - marg - tam*2, tam*2, tam*2, 0, 90);
+        g2d.drawArc(w - marg - tam * 2, h - marg - tam * 2, tam * 2, tam * 2, 0, 90);
         g2d.fillOval(w - marg - 3, h - marg - 3, 6, 6);
         g2d.fillOval(w - marg - tam - 3, h - marg - tam - 3, 6, 6);
     }
@@ -699,12 +1312,24 @@ class MenuPrincipal extends JPanel implements ActionListener {
             int alpha = 40 + (i % 6) * 25;
             Color cor;
             switch (i % 6) {
-                case 0: cor = new Color(255, 200, 220, Math.min(alpha, 160)); break;
-                case 1: cor = new Color(200, 235, 200, Math.min(alpha, 140)); break;
-                case 2: cor = new Color(200, 215, 255, Math.min(alpha, 150)); break;
-                case 3: cor = new Color(255, 240, 180, Math.min(alpha, 150)); break;
-                case 4: cor = new Color(235, 210, 255, Math.min(alpha, 140)); break;
-                default: cor = new Color(255, 220, 200, Math.min(alpha, 130)); break;
+                case 0:
+                    cor = new Color(255, 200, 220, Math.min(alpha, 160));
+                    break;
+                case 1:
+                    cor = new Color(200, 235, 200, Math.min(alpha, 140));
+                    break;
+                case 2:
+                    cor = new Color(200, 215, 255, Math.min(alpha, 150));
+                    break;
+                case 3:
+                    cor = new Color(255, 240, 180, Math.min(alpha, 150));
+                    break;
+                case 4:
+                    cor = new Color(235, 210, 255, Math.min(alpha, 140));
+                    break;
+                default:
+                    cor = new Color(255, 220, 200, Math.min(alpha, 130));
+                    break;
             }
 
             int tipo = i % 5;
@@ -713,25 +1338,25 @@ class MenuPrincipal extends JPanel implements ActionListener {
                 int r = sz / 2 + 1;
                 g2d.setStroke(new BasicStroke(1.2f));
                 g2d.setColor(cor);
-                g2d.drawLine((int)(cx - r), (int)cy, (int)(cx + r), (int)cy);
-                g2d.drawLine((int)cx, (int)(cy - r), (int)cx, (int)(cy + r));
-                g2d.drawLine((int)(cx - r/2), (int)(cy - r/2), (int)(cx + r/2), (int)(cy + r/2));
-                g2d.drawLine((int)(cx - r/2), (int)(cy + r/2), (int)(cx + r/2), (int)(cy - r/2));
+                g2d.drawLine((int) (cx - r), (int) cy, (int) (cx + r), (int) cy);
+                g2d.drawLine((int) cx, (int) (cy - r), (int) cx, (int) (cy + r));
+                g2d.drawLine((int) (cx - r / 2), (int) (cy - r / 2), (int) (cx + r / 2), (int) (cy + r / 2));
+                g2d.drawLine((int) (cx - r / 2), (int) (cy + r / 2), (int) (cx + r / 2), (int) (cy - r / 2));
             } else if (tipo == 1) {
-                // Coração miniatura
+                // Coracao miniatura
                 int hsz = sz;
                 g2d.setStroke(new BasicStroke(1.2f));
                 g2d.setColor(cor);
                 GeneralPath hp = new GeneralPath();
-                hp.moveTo(cx, cy + hsz/3);
-                hp.curveTo(cx, cy - hsz/3, cx - hsz, cy - hsz/3, cx - hsz, cy);
-                hp.curveTo(cx - hsz, cy + hsz*0.5, cx, cy + hsz, cx, cy + hsz/3);
-                hp.curveTo(cx, cy + hsz, cx + hsz, cy + hsz*0.5, cx + hsz, cy);
-                hp.curveTo(cx + hsz, cy - hsz/3, cx, cy - hsz/3, cx, cy + hsz/3);
+                hp.moveTo(cx, cy + hsz / 3);
+                hp.curveTo(cx, cy - hsz / 3, cx - hsz, cy - hsz / 3, cx - hsz, cy);
+                hp.curveTo(cx - hsz, cy + hsz * 0.5, cx, cy + hsz, cx, cy + hsz / 3);
+                hp.curveTo(cx, cy + hsz, cx + hsz, cy + hsz * 0.5, cx + hsz, cy);
+                hp.curveTo(cx + hsz, cy - hsz / 3, cx, cy - hsz / 3, cx, cy + hsz / 3);
                 g2d.draw(hp);
             } else {
                 g2d.setColor(cor);
-                g2d.fillOval((int)cx, (int)cy, sz, sz);
+                g2d.fillOval((int) cx, (int) cy, sz, sz);
             }
         }
     }
@@ -744,18 +1369,24 @@ class MenuPrincipal extends JPanel implements ActionListener {
         // Flor (topo esquerdo)
         mFlor(g2d, new Color(255, 175, 200, 170), (int) (w * 0.09), (int) (h * 0.13 + Math.sin(a) * 6), 22);
         // Estrela 4pts (topo direito)
-        mEstrela4(g2d, new Color(255, 215, 100, 170), (int) (w * 0.88 + Math.sin(a * 0.7) * 5), (int) (h * 0.10 + Math.cos(a * 0.8) * 5), 16);
+        mEstrela4(g2d, new Color(255, 215, 100, 170), (int) (w * 0.88 + Math.sin(a * 0.7) * 5),
+                (int) (h * 0.10 + Math.cos(a * 0.8) * 5), 16);
         // Nuvem (esquerda meio)
-        mNuvem(g2d, new Color(170, 205, 255, 150), (int) (w * 0.05 + Math.sin(a * 0.5) * 3), (int) (h * 0.42 + Math.cos(a * 0.6) * 4));
-        // Coração (direita meio) - pulsando
+        mNuvem(g2d, new Color(170, 205, 255, 150), (int) (w * 0.05 + Math.sin(a * 0.5) * 3),
+                (int) (h * 0.42 + Math.cos(a * 0.6) * 4));
+        // Coracao (direita meio) - pulsando
         float pulse = 1.0f + (float) Math.sin(a * 1.2) * 0.15f;
-        mCoracao(g2d, new Color(255, 155, 190, 160), (int) (w * 0.87 + Math.sin(a * 0.9) * 4), (int) (h * 0.50 + Math.cos(a) * 5), (int) (22 * pulse));
-        // Laço (baixo esquerdo)
-        mLaco(g2d, new Color(255, 185, 210, 160), (int) (w * 0.08 + Math.sin(a * 0.6) * 3), (int) (h * 0.77 + Math.cos(a * 0.7) * 4));
+        mCoracao(g2d, new Color(255, 155, 190, 160), (int) (w * 0.87 + Math.sin(a * 0.9) * 4),
+                (int) (h * 0.50 + Math.cos(a) * 5), (int) (22 * pulse));
+        // Laco (baixo esquerdo)
+        mLaco(g2d, new Color(255, 185, 210, 160), (int) (w * 0.08 + Math.sin(a * 0.6) * 3),
+                (int) (h * 0.77 + Math.cos(a * 0.7) * 4));
         // Estrela 5pts (baixo direito)
-        mEstrela5(g2d, new Color(255, 200, 110, 165), (int) (w * 0.89 + Math.sin(a * 0.8) * 4), (int) (h * 0.80 + Math.cos(a * 0.9) * 5), 20);
+        mEstrela5(g2d, new Color(255, 200, 110, 165), (int) (w * 0.89 + Math.sin(a * 0.8) * 4),
+                (int) (h * 0.80 + Math.cos(a * 0.9) * 5), 20);
         // Espiral (baixo centro-direita)
-        mEspiral(g2d, new Color(180, 195, 255, 155), (int) (w * 0.80 + Math.sin(a * 0.4) * 3), (int) (h * 0.20 + Math.cos(a * 0.5) * 4));
+        mEspiral(g2d, new Color(180, 195, 255, 155), (int) (w * 0.80 + Math.sin(a * 0.4) * 3),
+                (int) (h * 0.20 + Math.cos(a * 0.5) * 4));
 
         // Folhas decorativas
         int folhaCx = (int) (w * 0.55 + Math.sin(a * 0.3) * 4);
@@ -779,15 +1410,15 @@ class MenuPrincipal extends JPanel implements ActionListener {
         int asaH = 10;
         g2d.drawOval(borX - asaW, borY - asaH, asaW, asaH);
         g2d.drawOval(borX, borY - asaH, asaW, asaH);
-        g2d.drawOval(borX - asaW/2, borY, asaW/2, asaH/2);
-        g2d.drawOval(borX + asaW/4, borY, asaW/2, asaH/2);
+        g2d.drawOval(borX - asaW / 2, borY, asaW / 2, asaH / 2);
+        g2d.drawOval(borX + asaW / 4, borY, asaW / 2, asaH / 2);
         g2d.setColor(new Color(255, 180, 200, 180));
         g2d.fillOval(borX - 2, borY - 2, 4, 4);
         // Antenas
         g2d.drawLine(borX - 2, borY - 3, borX - 6, borY - 10);
         g2d.drawLine(borX + 2, borY - 3, borX + 6, borY - 10);
 
-        // --- Ícones de hobbies ---
+        // --- Icones de hobbies ---
         // Livro (leitura)
         int livroX = (int) (w * 0.18 + Math.sin(a * 0.5 + 1) * 5);
         int livroY = (int) (h * 0.70 + Math.cos(a * 0.6 + 1) * 5);
@@ -820,42 +1451,58 @@ class MenuPrincipal extends JPanel implements ActionListener {
         int halY = (int) (h * 0.30 + Math.cos(a * 0.5 + 3) * 5);
         g2d.setColor(new Color(150, 150, 170, 160));
         int barW = 20, barH = 4, pesoW = 6, pesoH = 9;
-        g2d.fillRoundRect(halX - barW/2, halY - barH/2, barW, barH, 2, 2);
-        g2d.fillRoundRect(halX - barW/2 - pesoW + 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
-        g2d.fillRoundRect(halX + barW/2 - 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
+        g2d.fillRoundRect(halX - barW / 2, halY - barH / 2, barW, barH, 2, 2);
+        g2d.fillRoundRect(halX - barW / 2 - pesoW + 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
+        g2d.fillRoundRect(halX + barW / 2 - 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
         g2d.setColor(new Color(120, 120, 140, 180));
-        g2d.drawRoundRect(halX - barW/2, halY - barH/2, barW, barH, 2, 2);
-        g2d.drawRoundRect(halX - barW/2 - pesoW + 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
-        g2d.drawRoundRect(halX + barW/2 - 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
+        g2d.drawRoundRect(halX - barW / 2, halY - barH / 2, barW, barH, 2, 2);
+        g2d.drawRoundRect(halX - barW / 2 - pesoW + 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
+        g2d.drawRoundRect(halX + barW / 2 - 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
 
         // Bolinhas decorativas pulsando com gradiente de cores
         for (int i = 0; i < 5; i++) {
             float by = (float) (h * 0.88 + Math.sin(a + i * 1.1) * 5);
-            float bx = (float)(w * 0.25 + i * 25);
-            float bs = 8 + (float)Math.sin(a * 1.5 + i) * 1.5f;
+            float bx = (float) (w * 0.25 + i * 25);
+            float bs = 8 + (float) Math.sin(a * 1.5 + i) * 1.5f;
             Color bc;
             switch (i % 4) {
-                case 0: bc = new Color(255, 200, 220, 130); break;
-                case 1: bc = new Color(200, 230, 200, 130); break;
-                case 2: bc = new Color(200, 220, 255, 130); break;
-                default: bc = new Color(255, 240, 180, 130); break;
+                case 0:
+                    bc = new Color(255, 200, 220, 130);
+                    break;
+                case 1:
+                    bc = new Color(200, 230, 200, 130);
+                    break;
+                case 2:
+                    bc = new Color(200, 220, 255, 130);
+                    break;
+                default:
+                    bc = new Color(255, 240, 180, 130);
+                    break;
             }
             g2d.setColor(bc);
-            g2d.fillOval((int)bx, (int)(by - bs/2), (int)bs, (int)bs);
+            g2d.fillOval((int) bx, (int) (by - bs / 2), (int) bs, (int) bs);
         }
         for (int i = 0; i < 4; i++) {
             float by = (float) (h * 0.84 + Math.cos(a + i * 1.3) * 5);
-            float bx = (float)(w * 0.62 + i * 25);
-            float bs = 9 + (float)Math.cos(a * 1.3 + i * 0.7) * 2;
+            float bx = (float) (w * 0.62 + i * 25);
+            float bs = 9 + (float) Math.cos(a * 1.3 + i * 0.7) * 2;
             Color bc;
             switch (i % 4) {
-                case 0: bc = new Color(200, 230, 200, 120); break;
-                case 1: bc = new Color(255, 200, 220, 120); break;
-                case 2: bc = new Color(255, 240, 180, 120); break;
-                default: bc = new Color(200, 220, 255, 120); break;
+                case 0:
+                    bc = new Color(200, 230, 200, 120);
+                    break;
+                case 1:
+                    bc = new Color(255, 200, 220, 120);
+                    break;
+                case 2:
+                    bc = new Color(255, 240, 180, 120);
+                    break;
+                default:
+                    bc = new Color(200, 220, 255, 120);
+                    break;
             }
             g2d.setColor(bc);
-            g2d.fillOval((int)bx, (int)(by - bs/2), (int)bs, (int)bs);
+            g2d.fillOval((int) bx, (int) (by - bs / 2), (int) bs, (int) bs);
         }
     }
 
@@ -992,7 +1639,7 @@ class MenuEmJogo extends JPanel implements ActionListener {
         });
         add(btnSalvar);
 
-        btnConfig = criarBotao("CONFIGURACOES");
+        btnConfig = criarBotao("CONFIGURAÇÕES");
         btnConfig.addActionListener(e -> frame.mostrarConfiguracoes("menuEmJogo"));
         add(btnConfig);
 
@@ -1074,16 +1721,16 @@ class MenuEmJogo extends JPanel implements ActionListener {
     }
 
     private void mostrarSobre() {
-        String mensagem = "Hobby Quest\n\n" +
+        String mensagem = "Robbie Quest\n\n" +
                 "Um jogo de aventura onde você ajuda Audrey\n" +
-                "a resolver mistérios e coletar itens especiais.\n\n" +
+                "a resolver misterios e coletar itens especiais.\n\n" +
                 "CONTROLES:\n" +
                 "A - Mover para esquerda\n" +
                 "D - Mover para direita\n" +
                 "E - Interagir com objetos e pegar itens\n" +
                 "F - Falar com personagens\n" +
-                "Q - Fechar diálogos e armário\n" +
-                "B - Abrir/Fechar inventário\n" +
+                "Q - Fechar dialogos e armário\n" +
+                "B - Abrir/Fechar inventario\n" +
                 "M - Mostrar/Esconder objetivos\n" +
                 "ESC - Abrir menu em jogo\n\n" +
                 "Desenvolvido com Java Swing";
@@ -1111,25 +1758,24 @@ class MenuEmJogo extends JPanel implements ActionListener {
 
         GradientPaint gradient = new GradientPaint(
                 0, 0, new Color(255, 245, 235),
-                W, H, new Color(255, 230, 240)
-        );
+                W, H, new Color(255, 230, 240));
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, W, H);
 
         g2d.setColor(new Color(200, 240, 210, 40));
-        g2d.fillOval(-80, -80, W/2, H/2);
+        g2d.fillOval(-80, -80, W / 2, H / 2);
         g2d.setColor(new Color(255, 250, 200, 35));
-        g2d.fillOval(W*2/3, H/3, W/2, H/2);
+        g2d.fillOval(W * 2 / 3, H / 3, W / 2, H / 2);
         g2d.setColor(new Color(200, 220, 255, 30));
-        g2d.fillOval(W/3, H*2/3, W/2, H/3);
+        g2d.fillOval(W / 3, H * 2 / 3, W / 2, H / 3);
         g2d.setColor(new Color(230, 210, 255, 30));
-        g2d.fillOval(W/4, H/4, W/3, H/3);
+        g2d.fillOval(W / 4, H / 4, W / 3, H / 3);
 
         desenharCantosDecorativos(g2d, W, H);
         desenharParticulasFlutuantes(g2d, W, H);
         desenharIconesHobbiesMenuPausa(g2d, W, H);
 
-        // Banner decorativo atrás do título PAUSADO
+        // Banner decorativo atras do titulo PAUSADO
         g2d.setFont(fontTitulo);
         String titulo = "PAUSADO";
         FontMetrics fm = g2d.getFontMetrics();
@@ -1142,14 +1788,15 @@ class MenuEmJogo extends JPanel implements ActionListener {
 
         g2d.setColor(new Color(180, 200, 180, 50));
         g2d.fillRoundRect(bannerX + 5, bannerY + 5, bannerW, bannerH, 35, 35);
-        GradientPaint bannerGrad = new GradientPaint(bannerX, bannerY, new Color(255, 255, 245, 240), bannerX, bannerY + bannerH, new Color(240, 255, 245, 240));
+        GradientPaint bannerGrad = new GradientPaint(bannerX, bannerY, new Color(255, 255, 245, 240), bannerX,
+                bannerY + bannerH, new Color(240, 255, 245, 240));
         g2d.setPaint(bannerGrad);
         g2d.fillRoundRect(bannerX, bannerY, bannerW, bannerH, 35, 35);
         g2d.setColor(new Color(180, 230, 180, 160));
         g2d.setStroke(new BasicStroke(2.5f));
         g2d.drawRoundRect(bannerX, bannerY, bannerW, bannerH, 35, 35);
 
-        // Glow externo do título
+        // Glow externo do titulo
         g2d.setFont(fontTitulo.deriveFont(Font.BOLD, 62f));
         fm = g2d.getFontMetrics();
         tx = (W - fm.stringWidth(titulo)) / 2;
@@ -1173,23 +1820,23 @@ class MenuEmJogo extends JPanel implements ActionListener {
         g2d.setPaint(titleGrad);
         g2d.drawString(titulo, tx, titleY);
 
-        // Estrelas decorativas ao lado do título
+        // Estrelas decorativas ao lado do titulo
         float a = animAngulo;
         g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         int starR = 7;
-        int esx = tx - 30 + (int)(Math.sin(a * 0.7) * 3);
-        int esy = titleY - fm.getAscent()/2 + (int)(Math.cos(a * 0.8) * 3);
+        int esx = tx - 30 + (int) (Math.sin(a * 0.7) * 3);
+        int esy = titleY - fm.getAscent() / 2 + (int) (Math.cos(a * 0.8) * 3);
         g2d.setColor(new Color(255, 215, 100, 200));
         g2d.drawLine(esx - starR, esy, esx + starR, esy);
         g2d.drawLine(esx, esy - starR, esx, esy + starR);
 
-        int edx = tx + fm.stringWidth(titulo) + 30 + (int)(Math.sin(a * 0.9 + 1) * 3);
-        int edy = titleY - fm.getAscent()/2 + (int)(Math.cos(a * 1.0 + 1) * 3);
+        int edx = tx + fm.stringWidth(titulo) + 30 + (int) (Math.sin(a * 0.9 + 1) * 3);
+        int edy = titleY - fm.getAscent() / 2 + (int) (Math.cos(a * 1.0 + 1) * 3);
         g2d.setColor(new Color(180, 230, 180, 200));
         g2d.drawLine(edx - starR, edy, edx + starR, edy);
         g2d.drawLine(edx, edy - starR, edx, edy + starR);
 
-        // Painel translúcido atrás dos botões
+        // Painel translucido atras dos botoes
         int btnStartY = (int) (H * 0.32);
         int btnEndY = btnStartY + 6 * (int) (H * 0.10) + 20;
         int cardW = Math.max(320, W / 3);
@@ -1207,29 +1854,29 @@ class MenuEmJogo extends JPanel implements ActionListener {
         g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         int marg = 22, tam = 32;
         Color[] cores = {
-            new Color(180, 230, 180, 140),
-            new Color(255, 215, 100, 140),
-            new Color(255, 180, 200, 140),
-            new Color(180, 210, 255, 140)
+                new Color(180, 230, 180, 140),
+                new Color(255, 215, 100, 140),
+                new Color(255, 180, 200, 140),
+                new Color(180, 210, 255, 140)
         };
 
         g2d.setColor(cores[0]);
-        g2d.drawArc(marg, marg, tam*2, tam*2, 180, 90);
+        g2d.drawArc(marg, marg, tam * 2, tam * 2, 180, 90);
         g2d.fillOval(marg - 3, marg - 3, 6, 6);
         g2d.fillOval(marg + tam - 3, marg + tam - 3, 6, 6);
 
         g2d.setColor(cores[1]);
-        g2d.drawArc(w - marg - tam*2, marg, tam*2, tam*2, 270, 90);
+        g2d.drawArc(w - marg - tam * 2, marg, tam * 2, tam * 2, 270, 90);
         g2d.fillOval(w - marg - 3, marg - 3, 6, 6);
         g2d.fillOval(w - marg - tam - 3, marg + tam - 3, 6, 6);
 
         g2d.setColor(cores[2]);
-        g2d.drawArc(marg, h - marg - tam*2, tam*2, tam*2, 90, 90);
+        g2d.drawArc(marg, h - marg - tam * 2, tam * 2, tam * 2, 90, 90);
         g2d.fillOval(marg - 3, h - marg - 3, 6, 6);
         g2d.fillOval(marg + tam - 3, h - marg - tam - 3, 6, 6);
 
         g2d.setColor(cores[3]);
-        g2d.drawArc(w - marg - tam*2, h - marg - tam*2, tam*2, tam*2, 0, 90);
+        g2d.drawArc(w - marg - tam * 2, h - marg - tam * 2, tam * 2, tam * 2, 0, 90);
         g2d.fillOval(w - marg - 3, h - marg - 3, 6, 6);
         g2d.fillOval(w - marg - tam - 3, h - marg - tam - 3, 6, 6);
     }
@@ -1243,12 +1890,24 @@ class MenuEmJogo extends JPanel implements ActionListener {
             int alpha = 40 + (i % 6) * 25;
             Color cor;
             switch (i % 6) {
-                case 0: cor = new Color(255, 200, 220, Math.min(alpha, 160)); break;
-                case 1: cor = new Color(200, 235, 200, Math.min(alpha, 140)); break;
-                case 2: cor = new Color(200, 215, 255, Math.min(alpha, 150)); break;
-                case 3: cor = new Color(255, 240, 180, Math.min(alpha, 150)); break;
-                case 4: cor = new Color(235, 210, 255, Math.min(alpha, 140)); break;
-                default: cor = new Color(255, 220, 200, Math.min(alpha, 130)); break;
+                case 0:
+                    cor = new Color(255, 200, 220, Math.min(alpha, 160));
+                    break;
+                case 1:
+                    cor = new Color(200, 235, 200, Math.min(alpha, 140));
+                    break;
+                case 2:
+                    cor = new Color(200, 215, 255, Math.min(alpha, 150));
+                    break;
+                case 3:
+                    cor = new Color(255, 240, 180, Math.min(alpha, 150));
+                    break;
+                case 4:
+                    cor = new Color(235, 210, 255, Math.min(alpha, 140));
+                    break;
+                default:
+                    cor = new Color(255, 220, 200, Math.min(alpha, 130));
+                    break;
             }
 
             int tipo = i % 5;
@@ -1256,24 +1915,24 @@ class MenuEmJogo extends JPanel implements ActionListener {
                 int r = sz / 2 + 1;
                 g2d.setStroke(new BasicStroke(1.2f));
                 g2d.setColor(cor);
-                g2d.drawLine((int)(cx - r), (int)cy, (int)(cx + r), (int)cy);
-                g2d.drawLine((int)cx, (int)(cy - r), (int)cx, (int)(cy + r));
-                g2d.drawLine((int)(cx - r/2), (int)(cy - r/2), (int)(cx + r/2), (int)(cy + r/2));
-                g2d.drawLine((int)(cx - r/2), (int)(cy + r/2), (int)(cx + r/2), (int)(cy - r/2));
+                g2d.drawLine((int) (cx - r), (int) cy, (int) (cx + r), (int) cy);
+                g2d.drawLine((int) cx, (int) (cy - r), (int) cx, (int) (cy + r));
+                g2d.drawLine((int) (cx - r / 2), (int) (cy - r / 2), (int) (cx + r / 2), (int) (cy + r / 2));
+                g2d.drawLine((int) (cx - r / 2), (int) (cy + r / 2), (int) (cx + r / 2), (int) (cy - r / 2));
             } else if (tipo == 1) {
                 int hsz = sz;
                 g2d.setStroke(new BasicStroke(1.2f));
                 g2d.setColor(cor);
                 GeneralPath hp = new GeneralPath();
-                hp.moveTo(cx, cy + hsz/3);
-                hp.curveTo(cx, cy - hsz/3, cx - hsz, cy - hsz/3, cx - hsz, cy);
-                hp.curveTo(cx - hsz, cy + hsz*0.5, cx, cy + hsz, cx, cy + hsz/3);
-                hp.curveTo(cx, cy + hsz, cx + hsz, cy + hsz*0.5, cx + hsz, cy);
-                hp.curveTo(cx + hsz, cy - hsz/3, cx, cy - hsz/3, cx, cy + hsz/3);
+                hp.moveTo(cx, cy + hsz / 3);
+                hp.curveTo(cx, cy - hsz / 3, cx - hsz, cy - hsz / 3, cx - hsz, cy);
+                hp.curveTo(cx - hsz, cy + hsz * 0.5, cx, cy + hsz, cx, cy + hsz / 3);
+                hp.curveTo(cx, cy + hsz, cx + hsz, cy + hsz * 0.5, cx + hsz, cy);
+                hp.curveTo(cx + hsz, cy - hsz / 3, cx, cy - hsz / 3, cx, cy + hsz / 3);
                 g2d.draw(hp);
             } else {
                 g2d.setColor(cor);
-                g2d.fillOval((int)cx, (int)cy, sz, sz);
+                g2d.fillOval((int) cx, (int) cy, sz, sz);
             }
         }
     }
@@ -1291,8 +1950,8 @@ class MenuEmJogo extends JPanel implements ActionListener {
         int asaH = 8;
         g2d.drawOval(borX - asaW, borY - asaH, asaW, asaH);
         g2d.drawOval(borX, borY - asaH, asaW, asaH);
-        g2d.drawOval(borX - asaW/2, borY, asaW/2, asaH/2);
-        g2d.drawOval(borX + asaW/4, borY, asaW/2, asaH/2);
+        g2d.drawOval(borX - asaW / 2, borY, asaW / 2, asaH / 2);
+        g2d.drawOval(borX + asaW / 4, borY, asaW / 2, asaH / 2);
         g2d.setColor(new Color(255, 180, 200, 160));
         g2d.fillOval(borX - 2, borY - 2, 4, 4);
         g2d.drawLine(borX - 2, borY - 3, borX - 5, borY - 9);
@@ -1334,28 +1993,36 @@ class MenuEmJogo extends JPanel implements ActionListener {
         int halY = (int) (h * 0.75 + Math.cos(a * 0.5 + 4) * 4);
         g2d.setColor(new Color(150, 150, 170, 150));
         int barW = 18, barH = 4, pesoW = 5, pesoH = 8;
-        g2d.fillRoundRect(halX - barW/2, halY - barH/2, barW, barH, 2, 2);
-        g2d.fillRoundRect(halX - barW/2 - pesoW + 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
-        g2d.fillRoundRect(halX + barW/2 - 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
+        g2d.fillRoundRect(halX - barW / 2, halY - barH / 2, barW, barH, 2, 2);
+        g2d.fillRoundRect(halX - barW / 2 - pesoW + 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
+        g2d.fillRoundRect(halX + barW / 2 - 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
         g2d.setColor(new Color(120, 120, 140, 170));
-        g2d.drawRoundRect(halX - barW/2, halY - barH/2, barW, barH, 2, 2);
-        g2d.drawRoundRect(halX - barW/2 - pesoW + 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
-        g2d.drawRoundRect(halX + barW/2 - 1, halY - pesoH/2, pesoW, pesoH, 2, 2);
+        g2d.drawRoundRect(halX - barW / 2, halY - barH / 2, barW, barH, 2, 2);
+        g2d.drawRoundRect(halX - barW / 2 - pesoW + 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
+        g2d.drawRoundRect(halX + barW / 2 - 1, halY - pesoH / 2, pesoW, pesoH, 2, 2);
 
         // Bolinhas decorativas
         for (int i = 0; i < 4; i++) {
             float by = (float) (h * 0.88 + Math.sin(a + i * 1.1) * 4);
-            float bx = (float)(w * 0.20 + i * 22);
-            float bs = 8 + (float)Math.sin(a * 1.4 + i) * 1.5f;
+            float bx = (float) (w * 0.20 + i * 22);
+            float bs = 8 + (float) Math.sin(a * 1.4 + i) * 1.5f;
             Color bc;
             switch (i % 4) {
-                case 0: bc = new Color(255, 200, 220, 120); break;
-                case 1: bc = new Color(200, 230, 200, 120); break;
-                case 2: bc = new Color(200, 220, 255, 120); break;
-                default: bc = new Color(255, 240, 180, 120); break;
+                case 0:
+                    bc = new Color(255, 200, 220, 120);
+                    break;
+                case 1:
+                    bc = new Color(200, 230, 200, 120);
+                    break;
+                case 2:
+                    bc = new Color(200, 220, 255, 120);
+                    break;
+                default:
+                    bc = new Color(255, 240, 180, 120);
+                    break;
             }
             g2d.setColor(bc);
-            g2d.fillOval((int)bx, (int)(by - bs/2), (int)bs, (int)bs);
+            g2d.fillOval((int) bx, (int) (by - bs / 2), (int) bs, (int) bs);
         }
     }
 }
@@ -1365,7 +2032,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private final int LARGURA = 1000;
     private final int ALTURA = 750;
 
-    private Image fundoCenario1, fundoCenario2, fundoCenario3, fundoGinasio, fundoSalaAula1, fundoBiblioteca, imgArmarioAberto, imgNicolas;
+    private Image fundoCenario1, fundoCenario2, fundoCenario3, fundoGinasio, fundoSalaAula1, fundoBiblioteca,
+            imgArmarioAberto, imgNicolas;
     private Image imgChave, imgLivro;
     private Image imgAlunoCorredor1, imgAlunoCorredor2;
     private Image imgRaquel;
@@ -1397,10 +2065,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean estaEmDialogoNicolas = false;
     private boolean nicolasJaFoiEncontrado = false;
     private String[] dialogoNicolasIntro = {
-            "Oi! Você deve ser a aluna nova, né? Eu sou o Nicollas, muito prazer!",
+            "Oi! Você deve ser a aluna nova, ne? Eu sou o Nicollas, muito prazer!",
             "Que bom te conhecer, Audrey! Eu ajudo os alunos com as missões por aqui.",
-            "Qualquer dúvida que tiver, pode contar comigo, tá?",
-            "Vamos começar sua aventura juntos! Vai ser incrível!"
+            "Qualquer duvida que tiver, pode contar comigo, ta?",
+            "Vamos comecar sua aventura juntos! Vai ser incrivel!"
     };
     private boolean primeiroEncontroNicolas = false;
     private boolean mostrando_chave = false;
@@ -1410,7 +2078,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean mostrarObjetivos = false;
     private int contadorEfeitoChave = 0;
 
-    // --- NOVAS VARIÁVEIS DE HOBBIES E DIÁRIO ---
+    // --- NOVAS VARIAVEIS DE HOBBIES E DIÁRIO ---
     private int nivelLeitura = 1;
     private int nivelArte = 1;
     private int nivelFitness = 1;
@@ -1442,7 +2110,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean sala1Aberta = false;
     private boolean personagensNaBiblioteca = false;
     private int contadorTeleporte = -1;
-    
+
     private Image imgCamila;
 
     // -------------------------------------------
@@ -1582,12 +2250,15 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         fundoBiblioteca = redimensionarFundo(new ImageIcon("bibliotecasala4.png").getImage(), LARGURA, ALTURA);
         fundoSalaAula1 = redimensionarFundo(new ImageIcon("sala de aula 1.png").getImage(), LARGURA, ALTURA);
         imgArmarioAberto = new ImageIcon("imagemarmario.png").getImage();
-        imgNicolas = redimensionarImagem(new ImageIcon("nico__1_-removebg-preview.png").getImage(), SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA);
+        imgNicolas = redimensionarImagem(new ImageIcon("nico__1_-removebg-preview.png").getImage(),
+                SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA);
         imgChave = new ImageIcon("chave.png").getImage();
         imgLivro = new ImageIcon("livro.png").getImage();
 
-        imgAlunoCorredor1 = redimensionarImagem(new ImageIcon("aluno_corredor1.png").getImage(), NPC_LARGURA, NPC_ALTURA);
-        imgAlunoCorredor2 = redimensionarImagem(new ImageIcon("aluno_corredor2_backup.png").getImage(), NPC_LARGURA, NPC_ALTURA);
+        imgAlunoCorredor1 = redimensionarImagem(new ImageIcon("aluno_corredor1.png").getImage(), NPC_LARGURA,
+                NPC_ALTURA);
+        imgAlunoCorredor2 = redimensionarImagem(new ImageIcon("aluno_corredor2_backup.png").getImage(), NPC_LARGURA,
+                NPC_ALTURA);
         imgPortraitAudrey = carregarImagem("pixel andry.png");
         imgPortraitNicollas = carregarImagem("pixel_nicolas.png");
         imgPortraitGabi = carregarImagem("gabi_personagem-removebg-preview.png");
@@ -1595,8 +2266,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         imgPortraitRaquel = null;
         imgPortraitNicolas = carregarImagem("portrait_nicollas-removebg-preview.png");
         imgPortraitCamila = carregarImagem("camila.png");
-        imgCamila = redimensionarImagem(new ImageIcon("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_CAMILA_ALTURA);
-        imgRaquel = redimensionarImagem(new ImageIcon("9_Sem_Título_20260615113034-removebg-preview__1_-removebg-preview.png").getImage(), SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
+        imgCamila = redimensionarImagem(new ImageIcon(
+                "a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview.png")
+                .getImage(), SALA_NPC_LARGURA, SALA_CAMILA_ALTURA);
+        imgRaquel = redimensionarImagem(
+                new ImageIcon("9_Sem_Titulo_20260615113034-removebg-preview__1_-removebg-preview.png").getImage(),
+                SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
 
         framesAndar[0] = redimensionarImagem(new ImageIcon("andar 1.png").getImage(), ANDAR1_LARGURA,
                 AUDREY_ALTURA);
@@ -1611,7 +2286,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         try {
             return ImageIO.read(new File(caminho));
         } catch (Exception e) {
-            System.err.println("[ERRO] Não foi possível carregar: " + caminho);
+            System.err.println("[ERRO] Não foi possivel carregar: " + caminho);
             return null;
         }
     }
@@ -1659,7 +2334,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         int w = getWidth();
         int h = getHeight();
 
-        // Calcular a escala preservando a proporção de 1000x750
+        // Calcular a escala preservando a proporcao de 1000x750
         double scaleX = (double) w / LARGURA;
         double scaleY = (double) h / ALTURA;
         double scale = Math.min(scaleX, scaleY);
@@ -1692,13 +2367,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 g2d.drawImage(fundoBiblioteca, 0, 0, LARGURA, ALTURA, this);
             }
 
-
-
-
             // Desenhar NPCs da sala de aula
             if (indiceMapa == 2) {
                 if (imgRaquel != null) {
-                    g2d.drawImage(imgRaquel, 350, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA, this);
+                    g2d.drawImage(imgRaquel, 350, audreyY - SALA_RAQUEL_ALTURA, SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA,
+                            this);
                     int labelW = 110;
                     int labelH = 30;
                     int labelX = 350 + (SALA_NPC_LARGURA - labelW) / 2;
@@ -1714,7 +2387,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawString("Raquel", labelX + (labelW - fm.stringWidth("Raquel")) / 2, labelY + labelH - 8);
                 }
                 if (imgNicolas != null) {
-                    g2d.drawImage(imgNicolas, 590, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
+                    g2d.drawImage(imgNicolas, 590, audreyY - SALA_NICOLAS_ALTURA, SALA_NICOLAS_LARGURA,
+                            SALA_NICOLAS_ALTURA, this);
                     int labelW = 120;
                     int labelH = 30;
                     int labelX = 590 + (SALA_NICOLAS_LARGURA - labelW) / 2;
@@ -1730,7 +2404,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawString("Nicolas", labelX + (labelW - fm.stringWidth("Nicolas")) / 2, labelY + labelH - 8);
                 }
                 if (imgCamila != null) {
-                    g2d.drawImage(imgCamila, 680, audreyY - SALA_CAMILA_ALTURA, SALA_NPC_LARGURA, SALA_CAMILA_ALTURA, this);
+                    g2d.drawImage(imgCamila, 680, audreyY - SALA_CAMILA_ALTURA, SALA_NPC_LARGURA, SALA_CAMILA_ALTURA,
+                            this);
                     int labelW = 110;
                     int labelH = 30;
                     int labelX = 680 + (SALA_NPC_LARGURA - labelW) / 2;
@@ -1768,8 +2443,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         this);
             }
 
-            // --- SHADER: Tom Pastel Levíssimo ---
-            // Véu rosa-creme uniforme, quase invisível, só aquece as cores
+            // --- SHADER: Tom Pastel Levissimo ---
+            // Veu rosa-creme uniforme, quase invisivel, só aquece as cores
             g2d.setColor(new Color(255, 235, 240, 18));
             g2d.fillRect(0, 0, LARGURA, ALTURA);
             // ----------------------------------------
@@ -1834,7 +2509,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             g2d.dispose(); // Libera o graphics do buffer
             PastelShader.aplicarFiltro(shaderBuffer);
 
-            // Agora desenha na tela real com as devidas proporções/bordas
+            // Agora desenha na tela real com as devidas proporcoes/bordas
             g2dReal.setColor(Color.BLACK);
             g2dReal.fillRect(0, 0, w, h);
             g2dReal.translate(xOffset, yOffset);
@@ -1879,7 +2554,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
         g2d.setFont(fontCrayonHand.deriveFont(Font.BOLD, 32));
         g2d.setColor(new Color(255, 215, 0));
-        g2d.drawString("INVENTARIO", caixaX + 150, caixaY + 50);
+        g2d.drawString("INVENTÁRIO", caixaX + 150, caixaY + 50);
 
         g2d.setColor(new Color(200, 200, 0));
         g2d.drawLine(caixaX + 20, caixaY + 70, caixaX + caixaLargura - 20, caixaY + 70);
@@ -1926,10 +2601,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (temCadernoEsboco) {
             g2d.setFont(fontCrayonHand.deriveFont(Font.BOLD, 20));
             g2d.setColor(Color.WHITE);
-            g2d.drawString("Caderno de Esboços", caixaX + 130, itemY + 10);
+            g2d.drawString("Caderno de Esbocos", caixaX + 130, itemY + 10);
             g2d.setFont(fontCrayonHand.deriveFont(Font.PLAIN, 14));
             g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("Obtido de: Líder Arte", caixaX + 130, itemY + 35);
+            g2d.drawString("Obtido de: Lider Arte", caixaX + 130, itemY + 35);
             itemCount++;
             itemY += 80;
         }
@@ -1940,7 +2615,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             g2d.drawString("Cronograma de Treinos", caixaX + 130, itemY + 10);
             g2d.setFont(fontCrayonHand.deriveFont(Font.PLAIN, 14));
             g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("Obtido de: Líder Fitness", caixaX + 130, itemY + 35);
+            g2d.drawString("Obtido de: Lider Fitness", caixaX + 130, itemY + 35);
             itemCount++;
             itemY += 80;
         }
@@ -1953,7 +2628,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
         g2d.setFont(fontCrayonHand.deriveFont(Font.PLAIN, 16));
         g2d.setColor(new Color(150, 150, 150));
-        g2d.drawString("Pressione [B] para fechar o inventário", caixaX + 50, caixaY + caixaAltura - 20);
+        g2d.drawString("Pressione [B] para fechar o inventario", caixaX + 50, caixaY + caixaAltura - 20);
     }
 
     private void desenharObjetivos(Graphics2D g2d) {
@@ -2059,13 +2734,15 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             String teclaF = Configuracoes.getInstance().getNomeTecla("FALAR");
 
             if (indiceMapa == 0 && Math.abs(audreyX - posArmarioX) < 150) {
-                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para abrir", audreyX - 10, audreyY - 430, Color.CYAN);
+                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para abrir", audreyX - 10, audreyY - 430,
+                        Color.CYAN);
             }
 
             if (indiceMapa == 1 && !personagensNaBiblioteca) {
                 if (Math.abs(audreyX - posPortaX) < 150) {
                     if (explorouCorredor) {
-                        desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para entrar", audreyX - 10, audreyY - 430, Color.GREEN);
+                        desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para entrar", audreyX - 10,
+                                audreyY - 430, Color.GREEN);
                     } else {
                         desenharTextoComSombra(g2d, "Vou explorar o final do corredor primeiro...", audreyX - 10,
                                 audreyY - 430, Color.LIGHT_GRAY);
@@ -2074,23 +2751,28 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             if (indiceMapa == 2 && Math.abs(audreyX - posNicolasXSalaAula) < 120) {
-                desenharTextoComSombra(g2d, "Pressione [" + teclaF + "] para falar", audreyX - 10, audreyY - 430, Color.YELLOW);
+                desenharTextoComSombra(g2d, "Pressione [" + teclaF + "] para falar", audreyX - 10, audreyY - 430,
+                        Color.YELLOW);
             }
 
             if (indiceMapa == 2 && estaProximoDaPuerta()) {
-                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para sair", audreyX - 10, audreyY - 430, Color.RED);
+                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para sair", audreyX - 10, audreyY - 430,
+                        Color.RED);
             }
 
             if (indiceMapa == 3) {
                 if (Math.abs(audreyX - 350) < 150) {
-                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para abrir", audreyX - 10, audreyY - 430, Color.LIGHT_GRAY);
+                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para abrir", audreyX - 10, audreyY - 430,
+                            Color.LIGHT_GRAY);
                 } else if (Math.abs(audreyX - 750) < 150) {
-                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para entrar na biblioteca", audreyX - 10, audreyY - 430, Color.GREEN);
+                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para entrar na biblioteca", audreyX - 10,
+                            audreyY - 430, Color.GREEN);
                 }
             }
-            
+
             if (indiceMapa == 6 && Math.abs(audreyX - 50) < 150) {
-                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para sair da biblioteca", audreyX - 10, audreyY - 430, Color.RED);
+                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para sair da biblioteca", audreyX - 10,
+                        audreyY - 430, Color.RED);
             }
 
             if (indiceMapa == 6 && personagensNaBiblioteca) {
@@ -2386,7 +3068,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             if (indiceMapa == 2) {
-                // Checar distância dos 3 grupos e esconder diálogo se longe
+                // Checar distancia dos 3 grupos e esconder dialogo se longe
                 if (Math.abs(audreyX - 300) > 150 && Math.abs(audreyX - 550) > 150 && Math.abs(audreyX - 800) > 150) {
                     if (!estaEmDialogoNicolas) {
                         textoDialogo = "";
@@ -2399,8 +3081,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 textoDialogo = "";
                 nomePersonagem = "";
             }
-
-
 
             if (indiceMapa == 6 && Math.abs(audreyX - 300) > 200 && Math.abs(audreyX - 550) > 200) {
                 if (!estaEmDialogoNicolas) {
@@ -2426,7 +3106,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
 
-        if (code == Configuracoes.getInstance().getTecla("INVENTARIO")) {
+        if (code == Configuracoes.getInstance().getTecla("INVENTÁRIO")) {
             inventarioAberto = !inventarioAberto;
             return;
         }
@@ -2438,24 +3118,23 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIREITA")) {
-            velX = 13;
+            velX = 16; // velocidade aumentada
             olhandoDireita = true;
             estaMovendo = true;
         }
 
         if (code == Configuracoes.getInstance().getTecla("ESQUERDA")) {
-            velX = -13;
+            velX = -16; // velocidade aumentada
             olhandoDireita = false;
             estaMovendo = true;
         }
 
-        if (code == Configuracoes.getInstance().getTecla("DIARIO")) {
+        if (code == Configuracoes.getInstance().getTecla("DIÁRIO")) {
             diarioAberto = !diarioAberto;
             return;
         }
 
         if (code == Configuracoes.getInstance().getTecla("FALAR")) {
-
 
             if (indiceMapa == 2) {
                 // Checa npc Raquel (x=370)
@@ -2465,17 +3144,17 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     if (!missaoLeituraAtiva && !missaoLeituraConcluida) {
                         if (faseDialogoLeitura == 0) {
                             GerenciadorAudio.tocarSomDialogo();
-                            textoDialogo = "Olá! Sou a Raquel, professora de literatura. O segredo de uma mente afiada é a constância.";
+                            textoDialogo = "Ola! Sou a Raquel, professora de literatura. O segredo de uma mente afiada e a constancia.";
                             faseDialogoLeitura = 1;
                         } else if (faseDialogoLeitura == 1) {
-                            textoDialogo = "Toma aqui esse marcador de páginas e a chave do armário.";
+                            textoDialogo = "Toma aqui esse marcador de paginas e a chave do armário.";
                             temChave = true;
                             faseDialogoLeitura = 2;
                         } else if (faseDialogoLeitura == 2) {
                             textoDialogo = "Assim que você pegar o livro e ler um capítulo na vida real...";
                             faseDialogoLeitura = 3;
                         } else if (faseDialogoLeitura == 3) {
-                            textoDialogo = "abra o seu diário e marque como concluído aqui no jogo.";
+                            textoDialogo = "abra o seu diario e marque como concluído aqui no jogo.";
                             missaoLeituraAtiva = true;
                             faseDialogoLeitura = 4;
                         }
@@ -2494,7 +3173,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     if (!missaoArteAtiva && !missaoArteConcluida) {
                         if (faseDialogoArte == 0) {
                             GerenciadorAudio.tocarSomDialogo();
-                            textoDialogo = "Oi Audrey! Sou o Nicolas, professor de artes. O segredo da verdadeira expressão é a prática diária.";
+                            textoDialogo = "Oi Audrey! Sou o Nicolas, professor de artes. O segredo da verdadeira expressão e a prática diária.";
                             faseDialogoArte = 1;
                         } else if (faseDialogoArte == 1) {
                             textoDialogo = "Toma aqui esse caderno de esboços.";
@@ -2504,7 +3183,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                             textoDialogo = "Recrie o traço de uma obra famosa na vida real...";
                             faseDialogoArte = 3;
                         } else if (faseDialogoArte == 3) {
-                            textoDialogo = "depois abra o seu diário e marque como concluído aqui no jogo.";
+                            textoDialogo = "depois abra o seu diario e marque como concluído aqui no jogo.";
                             missaoArteAtiva = true;
                             faseDialogoArte = 4;
                         }
@@ -2523,7 +3202,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         if (faseDialogoFitness == 0) {
                             nomePersonagem = "Camila";
                             GerenciadorAudio.tocarSomDialogo();
-                            textoDialogo = "E aí! Você deve ser a Audrey, a aluna nova, né? Eu sou a Camila, muito prazer!";
+                            textoDialogo = "E ai! Você deve ser a Audrey, a aluna nova, ne? Eu sou a Camila, muito prazer!";
                             faseDialogoFitness = 1;
                         } else if (faseDialogoFitness == 1) {
                             nomePersonagem = "Audrey";
@@ -2531,7 +3210,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                             faseDialogoFitness = 2;
                         } else if (faseDialogoFitness == 2) {
                             nomePersonagem = "Camila";
-                            textoDialogo = "Isso aí! Preparada? A chave de ouro é a disciplina. Toma aqui esse cronograma de treinos.";
+                            textoDialogo = "Isso ai! Preparada? A chave de ouro e a disciplina. Toma aqui esse cronograma de treinos.";
                             temCronograma = true;
                             faseDialogoFitness = 3;
                         } else if (faseDialogoFitness == 3) {
@@ -2540,13 +3219,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                             faseDialogoFitness = 4;
                         } else if (faseDialogoFitness == 4) {
                             nomePersonagem = "Camila";
-                            textoDialogo = "abre o seu diário e marca como concluído. Seja honesta!";
+                            textoDialogo = "abre o seu diario e marca como concluído. Seja honesta!";
                             missaoFitnessAtiva = true;
                             faseDialogoFitness = 5;
                         }
                     } else if (missaoFitnessConcluida) {
                         nomePersonagem = "Camila";
-                        textoDialogo = "Sua energia é contagiante! Parabéns!";
+                        textoDialogo = "Sua energia e contagiante! Parabéns!";
                         verificarLevel3();
                     } else {
                         nomePersonagem = "Camila";
@@ -2615,7 +3294,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 }
             }
             // Gabi na biblioteca
-            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 550) < 150 && textoDialogo.isEmpty()) {
+            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 550) < 150
+                    && textoDialogo.isEmpty()) {
                 if (!ep1FalouNpc2) {
                     GerenciadorAudio.tocarSomDialogo();
                     estaEmDialogoNicolas = true;
@@ -2632,7 +3312,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 }
             }
             // Ivi na biblioteca
-            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 300) < 150 && textoDialogo.isEmpty()) {
+            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 300) < 150
+                    && textoDialogo.isEmpty()) {
                 if (!ep1FalouNpc3) {
                     GerenciadorAudio.tocarSomDialogo();
                     estaEmDialogoNicolas = true;
@@ -2728,7 +3409,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         int diarioW = 800;
         int diarioH = 650;
 
-        // Fundo do diário
+        // Fundo do diario
         g2d.setColor(new Color(255, 250, 240));
         g2d.fillRoundRect(diarioX, diarioY, diarioW, diarioH, 30, 30);
         g2d.setColor(new Color(200, 180, 150));
@@ -2753,7 +3434,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             g2d.setColor(new Color(100, 50, 50));
         } else if (missaoLeituraConcluida) {
             g2d.setColor(new Color(50, 150, 50));
-            g2d.drawString("Ler um livro (Concluído!)", textX + 20, textY + 30);
+            g2d.drawString("Ler um livro (Concluido!)", textX + 20, textY + 30);
             g2d.setColor(new Color(100, 50, 50));
         } else {
             g2d.drawString("Fale com o grupo de Leitura", textX + 20, textY + 30);
@@ -2768,7 +3449,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             g2d.setColor(new Color(100, 50, 50));
         } else if (missaoArteConcluida) {
             g2d.setColor(new Color(50, 150, 50));
-            g2d.drawString("Recriar obra (Concluído!)", textX + 20, textY + 30);
+            g2d.drawString("Recriar obra (Concluido!)", textX + 20, textY + 30);
             g2d.setColor(new Color(100, 50, 50));
         } else {
             g2d.drawString("Fale com o grupo de Arte", textX + 20, textY + 30);
@@ -2783,7 +3464,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             g2d.setColor(new Color(100, 50, 50));
         } else if (missaoFitnessConcluida) {
             g2d.setColor(new Color(50, 150, 50));
-            g2d.drawString("12 polichinelos (Concluído!)", textX + 20, textY + 30);
+            g2d.drawString("12 polichinelos (Concluido!)", textX + 20, textY + 30);
             g2d.setColor(new Color(100, 50, 50));
         } else {
             g2d.drawString("Fale com o grupo Fitness", textX + 20, textY + 30);
@@ -2800,7 +3481,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
             if (nivelLeitura < 3) {
                 g2d.setColor(Color.BLUE);
-                g2d.drawString("Criar e Concluir Missão Leitura", rightX, rightY + 80);
+                g2d.drawString("Criar e Concluir Missao Leitura", rightX, rightY + 80);
                 g2d.drawRect(rightX + 280, rightY + 60, 30, 30);
             } else {
                 g2d.setColor(new Color(50, 150, 50));
@@ -2809,7 +3490,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
             if (nivelArte < 3) {
                 g2d.setColor(Color.BLUE);
-                g2d.drawString("Criar e Concluir Missão Arte", rightX, rightY + 130);
+                g2d.drawString("Criar e Concluir Missao Arte", rightX, rightY + 130);
                 g2d.drawRect(rightX + 280, rightY + 110, 30, 30);
             } else {
                 g2d.setColor(new Color(50, 150, 50));
@@ -2818,7 +3499,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
             if (nivelFitness < 3) {
                 g2d.setColor(Color.BLUE);
-                g2d.drawString("Criar e Concluir Missão Fitness", rightX, rightY + 180);
+                g2d.drawString("Criar e Concluir Missao Fitness", rightX, rightY + 180);
                 g2d.drawRect(rightX + 280, rightY + 160, 30, 30);
             } else {
                 g2d.setColor(new Color(50, 150, 50));
@@ -2839,6 +3520,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     @Override
     public void mouseClicked(MouseEvent e) {
     }
+
     @Override
     public void mousePressed(MouseEvent e) {
         if (!diarioAberto)
@@ -3002,7 +3684,7 @@ class MenuSlots extends JPanel {
                 btns[i].setBounds(bx, startY + i * gap, bw, bh);
                 if (btnApagarSlots[i] != null) {
                     btnApagarSlots[i].setBounds(bx + bw + 10, startY + i * gap, bh, bh); // lixeira ao lado, do tamanho
-                                                                                         // da altura do botão
+                                                                                         // da altura do botao
                 }
             }
         }
@@ -3012,7 +3694,7 @@ class MenuSlots extends JPanel {
     }
 
     private JButton criarBotaoLixeira(int slot) {
-        JButton botao = new JButton("🗑️") {
+        JButton botao = new JButton("🗑") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
@@ -3046,12 +3728,11 @@ class MenuSlots extends JPanel {
         botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         botao.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                    this, "Deseja REALMENTE apagar o save do Slot " + slot + "?\nEsta ação não pode ser desfeita.",
-                    "Confirmar Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (confirm == JOptionPane.YES_OPTION) {
+            boolean confirm = frame.mostrarConfirmacao(
+                    "Confirmar Exclusão", "Deseja REALMENTE apagar o save do Slot " + slot + "?\nEsta ação não pode ser desfeita.");
+            if (confirm) {
                 Database.apagarSave(slot);
-                JOptionPane.showMessageDialog(this, "Save apagado com sucesso.");
+                frame.mostrarMensagem("Aviso", "Save apagado com sucesso.");
                 atualizarBotoes();
                 if (frame.getSlotAtual() == slot)
                     frame.setSlotAtual(-1);
@@ -3081,7 +3762,7 @@ class MenuSlots extends JPanel {
             }
 
             if (btnApagarSlots[i] != null) {
-                btnApagarSlots[i].setVisible(existe); // Só mostra lixeira se existir save nesse slot
+                btnApagarSlots[i].setVisible(existe); // So mostra lixeira se existir save nesse slot
             }
         }
     }
@@ -3100,11 +3781,10 @@ class MenuSlots extends JPanel {
         switch (acaoAtual) {
             case JogoAudrey.ACAO_NOVO:
                 if (ocupado) {
-                    int confirm = JOptionPane.showConfirmDialog(
-                            this,
-                            "O Slot " + slot + " já possui um save.\nDeseja realmente apagar e iniciar um novo jogo?",
-                            "Aviso", JOptionPane.YES_NO_OPTION);
-                    if (confirm != JOptionPane.YES_OPTION)
+                    boolean confirm = frame.mostrarConfirmacao(
+                            "Aviso",
+                            "O Slot " + slot + " já possui um save.\nDeseja realmente apagar e iniciar um novo jogo?");
+                    if (!confirm)
                         return;
                     Database.apagarSave(slot);
                 }
@@ -3119,14 +3799,13 @@ class MenuSlots extends JPanel {
 
             case JogoAudrey.ACAO_APAGAR:
                 if (ocupado) {
-                    int confirm = JOptionPane.showConfirmDialog(
-                            this,
+                    boolean confirm = frame.mostrarConfirmacao(
+                            "Confirmar Exclusão",
                             "ATENÇÃO: Deseja REALMENTE apagar o save do Slot " + slot
-                                    + "?\nEsta ação não pode ser desfeita.",
-                            "Confirmar Exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                    if (confirm == JOptionPane.YES_OPTION) {
+                                    + "?\nEsta ação não pode ser desfeita.");
+                    if (confirm) {
                         Database.apagarSave(slot);
-                        JOptionPane.showMessageDialog(this, "Save apagado com sucesso.");
+                        frame.mostrarMensagem("Aviso", "Save apagado com sucesso.");
                         atualizarBotoes();
                     }
                 }
@@ -3134,15 +3813,14 @@ class MenuSlots extends JPanel {
 
             case JogoAudrey.ACAO_SALVAR:
                 if (ocupado && slot != frame.getSlotAtual()) {
-                    int confirm = JOptionPane.showConfirmDialog(
-                            this, "O Slot " + slot + " já possui um save.\nDeseja realmente sobrescrevê-lo?",
-                            "Aviso", JOptionPane.YES_NO_OPTION);
-                    if (confirm != JOptionPane.YES_OPTION)
+                    boolean confirm = frame.mostrarConfirmacao(
+                            "Aviso", "O Slot " + slot + " já possui um save.\nDeseja realmente sobrescrevê-lo?");
+                    if (!confirm)
                         return;
                 }
                 frame.setSlotAtual(slot);
                 frame.getJogoPanel().salvarEstado(slot);
-                JOptionPane.showMessageDialog(this, "Jogo salvo com sucesso no Slot " + slot + "!");
+                frame.mostrarMensagem("Sucesso", "Jogo salvo com sucesso no Slot " + slot + "!");
                 voltar();
                 break;
         }
@@ -3159,12 +3837,19 @@ class MenuSlots extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        GradientPaint gradient = new GradientPaint(
-                0, 0, new Color(255, 245, 235), // Creme pastel
-                0, getHeight(), new Color(255, 230, 240) // Rosa pastel
-        );
+        int w = getWidth(), h = getHeight();
+        GradientPaint gradient = new GradientPaint(0, 0, new Color(30, 20, 50), w, h, new Color(20, 10, 40));
         g2d.setPaint(gradient);
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.fillRect(0, 0, w, h);
+
+        Image banner = frame.getMenuPrincipal().getImgBanner();
+        if (banner != null) {
+            g2d.drawImage(banner, 0, 0, w, h, this);
+        }
+
+        GradientPaint overlay = new GradientPaint(0, 0, new Color(0, 0, 0, 180), 0, h / 2f, new Color(0, 0, 0, 0));
+        g2d.setPaint(overlay);
+        g2d.fillRect(0, 0, w, h / 2);
 
         g2d.setFont(fontTitulo);
         String titulo = "";
@@ -3201,11 +3886,11 @@ class Configuracoes {
 
     public static final String[] ACOES = {
             "ESQUERDA", "DIREITA", "INTERAGIR", "FALAR",
-            "FECHAR", "INVENTARIO", "OBJETIVOS", "DIARIO", "MENU"
+            "FECHAR", "INVENTÁRIO", "OBJETIVOS", "DIÁRIO", "MENU"
     };
     public static final String[] LABELS = {
             "Mover Esquerda", "Mover Direita", "Interagir", "Falar",
-            "Fechar Dialogo", "Inventario", "Objetivos", "Diario", "Menu"
+            "Fechar Diálogo", "Inventário", "Objetivos", "Diário", "Menu"
     };
 
     private Configuracoes() {
@@ -3226,9 +3911,9 @@ class Configuracoes {
         teclas.put("INTERAGIR", KeyEvent.VK_E);
         teclas.put("FALAR", KeyEvent.VK_F);
         teclas.put("FECHAR", KeyEvent.VK_Q);
-        teclas.put("INVENTARIO", KeyEvent.VK_B);
+        teclas.put("INVENTÁRIO", KeyEvent.VK_B);
         teclas.put("OBJETIVOS", KeyEvent.VK_M);
-        teclas.put("DIARIO", KeyEvent.VK_J);
+        teclas.put("DIÁRIO", KeyEvent.VK_J);
         teclas.put("MENU", KeyEvent.VK_ESCAPE);
     }
 
@@ -3288,18 +3973,21 @@ class Configuracoes {
         java.util.Properties props = new java.util.Properties();
         try (java.io.FileInputStream fis = new java.io.FileInputStream("config.properties")) {
             props.load(fis);
-            
+
             for (String acao : ACOES) {
                 if (props.containsKey("tecla_" + acao)) {
                     teclas.put(acao, Integer.parseInt(props.getProperty("tecla_" + acao)));
                 }
             }
-            if (props.containsKey("volumeEfeitos")) volumeEfeitos = Integer.parseInt(props.getProperty("volumeEfeitos"));
-            if (props.containsKey("brilho")) brilho = Integer.parseInt(props.getProperty("brilho"));
-            if (props.containsKey("shaderAtivo")) shaderAtivo = Boolean.parseBoolean(props.getProperty("shaderAtivo"));
-            
+            if (props.containsKey("volumeEfeitos"))
+                volumeEfeitos = Integer.parseInt(props.getProperty("volumeEfeitos"));
+            if (props.containsKey("brilho"))
+                brilho = Integer.parseInt(props.getProperty("brilho"));
+            if (props.containsKey("shaderAtivo"))
+                shaderAtivo = Boolean.parseBoolean(props.getProperty("shaderAtivo"));
+
         } catch (Exception e) {
-            System.err.println("Configuracoes nao encontradas ou erro ao carregar: " + e.getMessage());
+            System.err.println("Configuracoes não encontradas ou erro ao carregar: " + e.getMessage());
         }
     }
 }
@@ -3404,12 +4092,35 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
         });
         add(btnResetar);
 
-        sliderEfeitos = new JSlider(0, 100, Configuracoes.getInstance().getVolumeEfeitos());
+        sliderEfeitos = new JSlider(0, 100, Configuracoes.getInstance().getVolumeEfeitos()) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                int trackH = 10, trackY = h/2 - trackH/2;
+                int filled = (int)((getValue() / 100.0) * (w - 20));
+                // trilha vazia
+                g2.setColor(new Color(40, 30, 80));
+                g2.fillRoundRect(10, trackY, w - 20, trackH, 8, 8);
+                // trilha preenchida
+                GradientPaint gp = new GradientPaint(10, 0, new Color(100, 60, 200), 10 + filled, 0, new Color(160, 120, 255));
+                g2.setPaint(gp);
+                g2.fillRoundRect(10, trackY, filled, trackH, 8, 8);
+                // thumb
+                int tx = 10 + filled - 8;
+                g2.setColor(new Color(200, 180, 255));
+                g2.fillOval(tx, h/2 - 10, 18, 18);
+                g2.setColor(new Color(120, 80, 220));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawOval(tx, h/2 - 10, 18, 18);
+                g2.dispose();
+            }
+        };
         sliderEfeitos.setOpaque(false);
-        sliderEfeitos.setFont(fontCrayonHand.deriveFont(14f));
-        sliderEfeitos.setMajorTickSpacing(25);
-        sliderEfeitos.setPaintTicks(true);
-        sliderEfeitos.setPaintLabels(true);
+        sliderEfeitos.setUI(new javax.swing.plaf.basic.BasicSliderUI(sliderEfeitos) {
+            @Override public void paintThumb(Graphics g) {}
+            @Override public void paintTrack(Graphics g) {}
+        });
         sliderEfeitos.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent e) {
                 Configuracoes.getInstance().setVolumeEfeitos(sliderEfeitos.getValue());
@@ -3419,12 +4130,35 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
         });
         add(sliderEfeitos);
 
-        sliderBrilho = new JSlider(0, 100, Configuracoes.getInstance().getBrilho());
+        sliderBrilho = new JSlider(0, 100, Configuracoes.getInstance().getBrilho()) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                int trackH = 10, trackY = h/2 - trackH/2;
+                int filled = (int)((getValue() / 100.0) * (w - 20));
+                // trilha vazia
+                g2.setColor(new Color(40, 30, 80));
+                g2.fillRoundRect(10, trackY, w - 20, trackH, 8, 8);
+                // trilha preenchida (amarelo/laranja para brilho)
+                GradientPaint gp = new GradientPaint(10, 0, new Color(180, 120, 20), 10 + filled, 0, new Color(255, 220, 80));
+                g2.setPaint(gp);
+                g2.fillRoundRect(10, trackY, filled, trackH, 8, 8);
+                // thumb
+                int tx = 10 + filled - 8;
+                g2.setColor(new Color(255, 240, 150));
+                g2.fillOval(tx, h/2 - 10, 18, 18);
+                g2.setColor(new Color(200, 160, 40));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawOval(tx, h/2 - 10, 18, 18);
+                g2.dispose();
+            }
+        };
         sliderBrilho.setOpaque(false);
-        sliderBrilho.setFont(fontCrayonHand.deriveFont(14f));
-        sliderBrilho.setMajorTickSpacing(25);
-        sliderBrilho.setPaintTicks(true);
-        sliderBrilho.setPaintLabels(true);
+        sliderBrilho.setUI(new javax.swing.plaf.basic.BasicSliderUI(sliderBrilho) {
+            @Override public void paintThumb(Graphics g) {}
+            @Override public void paintTrack(Graphics g) {}
+        });
         sliderBrilho.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent e) {
                 Configuracoes.getInstance().setBrilho(sliderBrilho.getValue());
@@ -3432,6 +4166,7 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
             }
         });
         add(sliderBrilho);
+
 
         btnShader = new BotaoEstilizado(
                 "SHADER PASTEL: " + (Configuracoes.getInstance().isShaderAtivo() ? "LIGADO" : "DESLIGADO"),
@@ -3512,7 +4247,7 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
         sliderEfeitos.setBounds(sliderX, contentY + 60, sliderW, 60);
         sliderBrilho.setBounds(sliderX, contentY + 60, sliderW, 60);
         if (btnShader != null)
-            btnShader.setBounds(sliderX, contentY + 140, sliderW, 50);
+            btnShader.setBounds(sliderX, contentY + 280, sliderW, 50); // Movido para baixo do preview
 
         int voltarW = Math.max(300, w / 4);
         int voltarH = 70;
@@ -3522,7 +4257,7 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
         } else if (abaAtual == 1) {
             contentBottom = contentY + 60 + 60;
         } else {
-            contentBottom = contentY + 140 + 50;
+            contentBottom = contentY + 280 + 50; // Atualizado para nova posicao do btnShader
         }
         btnVoltar.setBounds((w - voltarW) / 2, contentBottom + 30, voltarW, voltarH);
     }
@@ -3535,13 +4270,22 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        GradientPaint gradient = new GradientPaint(0, 0, new Color(255, 245, 235), 0, H, new Color(255, 230, 240));
+        GradientPaint gradient = new GradientPaint(0, 0, new Color(30, 20, 50), W, H, new Color(20, 10, 40));
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, W, H);
 
+        Image banner = frame.getMenuPrincipal().getImgBanner();
+        if (banner != null) {
+            g2d.drawImage(banner, 0, 0, W, H, this);
+        }
+
+        GradientPaint overlay = new GradientPaint(0, 0, new Color(0, 0, 0, 180), 0, H / 2f, new Color(0, 0, 0, 0));
+        g2d.setPaint(overlay);
+        g2d.fillRect(0, 0, W, H / 2);
+
         int titleY = (int) (H * 0.10);
         g2d.setFont(fontTitulo);
-        String titulo = "CONFIGURACOES";
+        String titulo = "CONFIGURAÇÕES";
         FontMetrics fm = g2d.getFontMetrics();
         int x = (W - fm.stringWidth(titulo)) / 2;
 
@@ -3566,7 +4310,17 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
         int contentW = Math.max(500, (int) (W * 0.55));
         int contentX = (W - contentW) / 2;
 
-        g2d.setColor(new Color(120, 80, 100));
+        // Fundo escuro semi-transparente atras do painel de conteudo
+        int bgHeight = 0;
+        if (abaAtual == 0) bgHeight = Configuracoes.LABELS.length * 51 + 60;
+        else if (abaAtual == 1) bgHeight = 150;
+        else bgHeight = 350;
+
+        g2d.setColor(new Color(20, 15, 35, 200));
+        g2d.fillRoundRect(contentX - 20, contentY - 15, contentW + 40, bgHeight, 25, 25);
+        g2d.setColor(new Color(100, 80, 160, 150));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.drawRoundRect(contentX - 20, contentY - 15, contentW + 40, bgHeight, 25, 25);
 
         if (abaAtual == 0) {
             int rowH = 45;
@@ -3642,12 +4396,12 @@ class ConfiguracoesPanel extends JPanel implements KeyListener {
 }
 
 class BotaoEstilizado extends JButton {
-    private Color corFundoNormal = new Color(255, 230, 235);
-    private Color corFundoHover = new Color(255, 210, 220);
-    private Color corFundoPress = new Color(255, 190, 205);
-    private Color corBordaNormal = new Color(180, 230, 180);
-    private Color corBordaHover = new Color(150, 210, 150);
-    private Color corTexto = new Color(120, 80, 100);
+    private Color corFundoNormal = new Color(45, 35, 95);
+    private Color corFundoHover = new Color(75, 65, 135);
+    private Color corFundoPress = new Color(30, 20, 70);
+    private Color corBordaNormal = new Color(100, 120, 255);
+    private Color corBordaHover = new Color(255, 220, 50);
+    private Color corTexto = new Color(255, 255, 255);
     private Font fonteBase;
 
     public BotaoEstilizado(String texto, Font fonte) {
@@ -3682,20 +4436,20 @@ class BotaoEstilizado extends JButton {
 
         int w = getWidth();
         int h = getHeight();
-        int r = Math.min(w, h) - 10; // Formato pílula (bem arredondado)
+        int r = Math.min(w, h) - 10; // Formato pilula (bem arredondado)
 
         boolean isHovered = getModel().isRollover();
         boolean isPressed = getModel().isPressed();
         boolean isEnabled = isEnabled();
 
-        Color corFundo = !isEnabled ? new Color(240, 220, 225)
+        Color corFundo = !isEnabled ? new Color(40, 30, 60)
                 : isPressed ? corFundoPress : isHovered ? corFundoHover : corFundoNormal;
 
         int offsetY = isPressed ? 4 : 0;
 
         // Sombra / Base 3D
         if (!isPressed && isEnabled) {
-            g2d.setColor(new Color(150, 100, 120, 50));
+            g2d.setColor(new Color(10, 5, 20, 100));
             g2d.fillRoundRect(0, 5, w, h - 5, r, r);
         }
 
@@ -3703,18 +4457,12 @@ class BotaoEstilizado extends JButton {
         g2d.setColor(corFundo);
         g2d.fillRoundRect(0, offsetY, w, h - 5, r, r);
 
-        // Borda
-        Color corBorda = !isEnabled ? Color.LIGHT_GRAY : isHovered ? corBordaHover : corBordaNormal;
-        g2d.setColor(corBorda);
-        g2d.setStroke(new BasicStroke(3));
-        g2d.drawRoundRect(1, offsetY + 1, w - 3, h - 7, r, r);
-
         // Texto
         FontMetrics fm = g2d.getFontMetrics(getFont());
         int tx = (w - fm.stringWidth(getText())) / 2;
         int ty = offsetY + (h - 5 - fm.getHeight()) / 2 + fm.getAscent();
 
-        g2d.setColor(!isEnabled ? Color.GRAY : corTexto);
+        g2d.setColor(!isEnabled ? new Color(100, 90, 130) : corTexto);
         g2d.drawString(getText(), tx, ty);
 
         g2d.dispose();
