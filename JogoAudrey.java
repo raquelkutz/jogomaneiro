@@ -103,27 +103,21 @@ public class JogoAudrey extends JFrame {
     }
 
     public void irParaCutscene(int idCutscene) {
-        cutscenePanel = new CutscenePanel(this);
-        mainPanel.remove(cutscenePanel);
+        if (cutscenePanel != null) {
+            mainPanel.remove(cutscenePanel);
+        }
         cutscenePanel = new CutscenePanel(this);
         cutscenePanel.iniciarCutscene(idCutscene);
         mainPanel.add(cutscenePanel, "cutscene");
         mainPanel.revalidate();
+        mainPanel.repaint();
         cardLayout.show(mainPanel, "cutscene");
         cutscenePanel.requestFocus();
     }
 
     public void voltarDeCutscene() {
-        if (!jogoIniciado || jogoPanel == null) {
-            // E a primeira cutscene, recria o jogo
-            recriarJogo();
-            cardLayout.show(mainPanel, "jogo");
-            jogoPanel.requestFocus();
-        } else {
-            // E cutscene de meio de jogo
-            cardLayout.show(mainPanel, "jogo");
-            jogoPanel.requestFocus();
-        }
+        cardLayout.show(mainPanel, "jogo");
+        jogoPanel.requestFocus();
     }
 
     public void mostrarMenuEmJogo() {
@@ -3049,7 +3043,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 if (!cutsceneSalaVista) {
                     cutsceneSalaVista = true;
                     contadorTeleporte = 0;
-
+                    frame.irParaCutscene(1);
                 }
 
                 if (audreyX < 0) {
