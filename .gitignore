@@ -2,3 +2,5 @@
 savegame.db
 .vscode/
 *.code-workspace
+build/
+oracleJdk-26/

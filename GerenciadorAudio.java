@@ -8,7 +8,7 @@ public class GerenciadorAudio {
         if (true) return; // Musica desativada temporariamente
         new Thread(() -> {
             try {
-                java.io.File audioFile = new java.io.File("bgm.wav");
+                java.io.File audioFile = new java.io.File(JogoAudrey.resolvePath("bgm.wav"));
                 if (audioFile.exists()) {
                     AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
                     clipFundo = AudioSystem.getClip();
@@ -98,6 +98,85 @@ public class GerenciadorAudio {
                 tocarSomAspero(180, 300);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+
+    // Som real de abertura de porta
+    public static void tocarSomAbrirPorta() {
+        tocarWav("abrir_porta.wav", -12f);
+    }
+
+    // Passos ao caminhar
+    private static volatile Clip clipPassos;
+    private static final Object LOCK_PASSOS = new Object();
+
+    public static void tocarSomPassos() {
+        synchronized (LOCK_PASSOS) {
+            if (clipPassos != null && clipPassos.isRunning()) {
+                return;
+            }
+        }
+        new Thread(() -> {
+            try {
+                java.io.File f = new java.io.File(JogoAudrey.resolvePath("passos_concreto.wav"));
+                if (!f.exists()) {
+                    return;
+                }
+                AudioInputStream in = AudioSystem.getAudioInputStream(f);
+                Clip clip = AudioSystem.getClip();
+                clip.open(in);
+                synchronized (LOCK_PASSOS) {
+                    if (clipPassos != null && clipPassos.isRunning()) {
+                        clip.close();
+                        return;
+                    }
+                    clipPassos = clip;
+                }
+                clip.loop(Clip.LOOP_CONTINUOUSLY);
+                clip.start();
+            } catch (Exception e) {
+                System.err.println("Erro ao tocar passos: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public static void pararSomPassos() {
+        synchronized (LOCK_PASSOS) {
+            if (clipPassos != null) {
+                if (clipPassos.isRunning()) {
+                    clipPassos.stop();
+                }
+                clipPassos.close();
+                clipPassos = null;
+            }
+        }
+    }
+
+    // Toca um arquivo .wav uma única vez
+    private static void tocarWav(String caminho, float ganhoDb) {
+        new Thread(() -> {
+            try {
+                java.io.File f = new java.io.File(JogoAudrey.resolvePath(caminho));
+                if (!f.exists()) {
+                    return;
+                }
+                AudioInputStream in = AudioSystem.getAudioInputStream(f);
+                Clip clip = AudioSystem.getClip();
+                clip.open(in);
+                try {
+                    FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                    gain.setValue(Math.max(gain.getMinimum(), Math.min(gain.getMaximum(), ganhoDb)));
+                } catch (Exception ignorado) {
+                }
+                clip.addLineListener(ev -> {
+                    if (ev.getType() == LineEvent.Type.STOP) {
+                        clip.close();
+                    }
+                });
+                clip.start();
+            } catch (Exception e) {
+                System.err.println("Erro ao tocar " + caminho + ": " + e.getMessage());
             }
         }).start();
     }

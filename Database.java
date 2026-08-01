@@ -5,7 +5,7 @@ import java.util.Properties;
 
 public class Database {
     private static String getArquivoSave(int slot) {
-        return "savegame" + slot + ".db";
+        return JogoAudrey.resolvePath("savegame" + slot + ".db");
     }
 
     public static boolean saveExiste(int slot) {
