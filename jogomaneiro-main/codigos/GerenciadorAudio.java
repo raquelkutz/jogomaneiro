@@ -290,6 +290,9 @@ public class GerenciadorAudio {
     }
 
     public static void pararVozNicolas() {
+        if (!tocandoVozNicolas && (clipVozNicolas == null || !clipVozNicolas.isRunning())) {
+            return;
+        }
         logVoz("pararVozNicolas chamado");
         synchronized (LOCK_VOZ) {
             tocandoVozNicolas = false;
@@ -418,6 +421,9 @@ public class GerenciadorAudio {
     }
 
     public static void pararVozRaquel() {
+        if (!tocandoVozRaquel && (clipVozRaquel == null || !clipVozRaquel.isRunning())) {
+            return;
+        }
         logVoz("pararVozRaquel chamado");
         synchronized (LOCK_VOZ_RAQUEL) {
             tocandoVozRaquel = false;

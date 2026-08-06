@@ -2389,8 +2389,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private int ultimaPosAoEntraSala = 0;
 
     private int posArmarioX = 650;
-    private int posNicolasXSalaAula = 800;
-    private int posPortaX = 400;
+    private int posNicolasXSalaAula = 500;
+    private int posPortaX = 300;
 
     private int puertaSaidaX = 20;
     private int puertaSaidaLargura = 80;
@@ -2752,12 +2752,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 // Offset para descer os NPCs ao n\u00edvel do ch\u00e3o (mesmo que Audrey)
                 int npcBaseY = audreyY + 150;
                 if (imgRaquel != null) {
-                    desenharSombraChao(g2d, 310 + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
-                    g2d.drawImage(imgRaquel, 310 + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
+                    desenharSombraChao(g2d, 200 + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
+                    g2d.drawImage(imgRaquel, 200 + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
                             SALA_RAQUEL_ALTURA, this);
                     int labelW = 110;
                     int labelH = 30;
-                    int labelX = 310 + (SALA_NPC_LARGURA - labelW) / 2;
+                    int labelX = 200 + (SALA_NPC_LARGURA - labelW) / 2;
                     int labelY = npcBaseY - SALA_RAQUEL_ALTURA - labelH - 5;
                     g2d.setColor(new Color(253, 246, 227, 220));
                     g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
@@ -2770,12 +2770,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawString("Raquel", labelX + (labelW - fm.stringWidth("Raquel")) / 2, labelY + labelH - 8);
                 }
                 if (imgNicolas != null) {
-                    desenharSombraChao(g2d, 465 + SALA_NICOLAS_LARGURA / 2, npcBaseY - 55, (int) (SALA_NICOLAS_LARGURA * 0.6));
-                    g2d.drawImage(imgNicolas, 465 + SALA_NICOLAS_LARGURA, npcBaseY - SALA_NICOLAS_ALTURA,
+                    desenharSombraChao(g2d, 340 + SALA_NICOLAS_LARGURA / 2, npcBaseY - 55, (int) (SALA_NICOLAS_LARGURA * 0.6));
+                    g2d.drawImage(imgNicolas, 340 + SALA_NICOLAS_LARGURA, npcBaseY - SALA_NICOLAS_ALTURA,
                             -SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA, this);
                     int labelW = 120;
                     int labelH = 30;
-                    int labelX = 465 + (SALA_NICOLAS_LARGURA - labelW) / 2;
+                    int labelX = 340 + (SALA_NICOLAS_LARGURA - labelW) / 2;
                     int labelY = npcBaseY - SALA_NICOLAS_ALTURA - labelH - 5;
                     g2d.setColor(new Color(253, 246, 227, 220));
                     g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
@@ -2788,12 +2788,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawString("Nicolas", labelX + (labelW - fm.stringWidth("Nicolas")) / 2, labelY + labelH - 8);
                 }
                 if (imgCamila != null) {
-                    desenharSombraChao(g2d, 625 + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
-                    g2d.drawImage(imgCamila, 625 + SALA_NPC_LARGURA, npcBaseY - SALA_CAMILA_ALTURA, -SALA_NPC_LARGURA,
+                    desenharSombraChao(g2d, 480 + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
+                    g2d.drawImage(imgCamila, 480 + SALA_NPC_LARGURA, npcBaseY - SALA_CAMILA_ALTURA, -SALA_NPC_LARGURA,
                             SALA_CAMILA_ALTURA, this);
                     int labelW = 110;
                     int labelH = 30;
-                    int labelX = 625 + (SALA_NPC_LARGURA - labelW) / 2;
+                    int labelX = 480 + (SALA_NPC_LARGURA - labelW) / 2;
                     int labelY = npcBaseY - SALA_CAMILA_ALTURA - labelH - 5;
                     g2d.setColor(new Color(253, 246, 227, 220));
                     g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
@@ -3746,9 +3746,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     }
                 }
 
-                // Checar distancia dos 3 grupos e esconder dialogo se longe (s\u00f3 ap\u00f3s intro)
+                // Checar distancia dos 3 grupos e esconder dialogo se longe (só após intro)
                 if (dialogoSalaAutoConcluido && !estaEmDialogoNicolas) {
-                    if (Math.abs(audreyX - 530) > 220 && Math.abs(audreyX - 672) > 220 && Math.abs(audreyX - 975) > 220) {
+                    if (Math.abs(audreyX - 250) > 220 && Math.abs(audreyX - 390) > 220 && Math.abs(audreyX - 530) > 220) {
                         textoDialogo = "";
                         nomePersonagem = "";
                     }
@@ -3803,17 +3803,23 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIREITA")) {
-            velX = (indiceMapa == 2) ? 28 : 16;
-            olhandoDireita = true;
-            estaMovendo = true;
-            GerenciadorAudio.tocarSomPassos();
+            boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
+            if (!emDialogoForcado) {
+                velX = (indiceMapa == 2) ? 28 : 16;
+                olhandoDireita = true;
+                estaMovendo = true;
+                GerenciadorAudio.tocarSomPassos();
+            }
         }
 
         if (code == Configuracoes.getInstance().getTecla("ESQUERDA")) {
-            velX = (indiceMapa == 2) ? -28 : -16;
-            olhandoDireita = false;
-            estaMovendo = true;
-            GerenciadorAudio.tocarSomPassos();
+            boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
+            if (!emDialogoForcado) {
+                velX = (indiceMapa == 2) ? -28 : -16;
+                olhandoDireita = false;
+                estaMovendo = true;
+                GerenciadorAudio.tocarSomPassos();
+            }
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIÁRIO")) {
@@ -3940,13 +3946,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         ganharXP(10);
                     } else {
                         // Lembrete se a missão não foi concluída no diário
-                        if (Math.abs(audreyX - 530) < 200) {
+                        if (Math.abs(audreyX - 250) < 150) {
                             nomePersonagem = "Raquel";
                             textoDialogo = ep1_entregouDesenho ? "— Pronta para os próximos desafios?" : "— Como está ficando o esboço?";
-                        } else if (Math.abs(audreyX - 672) < 200) {
+                        } else if (Math.abs(audreyX - 390) < 150) {
                             nomePersonagem = "Nicolas";
                             textoDialogo = ep1_entregouDesenho ? "— Você desenha muito bem!" : "— Mal posso esperar para ver seu desenho!";
-                        } else if (Math.abs(audreyX - 975) < 200) {
+                        } else if (Math.abs(audreyX - 530) < 150) {
                             nomePersonagem = "Camila";
                             textoDialogo = ep1_entregouDesenho ? "— Que traço sensacional!" : "— Como está ficando o esboço?";
                         }
@@ -4171,6 +4177,19 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             ganharXP(xpPendente);
             xpPendente = 0;
             temXpPendente = false;
+        }
+    }
+
+    public void continuarDialogoDesenho() {
+        if (faseDialogoNicolas == 100) {
+            faseDialogoNicolas = 101;
+            estaEmDialogoNicolas = true;
+            nomePersonagem = "Nicolas";
+            textoDialogo = "\u2014 Ficou irado! Essa perspectiva, cara, deu um peso enorme para o desenho. Voc\u00ea tem, de fato, muita t\u00e9cnica.";
+            tamanhoTextoVisivel = 0;
+            tamanhoTextoVisivelAcumulado = 0.0;
+            GerenciadorAudio.tocarVozNicolas();
+            repaint();
         }
     }
 

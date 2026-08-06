@@ -13,11 +13,50 @@ public class Database {
     }
 
     public static boolean apagarSave(int slot) {
-        File f = new File(getArquivoSave(slot));
-        if (f.exists()) {
-            return f.delete();
+        String filename = "savegame" + slot + ".db";
+        boolean deletedAny = false;
+
+        // 1. Delete from classDir subfolders
+        try {
+            java.io.File classDir = new java.io.File(JogoAudrey.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (classDir.isFile()) {
+                classDir = classDir.getParentFile();
+            }
+            String[] subfolders = {"", "imagens/", "audios/", "codigos/"};
+            for (String sub : subfolders) {
+                File f = new File(classDir, sub + filename);
+                if (f.exists()) {
+                    if (f.delete()) deletedAny = true;
+                }
+            }
+        } catch (Exception e) {
+            // Ignore
         }
-        return false;
+
+        // 2. Delete from CWD and CWD subfolders
+        String[] subfolders = {"", "imagens/", "audios/", "codigos/"};
+        for (String sub : subfolders) {
+            File f = new File(sub + filename);
+            if (f.exists()) {
+                if (f.delete()) deletedAny = true;
+            }
+        }
+
+        // 3. Delete from jogomaneiro-main and subfolders
+        for (String sub : subfolders) {
+            File f = new File("jogomaneiro-main/" + sub + filename);
+            if (f.exists()) {
+                if (f.delete()) deletedAny = true;
+            }
+        }
+
+        // 4. Fallback directly resolved path
+        File fallbackFile = new File(getArquivoSave(slot));
+        if (fallbackFile.exists()) {
+            if (fallbackFile.delete()) deletedAny = true;
+        }
+
+        return deletedAny;
     }
 
     public static void salvarEstado(int slot, Properties props) {
