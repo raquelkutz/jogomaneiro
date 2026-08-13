@@ -3418,6 +3418,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 }
             }
 
+            if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
+                msg = ""; // Oculta o diálogo para deixar apenas as alternativas limpas
+            }
+
             g2d.setColor(new Color(240, 235, 245));
             int maxWidth = caixaX + caixaW - textXOffset - 40;
             desenharTextoQuebrado(g2d, msg, textXOffset, caixaY + 45, maxWidth);
@@ -3431,8 +3435,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     String opt2 = "Ainda vou fazer o desenho.";
                     
                     int optX = textXOffset + 20;
-                    int optY1 = caixaY + 75;
-                    int optY2 = caixaY + 105;
+                    int optY1 = caixaY + 55;
+                    int optY2 = caixaY + 85;
                     
                     // Opção 1
                     if (selectedDialogueOption == 0) {
