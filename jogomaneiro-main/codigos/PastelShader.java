@@ -24,58 +24,80 @@ public class PastelShader {
     private static long frameCount = 0;
     
     // Frame-skipping: removido para evitar piscar na tela
-    private static int frameSkip = 0; 
+    private static int frameSkip = 0;
 
-    public static void aplicarFiltro(BufferedImage img) {
+    // Buffers reutilizáveis para evitar alocações de memória a cada frame (0 GC pressure)
+    private static float[] blRBuf = new float[0];
+    private static float[] blGBuf = new float[0];
+    private static float[] blBBuf = new float[0];
+    private static float[] vigRowBuf = new float[0];
+
+    private static void ensureBloomBuffers(final int size) {
+        if (blRBuf.length < size) {
+            blRBuf = new float[size];
+            blGBuf = new float[size];
+            blBBuf = new float[size];
+        }
+    }
+
+    private static void ensureVigBuffer(final int size) {
+        if (vigRowBuf.length < size) {
+            vigRowBuf = new float[size];
+        }
+    }
+
+    public static void aplicarFiltro(final BufferedImage img) {
         frameCount++;
 
-        int width  = img.getWidth();
-        int height = img.getHeight();
-        int[] pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+        final int width  = img.getWidth();
+        final int height = img.getHeight();
+        final int[] pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
 
-        float time = frameCount * 0.016f;
+        final float time = frameCount * 0.016f;
 
         // Mapear 0-100 para floats internos
-        float uRay  = rayStrength / 100f;
-        float uBlm  = bloom / 100f;
-        float uFog  = fog / 100f;
-        float uWrm  = warmth / 100f;
-        float uVig  = vignette / 100f;
+        final float uRay  = rayStrength / 100f;
+        final float uBlm  = bloom / 100f;
+        final float uFog  = fog / 100f;
+        final float uWrm  = warmth / 100f;
+        final float uVig  = vignette / 100f;
 
         // Se tudo está zerado, não processar
         if (uRay == 0 && uBlm == 0 && uFog == 0 && uWrm == 0 && uVig == 0) return;
 
         // ---- Bloom pré-calculado em blocos 8x8 (rápido) ----
-        int bsz = 8;
-        int bw = (width + bsz - 1) / bsz;
-        int bh = (height + bsz - 1) / bsz;
-        float[] blR = new float[bw * bh];
-        float[] blG = new float[bw * bh];
-        float[] blB = new float[bw * bh];
+        final int bsz = 8;
+        final int bw = (width + bsz - 1) / bsz;
+        final int bh = (height + bsz - 1) / bsz;
+        final int bloomSize = bw * bh;
+        ensureBloomBuffers(bloomSize);
+        final float[] blR = blRBuf;
+        final float[] blG = blGBuf;
+        final float[] blB = blBBuf;
 
         if (uBlm > 0.01f) {
             for (int by = 0; by < bh; by++) {
                 for (int bx = 0; bx < bw; bx++) {
                     float sr = 0, sg = 0, sb = 0, tw = 0;
-                    int cx = bx * bsz + bsz / 2;
-                    int cy = by * bsz + bsz / 2;
+                    final int cx = bx * bsz + bsz / 2;
+                    final int cy = by * bsz + bsz / 2;
                     // Amostra 3x3 esparsada
                     for (int dy = -1; dy <= 1; dy++) {
                         for (int dx = -1; dx <= 1; dx++) {
-                            int sx = clampI(cx + dx * bsz, 0, width - 1);
-                            int sy = clampI(cy + dy * bsz, 0, height - 1);
-                            int c = pixels[sy * width + sx];
-                            float pr = ((c >> 16) & 0xff) * 0.00392157f;
-                            float pg = ((c >> 8) & 0xff) * 0.00392157f;
-                            float pb = (c & 0xff) * 0.00392157f;
-                            float brt = 0.299f * pr + 0.587f * pg + 0.114f * pb;
+                            final int sx = clampI(cx + dx * bsz, 0, width - 1);
+                            final int sy = clampI(cy + dy * bsz, 0, height - 1);
+                            final int c = pixels[sy * width + sx];
+                            final float pr = ((c >> 16) & 0xff) * 0.00392157f;
+                            final float pg = ((c >> 8) & 0xff) * 0.00392157f;
+                            final float pb = (c & 0xff) * 0.00392157f;
+                            final float brt = 0.299f * pr + 0.587f * pg + 0.114f * pb;
                             float w = brt > 0.55f ? (brt - 0.55f) / 0.45f : 0f; // smoothstep simplificado
                             w = w * w;
                             sr += pr * w; sg += pg * w; sb += pb * w;
                             tw += w + 0.0001f;
                         }
                     }
-                    int idx = by * bw + bx;
+                    final int idx = by * bw + bx;
                     blR[idx] = sr / tw;
                     blG[idx] = sg / tw;
                     blB[idx] = sb / tw;
@@ -86,9 +108,10 @@ public class PastelShader {
         // ---- Pre-computar vinheta por linha (evita sqrt por pixel) ----
         float[] vigRow = null;
         if (uVig > 0.01f) {
-            vigRow = new float[height];
+            ensureVigBuffer(height);
+            vigRow = vigRowBuf;
             for (int y = 0; y < height; y++) {
-                float dy = (float)y / height - 0.5f;
+                final float dy = (float)y / height - 0.5f;
                 vigRow[y] = dy * dy;
             }
         }

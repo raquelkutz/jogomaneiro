@@ -242,6 +242,16 @@ public class JogoAudrey extends JFrame {
 
     public void mostrarImportador() {
         cardLayout.show(mainPanel, "importador");
+        requestFocusInWindow();
+    }
+
+    public void mostrarImportadorReal() {
+        mostrarImportador();
+    }
+
+    public void voltarAoJogo() {
+        cardLayout.show(mainPanel, "jogo");
+        requestFocusInWindow();
     }
 
     public JogoAudrey() {
@@ -2385,7 +2395,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean ep1FalouGabiCorredor = false;
 
     // -------------------------------------------
-    private int indiceMapa = 0, faseDialogoNicolas = 0;
+    private int indiceMapa = 0, faseDialogoNicolas = 0, selectedDialogueOption = 0;
     private int ultimaPosAoEntraSala = 0;
 
     private int posArmarioX = 650;
@@ -2431,6 +2441,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private int contadorNotificacaoXP = 0;
     private static final int NOTIFICACAO_XP_DURACAO = 50; // Reduzido para 50 frames
     private int xpGanho = 0;
+
+    // --- ANIMACAO RISCADO (MISSAO CONCLUIDA) ---
+    private boolean mostrarAnimacaoRiscado = false;
+    private int contadorAnimacaoRiscado = 0;
+    private String textoMissaoRiscada = "";
 
     // XP concedido só após o fim da conversa
     private int xpPendente = 0;
@@ -2652,8 +2667,33 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         return result;
     }
 
+    // --- CACHE DE OBJETOS DE RENDERIZAÇÃO (0 ALOCAÇÕES NO REPAINT) ---
+    private static final BasicStroke STROKE_1 = new BasicStroke(1f);
+    private static final BasicStroke STROKE_2 = new BasicStroke(2f);
+    private static final BasicStroke STROKE_3 = new BasicStroke(3f);
+    private static final BasicStroke STROKE_4 = new BasicStroke(4f);
+
+    private static final Color COLOR_SOMBRA_CHAO = new Color(0, 0, 0, 70);
+    private static final Color COLOR_LABEL_BG = new Color(253, 246, 227, 220);
+    private static final Color COLOR_LABEL_BORDER = new Color(210, 180, 140);
+    private static final Color COLOR_LABEL_TEXT = new Color(120, 80, 100);
+    private static final Color COLOR_PASTEL_VEIL = new Color(255, 235, 240, 18);
+
+    private final java.util.Map<String, Image> cacheRedimensionado = new java.util.HashMap<>();
+
+    private Image getCachedResizedImage(Image img, int width, int height) {
+        if (img == null) return null;
+        String key = img.hashCode() + "_" + width + "_" + height;
+        Image res = cacheRedimensionado.get(key);
+        if (res == null) {
+            res = redimensionarImagem(img, width, height);
+            cacheRedimensionado.put(key, res);
+        }
+        return res;
+    }
+
     private void desenharSombraChao(Graphics2D g2d, int cx, int groundY, int largura) {
-        g2d.setColor(new Color(0, 0, 0, 70));
+        g2d.setColor(COLOR_SOMBRA_CHAO);
         g2d.fillOval(cx - largura / 2, groundY - 12, largura, 24);
     }
 
@@ -2684,11 +2724,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 
         int w = getWidth();
         int h = getHeight();
@@ -2935,6 +2975,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (mostrarNotificacaoXP) {
             desenharNotificacao(g2d, "+" + xpGanho + " XP ganho!", new Color(180, 100, 10), new Color(255, 220, 100), false);
         }
+        
+        if (mostrarAnimacaoRiscado) {
+            desenharAnimacaoRiscado(g2d);
+        }
 
         int brilhoVal = Configuracoes.getInstance().getBrilho();
         if (brilhoVal != 50) {
@@ -2964,7 +3008,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
     private void desenharLivroNoArmario(Graphics2D g2d) {
         if (imgLivro != null) {
-            Image livroRedimensionado = redimensionarImagem(imgLivro, 80, 100);
+            Image livroRedimensionado = getCachedResizedImage(imgLivro, 80, 100);
             int livroX = LARGURA / 2 - 40;
             int livroY = ALTURA / 2 - 50;
             g2d.drawImage(livroRedimensionado, livroX, livroY, this);
@@ -3007,7 +3051,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
         if (temChave) {
             if (imgChave != null) {
-                Image chaveGrande = redimensionarImagem(imgChave, 60, 60);
+                Image chaveGrande = getCachedResizedImage(imgChave, 60, 60);
                 g2d.drawImage(chaveGrande, caixaX + 50, itemY - 30, this);
             }
 
@@ -3025,7 +3069,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
         if (temLivro) {
             if (imgLivro != null) {
-                Image livroGrande = redimensionarImagem(imgLivro, 60, 60);
+                Image livroGrande = getCachedResizedImage(imgLivro, 60, 60);
                 g2d.drawImage(livroGrande, caixaX + 50, itemY - 30, this);
             }
 
@@ -3157,7 +3201,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             int tamanhoCh = (int) (80 * escala);
 
             if (imgChave != null) {
-                Image chaveEfeito = redimensionarImagem(imgChave, tamanhoCh, tamanhoCh);
+                Image chaveEfeito = getCachedResizedImage(imgChave, tamanhoCh, tamanhoCh);
                 g2d.drawImage(chaveEfeito, x - tamanhoCh / 2, y - tamanhoCh / 2, this);
             }
 
@@ -3381,20 +3425,32 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             // --- ÍCONE / SETA DE AVANÇAR (▼) OU OPÇÕES DE DIÁLOGO NO CENTRO INFERIOR ---
             if (!armarioEstaAberto && !textoDialogo.isEmpty()) {
                 if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
-                    g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 18f));
-                    String opcao = "[T] Mostrar Desenho";
-                    int opW = g2d.getFontMetrics().stringWidth(opcao);
+                    g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 17f));
                     
-                    // Fundo da opção (estilo botão)
-                    g2d.setColor(new Color(24, 18, 28, 200));
-                    g2d.fillRoundRect(caixaX + caixaW - opW - 30, caixaY + caixaH - 35, opW + 20, 28, 10, 10);
-                    g2d.setColor(new Color(180, 165, 195, 220));
-                    g2d.setStroke(new BasicStroke(1.5f));
-                    g2d.drawRoundRect(caixaX + caixaW - opW - 30, caixaY + caixaH - 35, opW + 20, 28, 10, 10);
+                    String opt1 = "Já terminei meu desenho! (Enviar imagem)";
+                    String opt2 = "Ainda vou fazer o desenho.";
                     
-                    // Texto da opção
-                    g2d.setColor(new Color(255, 230, 150));
-                    g2d.drawString(opcao, caixaX + caixaW - opW - 20, caixaY + caixaH - 16);
+                    int optX = textXOffset + 20;
+                    int optY1 = caixaY + 75;
+                    int optY2 = caixaY + 105;
+                    
+                    // Opção 1
+                    if (selectedDialogueOption == 0) {
+                        g2d.setColor(new Color(180, 255, 210));
+                        g2d.drawString("▶ " + opt1, optX - 15, optY1);
+                    } else {
+                        g2d.setColor(new Color(160, 150, 180, 160));
+                        g2d.drawString("  " + opt1, optX - 15, optY1);
+                    }
+                    
+                    // Opção 2
+                    if (selectedDialogueOption == 1) {
+                        g2d.setColor(new Color(255, 220, 130));
+                        g2d.drawString("▶ " + opt2, optX - 15, optY2);
+                    } else {
+                        g2d.setColor(new Color(160, 150, 180, 160));
+                        g2d.drawString("  " + opt2, optX - 15, optY2);
+                    }
                 } else {
                     int arrowX = caixaX + caixaW / 2;
                     int arrowY = caixaY + caixaH - 8;
@@ -3513,6 +3569,43 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         g2d.setComposite(oldComp);
     }
 
+    private void desenharAnimacaoRiscado(Graphics2D g2d) {
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 22f));
+        FontMetrics fm = g2d.getFontMetrics();
+        int width = fm.stringWidth(textoMissaoRiscada) + 40;
+        int height = 50;
+        
+        // Canto superior direito
+        int x = LARGURA - width - 20;
+        int y = 80;
+
+        // Fundo estilo papel
+        g2d.setColor(new Color(255, 250, 240, 220));
+        g2d.fillRoundRect(x, y, width, height, 10, 10);
+        g2d.setColor(new Color(200, 180, 150, 220));
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawRoundRect(x, y, width, height, 10, 10);
+
+        // Texto
+        g2d.setColor(new Color(100, 50, 50));
+        g2d.drawString(textoMissaoRiscada, x + 20, y + 32);
+
+        // Animação do risco
+        if (contadorAnimacaoRiscado > 10) {
+            int progressoRisco = Math.min(20, contadorAnimacaoRiscado - 10);
+            float proporcao = (float) progressoRisco / 20f;
+            int endX = x + 10 + (int)((width - 20) * proporcao);
+            
+            g2d.setColor(new Color(200, 30, 30, 200));
+            g2d.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            
+            // Desenhar um leve zigue-zague ou linha inclinada
+            int startY = y + height / 2 + 5;
+            int endY = y + height / 2 - 5 + (int)(Math.sin(progressoRisco * 0.3) * 3);
+            g2d.drawLine(x + 10, startY, endX, endY);
+        }
+    }
+
     private boolean estaProximoDaPuerta() {
         return indiceMapa == 2
                 && audreyX < puertaSaidaX + puertaSaidaLargura + 50
@@ -3541,7 +3634,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             if (tamanhoTextoVisivel < textoDialogo.length()) {
-                tamanhoTextoVisivelAcumulado += 1.5; // avança 1.5 letras a cada frame (50% mais rápido!)
+                tamanhoTextoVisivelAcumulado += 0.5; // avança 0.5 letras a cada frame (ajustado para 60fps)
                 int novoTamanho = (int) tamanhoTextoVisivelAcumulado;
                 if (novoTamanho > tamanhoTextoVisivel) {
                     tamanhoTextoVisivel = Math.min(textoDialogo.length(), novoTamanho);
@@ -3600,6 +3693,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             if (contadorNotificacaoXP >= NOTIFICACAO_XP_DURACAO) {
                 mostrarNotificacaoXP = false;
                 contadorNotificacaoXP = 0;
+            }
+        }
+
+        if (mostrarAnimacaoRiscado) {
+            contadorAnimacaoRiscado++;
+            if (contadorAnimacaoRiscado >= 50) { // menos de 1 segundo
+                mostrarAnimacaoRiscado = false;
+                contadorAnimacaoRiscado = 0;
             }
         }
 
@@ -3789,9 +3890,16 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             return;
         }
 
-        if (code == KeyEvent.VK_T) {
-            if (!textoDialogo.isEmpty() && faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
-                frame.mostrarImportador();
+        // Navegação de opções de diálogo quando faseDialogoNicolas for 100
+        if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
+            if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W || code == KeyEvent.VK_A || code == KeyEvent.VK_LEFT) {
+                selectedDialogueOption = 0;
+                repaint();
+                return;
+            }
+            if (code == KeyEvent.VK_DOWN || code == KeyEvent.VK_S || code == KeyEvent.VK_D || code == KeyEvent.VK_RIGHT) {
+                selectedDialogueOption = 1;
+                repaint();
                 return;
             }
         }
@@ -3837,7 +3945,17 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
-                return; // Bloqueia o "F" para obrigar a escolha da opcao [T]
+                if (selectedDialogueOption == 0) {
+                    frame.mostrarImportadorReal();
+                } else {
+                    estaEmDialogoNicolas = false;
+                    textoDialogo = "";
+                    nomePersonagem = "";
+                    faseDialogoNicolas = 0;
+                    ep1_entregouDesenho = false; // Permite falar de novo para tentar entregar depois
+                }
+                repaint();
+                return;
             }
 
             if (indiceMapa == 2) {
@@ -3921,21 +4039,17 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 if (dialogoSalaAutoConcluido) {
                     estaEmDialogoNicolas = true;
 
-                    if (ep1_solidaoUrbanaConcluida && !ep1_entregouDesenho) {
+                    if (ep1_solidaoUrbanaAtiva && !ep1_solidaoUrbanaConcluida && !ep1_entregouDesenho) {
                         // Inicia sequência de diálogo de entrega
                         nomePersonagem = "Audrey";
                         textoDialogo = "— Pronto, pessoal. Terminei, finalmente, o esboço do tema que vocês pediram. O que acham?";
                         ep1_entregouDesenho = true;
                         faseDialogoNicolas = 100; // marcador para fluxo de entrega
                     } else if (faseDialogoNicolas == 101) {
-                        nomePersonagem = "Nicolas";
-                        textoDialogo = "— Ficou irado! Essa perspectiva, cara, deu um peso enorme para o desenho. Você tem, de fato, muita técnica.";
-                        faseDialogoNicolas = 102;
-                    } else if (faseDialogoNicolas == 102) {
                         nomePersonagem = "Raquel";
                         textoDialogo = "— Perfeito! Você passou no teste com folga, Audrey. Agora, você é, oficialmente, a mente criativa do nosso grupo. Pronta para os próximos desafios?";
-                        faseDialogoNicolas = 103;
-                    } else if (faseDialogoNicolas == 103) {
+                        faseDialogoNicolas = 102;
+                    } else if (faseDialogoNicolas == 102) {
                         // Fim do Episódio 1! Fade out e save
                         estaEmDialogoNicolas = false;
                         textoDialogo = "";
@@ -4189,6 +4303,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             tamanhoTextoVisivel = 0;
             tamanhoTextoVisivelAcumulado = 0.0;
             GerenciadorAudio.tocarVozNicolas();
+            
+            // Marcar a missão "Solidão Urbana" como concluída e mostrar animação
+            ep1_solidaoUrbanaConcluida = true;
+            mostrarAnimacaoRiscado = true;
+            contadorAnimacaoRiscado = 0;
+            textoMissaoRiscada = "Desenhar 'A Solidão Urbana'";
+            GerenciadorAudio.tocarSomColeta();
+            
             repaint();
         }
     }
@@ -4291,7 +4413,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (ep1_solidaoUrbanaAtiva && !ep1_solidaoUrbanaConcluida) {
             g2d.setColor(Color.RED);
             desenharTextoEnvolvido(g2d, "Desenhar 'A Solidão Urbana' no mundo real", textX + 20, textY + 30, 270, 24);
-            g2d.drawRect(textX + 300, textY + 5, 30, 30);
             g2d.setColor(new Color(100, 50, 50));
         } else if (ep1_solidaoUrbanaConcluida) {
             g2d.setColor(new Color(50, 150, 50));
@@ -4366,6 +4487,48 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     @Override
     public void mousePressed(MouseEvent e) {
         if (!diarioAberto) {
+            if (!armarioEstaAberto && estaEmDialogoNicolas && faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
+                int w = getWidth();
+                int h = getHeight();
+                double scaleX = (double) w / LARGURA;
+                double scaleY = (double) h / ALTURA;
+                double scale = Math.min(scaleX, scaleY);
+                int xOffset = (int) ((w - (LARGURA * scale)) / 2);
+                int yOffset = (int) ((h - (ALTURA * scale)) / 2);
+
+                int realX = (int) ((e.getX() - xOffset) / scale);
+                int realY = (int) ((e.getY() - yOffset) / scale);
+
+                int caixaW = 860;
+                int caixaH = 130;
+                int caixaX = (LARGURA - caixaW) / 2;
+                int caixaY = ALTURA - caixaH - 30;
+
+                Image portraitImg = imgPortraitAudrey;
+                int textXOffset = caixaX + 30;
+                if (portraitImg != null) {
+                    int polaroidW = 160;
+                    textXOffset = caixaX + 15 + polaroidW + 25;
+                }
+
+                if (realX >= textXOffset - 20 && realX <= caixaX + caixaW - 20) {
+                    if (realY >= caixaY + 50 && realY <= caixaY + 80) {
+                        selectedDialogueOption = 0;
+                        repaint();
+                        frame.mostrarImportadorReal();
+                        return;
+                    } else if (realY >= caixaY + 81 && realY <= caixaY + 115) {
+                        selectedDialogueOption = 1;
+                        repaint();
+                        estaEmDialogoNicolas = false;
+                        textoDialogo = "";
+                        nomePersonagem = "";
+                        faseDialogoNicolas = 0;
+                        ep1_entregouDesenho = false;
+                        return;
+                    }
+                }
+            }
             return;
         }
 
@@ -4415,13 +4578,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
         }
         // Solidao Urbana Episodio 1
-        if (ep1_solidaoUrbanaAtiva && !ep1_solidaoUrbanaConcluida) {
-            if (realX >= textX + 300 && realX <= textX + 330 && realY >= diarioY + 420 + 5
-                    && realY <= diarioY + 420 + 35) {
-                ep1_solidaoUrbanaConcluida = true;
-                GerenciadorAudio.tocarSomColeta();
-            }
-        }
+        // (A missão só é concluída ao enviar a imagem, marcação manual removida)
 
         // Missões Level 3
         if (missaoLeituraConcluida && missaoArteConcluida && missaoFitnessConcluida) {

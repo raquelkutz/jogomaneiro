@@ -36,6 +36,17 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private int flipTo = 0;
     private static final float FLIP_SPEED = 0.012f;  // incremento por frame (~60fps => ~83 frames, virada mais lenta)
 
+    private static final Random SHARED_RND = new Random();
+    private static final BasicStroke STROKE_6 = new BasicStroke(6f);
+    private static final BasicStroke STROKE_8 = new BasicStroke(8f);
+    private static final BasicStroke STROKE_1 = new BasicStroke(1f);
+    private static final Color COLOR_MOLDURA_INNER = new Color(75, 65, 135);
+    private static final Color COLOR_MOLDURA_OUTER = new Color(45, 35, 95);
+    private static final Color[] SPARK_COLORS = {
+        new Color(150, 130, 230), new Color(200, 190, 255),
+        new Color(120, 80, 220), new Color(180, 160, 230)
+    };
+
     // -------- Sparkle / scratch particles --------
     private static final class Particle {
 
@@ -45,18 +56,16 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         Particle(float x, float y, Color c) {
             this.x = x;
             this.y = y;
-            Random rnd = new Random();
-            float ang = (float) (Math.random() * Math.PI * 2);
-            float spd = 0.5f + (float) (Math.random() * 2f);
+            float ang = (float) (SHARED_RND.nextFloat() * Math.PI * 2);
+            float spd = 0.5f + (float) (SHARED_RND.nextFloat() * 2f);
             vx = (float) (Math.cos(ang) * spd);
             vy = (float) (Math.sin(ang) * spd) - 1.5f;
-            maxLife = 28 + (float) (Math.random() * 20);
+            maxLife = 28 + (float) (SHARED_RND.nextFloat() * 20);
             life = maxLife;
             color = c;
         }
     }
     private final List<Particle> particles = new ArrayList<>();
-    private final Random rnd = new Random();
 
     // -------- Botão PULAR --------
     private int botaoPularX, botaoPularY;
@@ -215,13 +224,13 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         g2d.setClip(null);
 
         // 4. Borda da moldura (roxo do menu)
-        g2d.setStroke(new BasicStroke(6f));
-        g2d.setColor(new Color(75, 65, 135));
+        g2d.setStroke(STROKE_6);
+        g2d.setColor(COLOR_MOLDURA_INNER);
         g2d.drawRoundRect(frameX, frameY, frameW, frameH, 18, 18);
-        g2d.setStroke(new BasicStroke(8f));
-        g2d.setColor(new Color(45, 35, 95));
+        g2d.setStroke(STROKE_8);
+        g2d.setColor(COLOR_MOLDURA_OUTER);
         g2d.drawRoundRect(frameX - 1, frameY - 1, frameW + 2, frameH + 2, 20, 20);
-        g2d.setStroke(new BasicStroke(1f));
+        g2d.setStroke(STROKE_1);
 
         // 5. Partículas sparkle
         desenharParticulas(g2d);
@@ -697,13 +706,9 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
                 // Spawn sparkles no centro
                 int w = getWidth(), h = getHeight();
                 for (int i = 0; i < 12; i++) {
-                    Color[] cols = {
-                        new Color(150, 130, 230), new Color(200, 190, 255),
-                        new Color(120, 80, 220), new Color(180, 160, 230)
-                    };
-                    particles.add(new Particle(w / 2f + (rnd.nextFloat() - 0.5f) * 200,
-                            h / 2f + (rnd.nextFloat() - 0.5f) * 100,
-                            cols[rnd.nextInt(cols.length)]));
+                    particles.add(new Particle(w / 2f + (SHARED_RND.nextFloat() - 0.5f) * 200,
+                            h / 2f + (SHARED_RND.nextFloat() - 0.5f) * 100,
+                            SPARK_COLORS[SHARED_RND.nextInt(SPARK_COLORS.length)]));
                 }
             }
         }
@@ -736,12 +741,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
                 float ky = Math.min(k, frameH2);
                 pencilX = frameX2 + kx / 2f;
                 pencilY = frameY2 + ky / 2f;
-                if (rnd.nextInt(3) == 0) {
-                    Color[] sparkCols = {
-                        new Color(200, 190, 255), new Color(150, 130, 230),
-                        new Color(180, 160, 230), new Color(120, 80, 220)
-                    };
-                    particles.add(new Particle(pencilX, pencilY, sparkCols[rnd.nextInt(sparkCols.length)]));
+                if (SHARED_RND.nextInt(3) == 0) {
+                    particles.add(new Particle(pencilX, pencilY, SPARK_COLORS[SHARED_RND.nextInt(SPARK_COLORS.length)]));
                 }
             }
         }

@@ -2,15 +2,18 @@ import javax.sound.sampled.*;
 
 public class GerenciadorAudio {
     private static final int SAMPLE_RATE = 44100;
+    private static final float MIN_DB = -35.0f;
+    private static final float MAX_DB = -18.0f;
+
     private static Clip clipFundo;
     private static Clip clipCarregamento;
 
     public static void tocarMusicaFundo() {
         new Thread(() -> {
             try {
-                java.io.File audioFile = new java.io.File(JogoAudrey.resolvePath("bgm.wav"));
+                final java.io.File audioFile = new java.io.File(JogoAudrey.resolvePath("bgm.wav"));
                 if (audioFile.exists()) {
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+                    final AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
                     clipFundo = AudioSystem.getClip();
                     clipFundo.open(audioStream);
                     atualizarVolumeMusica(Configuracoes.getInstance().getVolumeMusica());
@@ -25,14 +28,12 @@ public class GerenciadorAudio {
         }).start();
     }
 
-    private static float calcularVolumeDb(int volume) {
-        float min = -35.0f;
-        float max = -18.0f; // Música mais baixa para destacar a voz
-        int v = Math.max(0, Math.min(100, volume));
-        return min + ((max - min) * (v / 100.0f));
+    private static float calcularVolumeDb(final int volume) {
+        final int v = Math.max(0, Math.min(100, volume));
+        return MIN_DB + ((MAX_DB - MIN_DB) * (v / 100.0f));
     }
 
-    public static void atualizarVolumeMusica(int volumeMusica) {
+    public static void atualizarVolumeMusica(final int volumeMusica) {
         ajustarVolumeClip(clipFundo, volumeMusica);
     }
 
@@ -159,48 +160,39 @@ public class GerenciadorAudio {
         tocarWav("abrir_porta.wav", -12f);
     }
 
-    // Passos ao caminhar
+    // Passos ao caminhar (cache em memória para 0 I/O de disco no movimento)
     private static volatile Clip clipPassos;
     private static final Object LOCK_PASSOS = new Object();
 
+    private static void carregarClipPassos() {
+        if (clipPassos != null && clipPassos.isOpen()) return;
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("passos_concreto.wav"));
+            if (f.exists()) {
+                AudioInputStream in = AudioSystem.getAudioInputStream(f);
+                clipPassos = AudioSystem.getClip();
+                clipPassos.open(in);
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao carregar passos: " + e.getMessage());
+        }
+    }
+
     public static void tocarSomPassos() {
         synchronized (LOCK_PASSOS) {
-            if (clipPassos != null && clipPassos.isRunning()) {
-                return;
+            carregarClipPassos();
+            if (clipPassos != null && clipPassos.isOpen() && !clipPassos.isRunning()) {
+                clipPassos.setFramePosition(0);
+                clipPassos.loop(Clip.LOOP_CONTINUOUSLY);
+                clipPassos.start();
             }
         }
-        new Thread(() -> {
-            try {
-                java.io.File f = new java.io.File(JogoAudrey.resolvePath("passos_concreto.wav"));
-                if (!f.exists()) {
-                    return;
-                }
-                AudioInputStream in = AudioSystem.getAudioInputStream(f);
-                Clip clip = AudioSystem.getClip();
-                clip.open(in);
-                synchronized (LOCK_PASSOS) {
-                    if (clipPassos != null && clipPassos.isRunning()) {
-                        clip.close();
-                        return;
-                    }
-                    clipPassos = clip;
-                }
-                clip.loop(Clip.LOOP_CONTINUOUSLY);
-                clip.start();
-            } catch (Exception e) {
-                System.err.println("Erro ao tocar passos: " + e.getMessage());
-            }
-        }).start();
     }
 
     public static void pararSomPassos() {
         synchronized (LOCK_PASSOS) {
-            if (clipPassos != null) {
-                if (clipPassos.isRunning()) {
-                    clipPassos.stop();
-                }
-                clipPassos.close();
-                clipPassos = null;
+            if (clipPassos != null && clipPassos.isOpen() && clipPassos.isRunning()) {
+                clipPassos.stop();
             }
         }
     }
@@ -208,6 +200,7 @@ public class GerenciadorAudio {
     // Voz do personagem Nicolás (tocada quando ele fala, estilo Undertale)
     private static volatile Clip clipVozNicolas;
     private static volatile boolean tocandoVozNicolas = false;
+    private static volatile Thread threadVozNicolas = null;
     private static final Object LOCK_VOZ = new Object();
 
     private static void logVoz(String msg) {
@@ -237,26 +230,23 @@ public class GerenciadorAudio {
     }
 
     public static void tocarVozNicolas() {
-        logVoz("tocarVozNicolas chamado");
         synchronized (LOCK_VOZ) {
-            if (tocandoVozNicolas) {
-                return; // Já está tocando no loop Undertale
-            }
-            tocandoVozNicolas = true;
-        }
-        new Thread(() -> {
-            carregarClipVozNicolas();
-            if (clipVozNicolas == null || !clipVozNicolas.isOpen()) {
-                synchronized (LOCK_VOZ) {
-                    tocandoVozNicolas = false;
-                }
+            if (tocandoVozNicolas && threadVozNicolas != null && threadVozNicolas.isAlive()) {
                 return;
             }
-            while (true) {
-                synchronized (LOCK_VOZ) {
-                    if (!tocandoVozNicolas) {
-                        break;
+            tocandoVozNicolas = true;
+            if (threadVozNicolas != null && threadVozNicolas.isAlive()) {
+                threadVozNicolas.interrupt();
+            }
+            threadVozNicolas = new Thread(() -> {
+                carregarClipVozNicolas();
+                if (clipVozNicolas == null || !clipVozNicolas.isOpen()) {
+                    synchronized (LOCK_VOZ) {
+                        tocandoVozNicolas = false;
                     }
+                    return;
+                }
+                while (tocandoVozNicolas && !Thread.currentThread().isInterrupted()) {
                     try {
                         clipVozNicolas.stop();
                         clipVozNicolas.setFramePosition(0);
@@ -268,7 +258,7 @@ public class GerenciadorAudio {
                                 gain.setValue(gain.getMinimum());
                             } else {
                                 float maxDb = gain.getMaximum();
-                                float minDb = -18.0f; // Permite ficar confortável em volumes baixos
+                                float minDb = -18.0f;
                                 float valorDb = minDb + (maxDb - minDb) * (vol / 100.0f);
                                 gain.setValue(valorDb);
                             }
@@ -276,26 +266,25 @@ public class GerenciadorAudio {
                         }
 
                         clipVozNicolas.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
                     } catch (Exception e) {
                         logVoz("Erro ao tocar blip: " + e.getMessage());
                     }
                 }
-                try {
-                    Thread.sleep(75); // Intervalo estilo Undertale entre blips de voz
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }).start();
+            });
+            threadVozNicolas.start();
+        }
     }
 
     public static void pararVozNicolas() {
-        if (!tocandoVozNicolas && (clipVozNicolas == null || !clipVozNicolas.isRunning())) {
-            return;
-        }
-        logVoz("pararVozNicolas chamado");
         synchronized (LOCK_VOZ) {
             tocandoVozNicolas = false;
+            if (threadVozNicolas != null) {
+                threadVozNicolas.interrupt();
+                threadVozNicolas = null;
+            }
             if (clipVozNicolas != null && clipVozNicolas.isRunning()) {
                 clipVozNicolas.stop();
             }
@@ -305,6 +294,7 @@ public class GerenciadorAudio {
     // Voz da personagem Raquel (tocada quando ela fala, estilo Undertale)
     private static volatile Clip clipVozRaquel;
     private static volatile boolean tocandoVozRaquel = false;
+    private static volatile Thread threadVozRaquel = null;
     private static final Object LOCK_VOZ_RAQUEL = new Object();
 
     private static void carregarClipVozRaquel() {
@@ -368,26 +358,23 @@ public class GerenciadorAudio {
     }
 
     public static void tocarVozRaquel() {
-        logVoz("tocarVozRaquel chamado");
         synchronized (LOCK_VOZ_RAQUEL) {
-            if (tocandoVozRaquel) {
+            if (tocandoVozRaquel && threadVozRaquel != null && threadVozRaquel.isAlive()) {
                 return;
             }
             tocandoVozRaquel = true;
-        }
-        new Thread(() -> {
-            carregarClipVozRaquel();
-            if (clipVozRaquel == null || !clipVozRaquel.isOpen()) {
-                synchronized (LOCK_VOZ_RAQUEL) {
-                    tocandoVozRaquel = false;
-                }
-                return;
+            if (threadVozRaquel != null && threadVozRaquel.isAlive()) {
+                threadVozRaquel.interrupt();
             }
-            while (true) {
-                synchronized (LOCK_VOZ_RAQUEL) {
-                    if (!tocandoVozRaquel) {
-                        break;
+            threadVozRaquel = new Thread(() -> {
+                carregarClipVozRaquel();
+                if (clipVozRaquel == null || !clipVozRaquel.isOpen()) {
+                    synchronized (LOCK_VOZ_RAQUEL) {
+                        tocandoVozRaquel = false;
                     }
+                    return;
+                }
+                while (tocandoVozRaquel && !Thread.currentThread().isInterrupted()) {
                     try {
                         clipVozRaquel.stop();
                         clipVozRaquel.setFramePosition(0);
@@ -399,7 +386,7 @@ public class GerenciadorAudio {
                                 gain.setValue(gain.getMinimum());
                             } else {
                                 float maxDb = gain.getMaximum();
-                                float minDb = -18.0f; // Permite ficar confortável em volumes baixos
+                                float minDb = -18.0f;
                                 float valorDb = minDb + (maxDb - minDb) * (vol / 100.0f);
                                 gain.setValue(valorDb);
                             }
@@ -407,26 +394,25 @@ public class GerenciadorAudio {
                         }
 
                         clipVozRaquel.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
                     } catch (Exception e) {
                         logVoz("Erro ao tocar blip Raquel: " + e.getMessage());
                     }
                 }
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }).start();
+            });
+            threadVozRaquel.start();
+        }
     }
 
     public static void pararVozRaquel() {
-        if (!tocandoVozRaquel && (clipVozRaquel == null || !clipVozRaquel.isRunning())) {
-            return;
-        }
-        logVoz("pararVozRaquel chamado");
         synchronized (LOCK_VOZ_RAQUEL) {
             tocandoVozRaquel = false;
+            if (threadVozRaquel != null) {
+                threadVozRaquel.interrupt();
+                threadVozRaquel = null;
+            }
             if (clipVozRaquel != null && clipVozRaquel.isRunning()) {
                 clipVozRaquel.stop();
             }
