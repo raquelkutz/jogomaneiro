@@ -2375,6 +2375,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean temCronograma = false;
 
     private boolean explorouCorredor = false;
+    // Flags de visita por area (para exigir exploração completa)
+    private boolean visitouGinasio = false;
+    private boolean visitouCorredor2 = false; // mapa 3
+    private boolean visitouCorredor3 = false; // mapa 4
+    private boolean visitouCorredor4 = false; // mapa 5
+    private boolean visitouBiblioteca = false; // mapa 6
     private boolean diarioAberto = false;
 
     // --- EPISODIO 1 ---
@@ -3723,6 +3729,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             audreyX_public = audreyX;
 
             if (indiceMapa == 0) {
+                visitouGinasio = true;
                 if (audreyX < 0) {
                     audreyX = 0;
                 }
@@ -3734,16 +3741,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     estaEmDialogoNicolas = false;
                     GerenciadorAudio.pararVozNicolas();
                     faseDialogoNicolas = 0;
-                    explorouCorredor = true;
                     if (!sala1Aberta) {
                         sala1Aberta = true;
                         GerenciadorAudio.tocarSomSinalEscolar();
                     }
                 }
             } else if (indiceMapa == 1) {
-                if (audreyX > 700) {
-                    explorouCorredor = true;
-                }
+                // Corredor 1: não conta como área obrigatória separada
                 if (audreyX < 0) {
                     audreyX = 0;
                     if (velX < 0) {
@@ -3765,6 +3769,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     GerenciadorAudio.pararVozNicolas();
                 }
             } else if (indiceMapa == 3) {
+                visitouCorredor2 = true;
                 if (audreyX < 0) {
                     audreyX = 0;
                     if (velX < 0) {
@@ -3781,6 +3786,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     nomePersonagem = "";
                 }
             } else if (indiceMapa == 4) {
+                visitouCorredor3 = true;
                 if (audreyX < 0) {
                     audreyX = 0;
                     if (velX < 0) {
@@ -3797,6 +3803,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     nomePersonagem = "";
                 }
             } else if (indiceMapa == 5) {
+                visitouCorredor4 = true;
                 if (audreyX < 0) {
                     audreyX = 0;
                     if (velX < 0) {
@@ -4122,7 +4129,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     textoDialogo = "Ainda preciso conhecer o lugar e falar com o pessoal antes de entrar.";
                     return;
                 }
-                if (explorouCorredor) {
+                boolean exploracaoCompleta = visitouGinasio && visitouCorredor2 && visitouCorredor3 && visitouCorredor4 && visitouBiblioteca;
+                if (exploracaoCompleta) {
+                    explorouCorredor = true;
                     GerenciadorAudio.tocarSomAbrirPorta();
                     ultimaPosAoEntraSala = audreyX;
                     indiceMapa = 2;
@@ -4134,7 +4143,17 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     faseDialogoNicolas = 0;
                 } else {
                     nomePersonagem = "Audrey";
-                    textoDialogo = "Ainda não me sinto pronta para entrar... vou dar uma olhada no final do corredor primeiro.";
+                    // Monta mensagem dizendo o que ainda falta explorar
+                    StringBuilder falta = new StringBuilder("Ainda preciso explorar: ");
+                    if (!visitouGinasio)     falta.append("o ginásio, ");
+                    if (!visitouCorredor2)   falta.append("o corredor 2, ");
+                    if (!visitouCorredor3)   falta.append("o corredor 3, ");
+                    if (!visitouCorredor4)   falta.append("o corredor 4, ");
+                    if (!visitouBiblioteca)  falta.append("a biblioteca, ");
+                    String msg = falta.toString();
+                    if (msg.endsWith(", ")) msg = msg.substring(0, msg.length() - 2) + ".";
+                    textoDialogo = msg;
+                    estaEmDialogoNicolas = true;
                 }
             } // Gabi no corredor (X=500, longe da porta em X=350)
             else if (indiceMapa == 1 && Math.abs(audreyX - 500) < 150 && textoDialogo.isEmpty()) {
@@ -4172,6 +4191,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 GerenciadorAudio.tocarSomAbrirPorta();
                 indiceMapa = 6;
                 audreyX = 100;
+                visitouBiblioteca = true;
                 if (!ep1InteragiuBiblioteca) {
                     ep1InteragiuBiblioteca = true;
                     checarObjetivosEp1();
