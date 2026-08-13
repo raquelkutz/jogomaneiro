@@ -3638,7 +3638,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             if (tamanhoTextoVisivel < textoDialogo.length()) {
-                tamanhoTextoVisivelAcumulado += 0.5; // avança 0.5 letras a cada frame (ajustado para 60fps)
+                tamanhoTextoVisivelAcumulado += 0.8; // avança 0.8 letras a cada frame (mais rápido)
                 int novoTamanho = (int) tamanhoTextoVisivelAcumulado;
                 if (novoTamanho > tamanhoTextoVisivel) {
                     tamanhoTextoVisivel = Math.min(textoDialogo.length(), novoTamanho);
@@ -3917,7 +3917,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (code == Configuracoes.getInstance().getTecla("DIREITA")) {
             boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
             if (!emDialogoForcado) {
-                velX = (indiceMapa == 2) ? 28 : 16;
+                velX = (indiceMapa == 2) ? 20 : 12;
                 olhandoDireita = true;
                 estaMovendo = true;
                 GerenciadorAudio.tocarSomPassos();
@@ -3927,7 +3927,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (code == Configuracoes.getInstance().getTecla("ESQUERDA")) {
             boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
             if (!emDialogoForcado) {
-                velX = (indiceMapa == 2) ? -28 : -16;
+                velX = (indiceMapa == 2) ? -20 : -12;
                 olhandoDireita = false;
                 estaMovendo = true;
                 GerenciadorAudio.tocarSomPassos();
