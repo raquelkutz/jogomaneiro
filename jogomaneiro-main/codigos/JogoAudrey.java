@@ -4143,16 +4143,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     faseDialogoNicolas = 0;
                 } else {
                     nomePersonagem = "Audrey";
-                    // Monta mensagem dizendo o que ainda falta explorar
-                    StringBuilder falta = new StringBuilder("Ainda preciso explorar: ");
-                    if (!visitouGinasio)     falta.append("o ginásio, ");
-                    if (!visitouCorredor2)   falta.append("o corredor 2, ");
-                    if (!visitouCorredor3)   falta.append("o corredor 3, ");
-                    if (!visitouCorredor4)   falta.append("o corredor 4, ");
-                    if (!visitouBiblioteca)  falta.append("a biblioteca, ");
-                    String msg = falta.toString();
-                    if (msg.endsWith(", ")) msg = msg.substring(0, msg.length() - 2) + ".";
-                    textoDialogo = msg;
+                    textoDialogo = "Acho melhor eu ir explorar um pouco a escola antes de entrar na sala de aula.";
                     estaEmDialogoNicolas = true;
                 }
             } // Gabi no corredor (X=500, longe da porta em X=350)
