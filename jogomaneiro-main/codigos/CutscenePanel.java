@@ -1,4 +1,3 @@
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -10,8 +9,7 @@ import java.util.Random;
 import javax.swing.*;
 
 /**
- * CutscenePanel — efeito de virar página de caderno (page-flip), inspirado no
- * hobby_quest_cutscene.html.
+ * CutscenePanel — transição fluida entre cenas com efeito suave e partículas.
  */
 public class CutscenePanel extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
 
@@ -26,7 +24,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private Image[] imagens;
     private String[] nomesImagens = new String[0];
 
-    // -------- Page-flip --------
+    // -------- Transição de Slide --------
     private enum FlipState {
         IDLE, FLIP_NEXT, FLIP_PREV
     }
@@ -34,7 +32,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private float flipT = 0f;   // 0..1
     private int flipFrom = 0;
     private int flipTo = 0;
-    private static final float FLIP_SPEED = 0.012f;  // incremento por frame (~60fps => ~83 frames, virada mais lenta)
+    private static final float FLIP_SPEED = 0.055f;  // ~18 frames (~0.3s) - transição rápida e fluida
 
     private static final Random SHARED_RND = new Random();
     private static final BasicStroke STROKE_6 = new BasicStroke(6f);
@@ -47,9 +45,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         new Color(120, 80, 220), new Color(180, 160, 230)
     };
 
-    // -------- Sparkle / scratch particles --------
+    // -------- Partículas --------
     private static final class Particle {
-
         float x, y, vx, vy, life, maxLife;
         Color color;
 
@@ -57,10 +54,10 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             this.x = x;
             this.y = y;
             float ang = (float) (SHARED_RND.nextFloat() * Math.PI * 2);
-            float spd = 0.5f + (float) (SHARED_RND.nextFloat() * 2f);
+            float spd = 0.8f + (float) (SHARED_RND.nextFloat() * 2.5f);
             vx = (float) (Math.cos(ang) * spd);
-            vy = (float) (Math.sin(ang) * spd) - 1.5f;
-            maxLife = 28 + (float) (SHARED_RND.nextFloat() * 20);
+            vy = (float) (Math.sin(ang) * spd) - 1.2f;
+            maxLife = 20 + (float) (SHARED_RND.nextFloat() * 15);
             life = maxLife;
             color = c;
         }
@@ -84,20 +81,16 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     // -------- Fade saída --------
     private boolean emFade = false;
     private int fadeProgresso = 0;
-    private final int FADE_MAX = 40;
+    private final int FADE_MAX = 30;
     private boolean fadeAcaoExecutada = false;
 
-    // -------- Lápis animado --------
+    // -------- Lápis animado (desenho na abertura) --------
     private float pencilX = 0, pencilY = 0;
     private boolean pencilVisible = false;
-    // Lápis "escrevendo" o slide: reveal diagonal + lápis na frente de escrita
     private boolean pencilWriting = false;
     private float writingT = 0f;   // 0..1
-    private static final float WRITING_SPEED = 0.011f;  // ~91 frames (~1,5s)
+    private static final float WRITING_SPEED = 0.045f;  // ~22 frames (~0.35s) - rápido e sem travar
 
-    // -------- Cache dos slides renderizados (escala) --------
-    // sem cache — desenhamos direto
-    // -------------------------------------------------------
     public CutscenePanel(JogoAudrey frame) {
         this.frame = frame;
         setPreferredSize(new Dimension(LARGURA, ALTURA));
@@ -214,11 +207,11 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         Shape clip = new RoundRectangle2D.Float(frameX, frameY, frameW, frameH, 18, 18);
         g2d.setClip(clip);
 
-        // 3. Desenhar slides com page-flip
+        // 3. Desenhar slides
         if (flipState == FlipState.IDLE) {
             desenharSlideEmRect(g2d, cenaAtual, frameX, frameY, frameW, frameH);
         } else {
-            desenharPageFlip(g2d, frameX, frameY, frameW, frameH);
+            desenharSlideTransition(g2d, frameX, frameY, frameW, frameH);
         }
 
         g2d.setClip(null);
@@ -267,7 +260,6 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
 
     // ---- Fundo papel (cores do menu principal) --------------
     private void desenharFundoPapel(Graphics2D g2d, int w, int h) {
-        // Fundo base igual ao MenuPrincipal
         GradientPaint bg = new GradientPaint(0, 0, new Color(30, 20, 50), w, h, new Color(20, 10, 40));
         g2d.setPaint(bg);
         g2d.fillRect(0, 0, w, h);
@@ -317,187 +309,83 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         int ix = rx + (rw - fw) / 2;
         int iy = ry + (rh - fh) / 2;
 
-        // Reveal diagonal: lápis "escrevendo" o slide
-        Shape clipSalvo = g2d.getClip();
-        if (pencilWriting) {
-            int k = (int) (writingT * (rw + rh));
-            if (k <= 0) {
+        // Reveal diagonal apenas se pencilWriting estiver ativo (abertura do jogo)
+        if (pencilWriting && flipState == FlipState.IDLE) {
+            float diag = writingT * (rw + rh);
+            if (diag <= 0) {
                 return;
             }
-            g2d.setClip(rx, ry, k, k);
+            Shape clipSalvo = g2d.getClip();
+            Path2D.Float clipPath = new Path2D.Float();
+            if (diag >= rw + rh) {
+                clipPath.moveTo(rx, ry);
+                clipPath.lineTo(rx + rw, ry);
+                clipPath.lineTo(rx + rw, ry + rh);
+                clipPath.lineTo(rx, ry + rh);
+            } else {
+                clipPath.moveTo(rx, ry);
+                clipPath.lineTo(rx + Math.min(diag, rw), ry);
+                if (diag > rw) {
+                    clipPath.lineTo(rx + rw, ry + (diag - rw));
+                }
+                if (diag > rh) {
+                    clipPath.lineTo(rx + (diag - rh), ry + rh);
+                    clipPath.lineTo(rx, ry + rh);
+                } else {
+                    clipPath.lineTo(rx, ry + diag);
+                }
+            }
+            clipPath.closePath();
+            g2d.clip(clipPath);
+            g2d.drawImage(img, ix, iy, fw, fh, this);
+            g2d.setClip(clipSalvo);
+        } else {
+            g2d.drawImage(img, ix, iy, fw, fh, this);
         }
-        g2d.drawImage(img, ix, iy, fw, fh, this);
 
         // Animação do botão "Começar aventura" no último slide
-        if (idx == imagens.length - 1) {
+        if (idx == imagens.length - 1 && !pencilWriting && flipState == FlipState.IDLE) {
             desenharAnimacaoBotaoIniciar(g2d, ix, iy, fw, fh, scale);
-        }
-        if (pencilWriting) {
-            g2d.setClip(clipSalvo);
         }
     }
 
-    // ---- Page-flip 3D simulado com Java2D -----------------
-    private void desenharPageFlip(Graphics2D g2d, int fx, int fy, int fw, int fh) {
+    // ---- Transição Fluida e Rápida entre Slides (Zero Tela Preta) -----
+    private void desenharSlideTransition(Graphics2D g2d, int fx, int fy, int fw, int fh) {
         boolean goingNext = (flipState == FlipState.FLIP_NEXT);
         float t = easing(flipT);  // 0..1
 
-        // slide "de baixo" (destino)
-        desenharSlideEmRect(g2d, flipTo, fx, fy, fw, fh);
-
-        // Sombra do understudyShade
-        int shadowAlpha = (int) (t < 0.7f ? (0.7f - t) / 0.7f * 90 : 0);
-        if (shadowAlpha > 0) {
-            GradientPaint sh;
-            if (goingNext) {
-                sh = new GradientPaint(fx, fy, new Color(0, 0, 0, shadowAlpha), fx + fw * 0.55f, fy, new Color(0, 0, 0, 0));
-            } else {
-                sh = new GradientPaint(fx + fw, fy, new Color(0, 0, 0, shadowAlpha), fx + fw * 0.45f, fy, new Color(0, 0, 0, 0));
-            }
-            g2d.setPaint(sh);
-            g2d.fillRect(fx, fy, fw, fh);
-        }
-
-        // ---- A página que está virando ----
-        // Simulamos a virada como uma "dobra" vertical.
-        // Para next: a página sai pela esquerda (dobra de 0→-180° em perspectiva)
-        // Para prev: a página sai pela direita
-        // Usamos shear + escala para simular perspectiva 2D.
-        Graphics2D g3 = (Graphics2D) g2d.create();
-
-        float halfAngle = t * 180f; // 0..180 graus
-        float cosA = (float) Math.cos(Math.toRadians(halfAngle));
-        float absCos = Math.abs(cosA);
-
-        // Largura da página que aparece (projeta perspectiva)
-        int pageW = (int) (fw * absCos);
-        if (pageW < 2) {
-            pageW = 2;
-        }
-
-        // Escolhe a imagem face: frente (from) até 90°, depois traseira (papel)
-        boolean mostrandoFrente = (halfAngle <= 90f);
-
+        int offsetOut, offsetIn;
         if (goingNext) {
-            // Pivot: borda direita do slide anterior = fx + fw
-            int pivotX = fx + fw;
-            // Página esquerda do pivot
-            int pageX = pivotX - pageW;
-
-            Shape oldClip = g3.getClip();
-            g3.setClip(fx, fy, fw, fh);
-
-            if (mostrandoFrente) {
-                // Desenha slide "from" comprimido horizontalmente
-                if (imagens[flipFrom] != null) {
-                    int iw = imagens[flipFrom].getWidth(this);
-                    int ih = imagens[flipFrom].getHeight(this);
-                    double sc = Math.max((double) fw / iw, (double) fh / ih);
-                    int srcW = (int) (iw * sc), srcH = (int) (ih * sc);
-                    int srcX = fx + (fw - srcW) / 2, srcY = fy + (fh - srcH) / 2;
-
-                    // Clip: apenas a parte direita que não virou
-                    g3.setClip(pivotX - pageW, fy, fw - (fw - pageW), fh);
-
-                    // Skew leve
-                    AffineTransform at = new AffineTransform();
-                    at.translate(pivotX, fy + fh / 2f);
-                    at.scale(absCos, 1.0 - t * 0.04);
-                    at.translate(-pivotX, -(fy + fh / 2f));
-                    g3.setTransform(at);
-                    g3.drawImage(imagens[flipFrom], srcX, srcY, srcW, srcH, this);
-                    g3.setTransform(new AffineTransform());
-                }
-            } else {
-                // Face traseira: papel de caderno
-                desenharFaceTraseira(g3, pageX, fy, pageW, fh, absCos);
-            }
-
-            g3.setClip(oldClip);
-
-            // Sombra de borda na dobra
-            float edgeAlpha = (float) (Math.sin(Math.toRadians(halfAngle)) * 0.55);
-            desenharSombraBorda(g3, pivotX - pageW, fy, pageW, fh, edgeAlpha, true);
-
+            offsetOut = (int) (-t * fw);
+            offsetIn = offsetOut + fw;
         } else {
-            // PREV: pivot esquerdo
-            int pivotX = fx;
-            int pageX = pivotX;
-
-            Shape oldClip = g3.getClip();
-            g3.setClip(fx, fy, fw, fh);
-
-            if (mostrandoFrente) {
-                if (imagens[flipFrom] != null) {
-                    int iw = imagens[flipFrom].getWidth(this);
-                    int ih = imagens[flipFrom].getHeight(this);
-                    double sc = Math.max((double) fw / iw, (double) fh / ih);
-                    int srcW = (int) (iw * sc), srcH = (int) (ih * sc);
-                    int srcX = fx + (fw - srcW) / 2, srcY = fy + (fh - srcH) / 2;
-
-                    g3.setClip(fx, fy, pageW, fh);
-                    AffineTransform at = new AffineTransform();
-                    at.translate(pivotX, fy + fh / 2f);
-                    at.scale(absCos, 1.0 - t * 0.04);
-                    at.translate(-pivotX, -(fy + fh / 2f));
-                    g3.setTransform(at);
-                    g3.drawImage(imagens[flipFrom], srcX, srcY, srcW, srcH, this);
-                    g3.setTransform(new AffineTransform());
-                }
-            } else {
-                desenharFaceTraseira(g3, pageX, fy, pageW, fh, absCos);
-            }
-
-            g3.setClip(oldClip);
-            desenharSombraBorda(g3, pageX + pageW - 15, fy, 15, fh, (float) (Math.sin(Math.toRadians(halfAngle)) * 0.55), false);
+            offsetOut = (int) (t * fw);
+            offsetIn = offsetOut - fw;
         }
 
-        // Shadow "floor" (embaixo do frame) — faixa escura
-        float shadowPeak = (float) (Math.sin(Math.toRadians(halfAngle)));
-        int floorAlpha = (int) (shadowPeak * 60);
-        if (floorAlpha > 0) {
-            g3.setColor(new Color(0, 0, 0, floorAlpha));
-            g3.fillRect(fx + fw / 4, fy + fh - 4, fw / 2, 6);
-        }
+        // 1. Desenha o slide de saída
+        desenharSlideEmRect(g2d, flipFrom, fx + offsetOut, fy, fw, fh);
 
-        g3.dispose();
-    }
+        // 2. Desenha o slide de entrada
+        desenharSlideEmRect(g2d, flipTo, fx + offsetIn, fy, fw, fh);
 
-    /**
-     * Face traseira da página (papel com linhas)
-     */
-    private void desenharFaceTraseira(Graphics2D g, int rx, int ry, int rw, int rh, float cosA) {
-        // Fundo roxo escuro
-        g.setColor(new Color(45, 35, 95));
-        g.fillRect(rx, ry, rw, rh);
-        // Linhas do caderno (lavanda)
-        g.setColor(new Color(150, 130, 230, 60));
-        for (int y = ry + 39; y < ry + rh; y += 40) {
-            g.drawLine(rx, y, rx + rw, y);
-        }
-        // Sombra radial no centro
-        GradientPaint rg = new GradientPaint(rx + rw * 0.3f, ry + rh * 0.5f, new Color(0, 0, 0, (int) (15 * cosA)),
-                rx + rw, ry + rh * 0.5f, new Color(0, 0, 0, 0));
-        g.setPaint(rg);
-        g.fillRect(rx, ry, rw, rh);
-    }
-
-    /**
-     * Sombra de borda (simula o vinco da página)
-     */
-    private void desenharSombraBorda(Graphics2D g, int x, int y, int w, int h, float alpha, boolean rightSide) {
-        if (alpha <= 0 || w <= 0) {
-            return;
-        }
-        int a = (int) (alpha * 200);
-        GradientPaint sh;
-        if (rightSide) {
-            sh = new GradientPaint(x, y, new Color(0, 0, 0, Math.min(255, a)), x + Math.min(w, 40), y, new Color(0, 0, 0, 0));
+        // 3. Sombra suave na borda divisória para dar profundidade
+        int shadowW = 35;
+        if (goingNext) {
+            int shadowX = fx + offsetIn;
+            GradientPaint sh = new GradientPaint(
+                    shadowX - shadowW, fy, new Color(0, 0, 0, 0),
+                    shadowX, fy, new Color(0, 0, 0, 110));
+            g2d.setPaint(sh);
+            g2d.fillRect(shadowX - shadowW, fy, shadowW, fh);
         } else {
-            sh = new GradientPaint(x + w, y, new Color(0, 0, 0, Math.min(255, a)), x + Math.max(0, w - 40), y, new Color(0, 0, 0, 0));
+            int shadowX = fx + offsetIn + fw;
+            GradientPaint sh = new GradientPaint(
+                    shadowX, fy, new Color(0, 0, 0, 110),
+                    shadowX + shadowW, fy, new Color(0, 0, 0, 0));
+            g2d.setPaint(sh);
+            g2d.fillRect(shadowX, fy, shadowW, fh);
         }
-        g.setPaint(sh);
-        g.fillRect(x, y, w, h);
     }
 
     // ---- Animação do botão "Começar aventura" -------------
@@ -517,7 +405,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         float p2 = (float) (Math.sin(t + 1.2) * 0.5 + 0.5);
         float p3 = (float) (Math.sin(t + 2.4) * 0.5 + 0.5);
 
-        // Camada externa — brilho roxo escuro
+        // Camada externa
         int a1 = (int) (40 + p1 * 80);
         g2d.setColor(new Color(75, 65, 135, a1));
         g2d.setStroke(new BasicStroke(4 + p2 * 6, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -564,42 +452,49 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         }
     }
 
-    // ---- Lápis animado (cursor) ----------------------------
+    // ---- Lápis animado -------------------------------------
     private void desenharLapis(Graphics2D g2d) {
         int px = (int) pencilX;
         int py = (int) pencilY;
-        // Inclinação durante flip: inclina levemente no sentido do movimento
-        float inclinacao = (flipState == FlipState.FLIP_NEXT) ? -25f : (flipState == FlipState.FLIP_PREV ? 25f : 0f);
+        float inclinacao = (flipState == FlipState.FLIP_NEXT) ? -20f : (flipState == FlipState.FLIP_PREV ? 20f : -10f);
         Graphics2D gp = (Graphics2D) g2d.create();
         gp.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         gp.rotate(Math.toRadians(inclinacao), px, py);
+        
         // Sombra suave
         gp.setColor(new Color(0, 0, 0, 40));
         gp.fillOval(px - 8, py + 20, 18, 6);
+        
         // corpo amarelo
         gp.setColor(new Color(242, 201, 76));
         int[] xp = {px - 6, px + 6, px + 6, px - 6};
         int[] yp = {py - 24, py - 24, py + 14, py + 14};
         gp.fillPolygon(xp, yp, 4);
+        
         // linha divisória
         gp.setColor(new Color(200, 160, 40, 160));
         gp.drawLine(px - 6, py - 6, px + 6, py - 6);
+        
         // ponta (madeira)
         gp.setColor(new Color(210, 170, 110));
         int[] xp2 = {px - 5, px + 5, px};
         int[] yp2 = {py + 14, py + 14, py + 26};
         gp.fillPolygon(xp2, yp2, 3);
+        
         // grafite (ponta escura)
         gp.setColor(new Color(60, 60, 60));
         int[] xp3 = {px - 1, px + 1, px};
         int[] yp3 = {py + 22, py + 22, py + 26};
         gp.fillPolygon(xp3, yp3, 3);
+        
         // borracha (topo)
         gp.setColor(new Color(242, 140, 160));
         gp.fillRoundRect(px - 6, py - 28, 12, 8, 4, 4);
-        // anel metalico
+        
+        // anel metálico
         gp.setColor(new Color(180, 180, 200));
         gp.fillRect(px - 7, py - 22, 14, 4);
+        
         // borda
         gp.setColor(new Color(138, 109, 30));
         gp.setStroke(new BasicStroke(1.5f));
@@ -624,7 +519,6 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             if (i == cenaAtual) {
                 g2d.setColor(new Color(150, 130, 230)); // lavanda "on"
                 g2d.fillOval(dx - 1, dotY - 1, DOT_SIZE + 2, DOT_SIZE + 2);
-                // glow
                 g2d.setColor(new Color(150, 130, 230, 60));
                 g2d.fillOval(dx - 4, dotY - 4, DOT_SIZE + 8, DOT_SIZE + 8);
             } else {
@@ -645,7 +539,6 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
         Color corHover = new Color(75, 65, 135);
         Color corTexto = Color.WHITE;
 
-        // fundo escuro atrás
         g2d.setColor(new Color(0, 0, 0, 80));
         g2d.fillRoundRect(botaoPularX - 10, botaoPularY - 6, botaoPularLargura + 20, botaoPularAltura + 12, 30, 30);
 
@@ -665,7 +558,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     private void desenharHint(Graphics2D g2d, int w, int h) {
         float alpha = 0.55f + (float) (Math.sin(pulseFrame * 0.05) * 0.45);
         g2d.setFont(fontCrayonHand.deriveFont(12f));
-        String txt = "clique / \u2192 para virar a p\u00e1gina";
+        String txt = "clique / \u2192 para avançar";
         FontMetrics fm = g2d.getFontMetrics();
         int tw = fm.stringWidth(txt);
         int tx = w - tw - 24;
@@ -696,18 +589,20 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
     // ======================= ACTION (Timer) ==================
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Page-flip
+        // Transição de Slide
         if (flipState != FlipState.IDLE) {
             flipT += FLIP_SPEED;
             if (flipT >= 1f) {
                 flipT = 0f;
                 cenaAtual = flipTo;
                 flipState = FlipState.IDLE;
-                // Spawn sparkles no centro
+                
+                // Spawn sparkles suaves no final da transição
                 int w = getWidth(), h = getHeight();
-                for (int i = 0; i < 12; i++) {
-                    particles.add(new Particle(w / 2f + (SHARED_RND.nextFloat() - 0.5f) * 200,
-                            h / 2f + (SHARED_RND.nextFloat() - 0.5f) * 100,
+                for (int i = 0; i < 10; i++) {
+                    particles.add(new Particle(
+                            w / 2f + (SHARED_RND.nextFloat() - 0.5f) * 300,
+                            h / 2f + (SHARED_RND.nextFloat() - 0.5f) * 150,
                             SPARK_COLORS[SHARED_RND.nextInt(SPARK_COLORS.length)]));
                 }
             }
@@ -722,7 +617,7 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             return p.life <= 0;
         });
 
-        // Lápis escrevendo o slide (reveal diagonal)
+        // Lápis desenhando no início (rápido e fluido)
         if (pencilWriting) {
             writingT += WRITING_SPEED;
             if (writingT >= 1f) {
@@ -736,12 +631,10 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
                 int frameH2 = (int) (frameW2 * 9.0 / 16.0);
                 int frameX2 = (w2 - frameW2) / 2;
                 int frameY2 = (h2 - frameH2) / 2;
-                float k = writingT * (frameW2 + frameH2);
-                float kx = Math.min(k, frameW2);
-                float ky = Math.min(k, frameH2);
-                pencilX = frameX2 + kx / 2f;
-                pencilY = frameY2 + ky / 2f;
-                if (SHARED_RND.nextInt(3) == 0) {
+                
+                pencilX = frameX2 + writingT * frameW2;
+                pencilY = frameY2 + writingT * frameH2;
+                if (SHARED_RND.nextInt(2) == 0) {
                     particles.add(new Particle(pencilX, pencilY, SPARK_COLORS[SHARED_RND.nextInt(SPARK_COLORS.length)]));
                 }
             }
@@ -776,8 +669,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             flipTo = cenaAtual + 1;
             flipT = 0f;
             flipState = FlipState.FLIP_NEXT;
-            pencilWriting = true;
-            writingT = 0f;
+            pencilWriting = false;
+            pencilVisible = false;
         } else {
             disparararFade();
         }
@@ -793,8 +686,8 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             flipTo = cenaAtual - 1;
             flipT = 0f;
             flipState = FlipState.FLIP_PREV;
-            pencilWriting = true;
-            writingT = 0f;
+            pencilWriting = false;
+            pencilVisible = false;
         }
     }
 
@@ -880,7 +773,6 @@ public class CutscenePanel extends JPanel implements ActionListener, KeyListener
             repaint();
         }
 
-        // Move o lápis junto com o mouse apenas quando NÃO estiver escrevendo nem em flip
         if (pencilVisible && flipState == FlipState.IDLE && !pencilWriting) {
             pencilX = mx;
             pencilY = my;

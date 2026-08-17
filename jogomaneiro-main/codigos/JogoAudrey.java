@@ -284,9 +284,11 @@ public class JogoAudrey extends JFrame {
         mainPanel.add(configuracoesPanel, "configuracoes");
         importadorImagem = new ImportadorImagem(this, () -> {
             cardLayout.show(mainPanel, "jogo");
-            requestFocusInWindow();
             if (jogoPanel != null) {
                 jogoPanel.continuarDialogoDesenho();
+                jogoPanel.setFocusable(true);
+                jogoPanel.requestFocusInWindow();
+                jogoPanel.requestFocus();
             }
         });
         mainPanel.add(importadorImagem, "importador");
@@ -784,6 +786,10 @@ public class JogoAudrey extends JFrame {
     }
 
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
         garantirImagemExiste("ginasio.png");
         garantirImagemExiste("chave.png");
         garantirImagemExiste("livro.png");
@@ -3628,7 +3634,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             GerenciadorAudio.tocarSomSinalEscolar();
             estaEmDialogoNicolas = true;
             nomePersonagem = "Sistema";
-            textoDialogo = "Agora que você conheceu a Gabi e a Ivi, a porta da Sala 1 está aberta!";
+            textoDialogo = "Agora que você conheceu a Gabi e a Ivi, a porta da Sala 1 está aberta! Pressione [E] para entrar.";
         }
     }
 
@@ -3727,6 +3733,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
             indiceMapa_public = indiceMapa;
             audreyX_public = audreyX;
+
+            // Desbloquear porta ao explorar qualquer área (corredor ou biblioteca)
+            if (indiceMapa == 3 || indiceMapa == 4 || indiceMapa == 5 || indiceMapa == 6) {
+                explorouCorredor = true;
+            }
 
             if (indiceMapa == 0) {
                 visitouGinasio = true;
@@ -3892,6 +3903,161 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         repaint();
     }
 
+    public void avancarDialogo() {
+        if (!textoDialogo.isEmpty() && tamanhoTextoVisivel < textoDialogo.length()) {
+            tamanhoTextoVisivel = textoDialogo.length();
+            tamanhoTextoVisivelAcumulado = textoDialogo.length();
+            GerenciadorAudio.pararVozNicolas();
+            GerenciadorAudio.pararVozRaquel();
+            repaint();
+            return;
+        }
+
+        if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
+            if (selectedDialogueOption == 0) {
+                frame.mostrarImportadorReal();
+            } else {
+                estaEmDialogoNicolas = false;
+                textoDialogo = "";
+                nomePersonagem = "";
+                faseDialogoNicolas = 0;
+                ep1_entregouDesenho = false;
+            }
+            repaint();
+            return;
+        }
+
+        if (indiceMapa == 2) {
+            // Diálogo automático de intro
+            if (aguardandoAvanceSalaAuto && !dialogoSalaAutoConcluido) {
+                GerenciadorAudio.tocarSomDialogo();
+                faseDialogoSalaAuto++;
+                tamanhoTextoVisivel = 0;
+                tamanhoTextoVisivelAcumulado = 0.0;
+                switch (faseDialogoSalaAuto) {
+                    case 1:
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "— Oi, com licença... Sou a Audrey, aluna nova.";
+                        break;
+                    case 2:
+                        nomePersonagem = "Raquel";
+                        textoDialogo = "— Ah, oi! Seja bem-vinda! Eu sou a Raquel. Estávamos, justamente, discutindo sobre o projeto do festival cultural.";
+                        break;
+                    case 3:
+                        nomePersonagem = "Nicolas";
+                        textoDialogo = "— Salve, Audrey! Sou o Nicollas. Cara, a Raquel quer ir pelo caminho mais clássico, mas, eu acho, que a gente devia meter uma parada mais urbana... tipo, um grafite expressionista.";
+                        break;
+                    case 4:
+                        nomePersonagem = "Nicolas";
+                        textoDialogo = "— Arte tem que ter impacto, sabe? Sentimento, puro sentimento bruto!";
+                        break;
+                    case 5:
+                        nomePersonagem = "Camila";
+                        textoDialogo = "— Sou a Camila. E, o Nicollas, esquece que o expressionismo é, justamente, sobre distorcer a realidade para expressar as emoções. Não precisa ser só grafite.";
+                        break;
+                    case 6:
+                        nomePersonagem = "Camila";
+                        textoDialogo = "— A arte ganha vida, de verdade, quando o conceito é forte. E você, Audrey? Curte alguma vertente?";
+                        break;
+                    case 7:
+                        nomePersonagem = "Audrey";
+                        textoDialogo = "— Eu gosto bastante de desenhar, na verdade. Para mim, a arte ajuda a colocar para fora coisas... coisas que as palavras não dão conta.";
+                        break;
+                    case 8:
+                        nomePersonagem = "Raquel";
+                        textoDialogo = "— Sério? Que incrível! Olha, a gente está precisando de ajuda, e de ideias novas para o grupo. Que tal um teste rápido, bem rápido, para ver o seu estilo?";
+                        break;
+                    case 9:
+                        nomePersonagem = "Nicolas";
+                        textoDialogo = "— Boa! Vamos ver, então, o seu nível artístico. Quero ver como você interpreta o tema: 'O Sentimento da Solidão Urbana'.";
+                        break;
+                    case 10:
+                        nomePersonagem = "Nicolas";
+                        textoDialogo = "— Pode ser algo tecnológico, um cenário bem vazio, ou, quem sabe, só alguém na multidão.";
+                        break;
+                    case 11:
+                        nomePersonagem = "Camila";
+                        textoDialogo = "— Mostra para a gente, Audrey, do que você é capaz. Estamos, de verdade, bem curiosos!";
+                        break;
+                    default:
+                        dialogoSalaAutoConcluido = true;
+                        aguardandoAvanceSalaAuto = false;
+                        estaEmDialogoNicolas = false;
+                        textoDialogo = "";
+                        nomePersonagem = "";
+                        ep1_solidaoUrbanaAtiva = true;
+                        entregarXpPendente();
+
+                        String teclaDiario = Configuracoes.getInstance().getNomeTecla("DIÁRIO");
+                        textoNotificacao = "Missão adicionada ao Diário! Pressione [" + teclaDiario + "] para abrir o diário";
+                        mostrarNotificacaoMissao = true;
+                        contadorNotificacaoMissao = 0;
+                        break;
+                }
+                if ("Nicolas".equals(nomePersonagem)) {
+                    GerenciadorAudio.tocarVozNicolas();
+                } else if ("Raquel".equals(nomePersonagem)) {
+                    GerenciadorAudio.tocarVozRaquel();
+                } else {
+                    GerenciadorAudio.pararVozNicolas();
+                    GerenciadorAudio.pararVozRaquel();
+                }
+                repaint();
+                return;
+            }
+
+            // Diálogos pós-intro (entrega de desenho / feedback)
+            if (dialogoSalaAutoConcluido) {
+                estaEmDialogoNicolas = true;
+                GerenciadorAudio.tocarSomDialogo();
+
+                if (ep1_solidaoUrbanaAtiva && !ep1_solidaoUrbanaConcluida && !ep1_entregouDesenho) {
+                    ep1_entregouDesenho = true;
+                    faseDialogoNicolas = 100;
+                    nomePersonagem = "Audrey";
+                    textoDialogo = " ";
+                    tamanhoTextoVisivel = 0;
+                    tamanhoTextoVisivelAcumulado = 0.0;
+                } else if (faseDialogoNicolas == 101) {
+                    nomePersonagem = "Raquel";
+                    textoDialogo = "— Perfeito! Você passou no teste com folga, Audrey. Agora, você é, oficialmente, a mente criativa do nosso grupo. Pronta para os próximos desafios?";
+                    faseDialogoNicolas = 102;
+                    tamanhoTextoVisivel = 0;
+                    tamanhoTextoVisivelAcumulado = 0.0;
+                } else if (faseDialogoNicolas == 102) {
+                    estaEmDialogoNicolas = false;
+                    textoDialogo = "";
+                    nomePersonagem = "";
+                    faseDialogoNicolas = 0;
+                    ganharXP(10);
+                } else {
+                    tamanhoTextoVisivel = 0;
+                    tamanhoTextoVisivelAcumulado = 0.0;
+                    if (Math.abs(audreyX - 250) < 150) {
+                        nomePersonagem = "Raquel";
+                        textoDialogo = ep1_entregouDesenho ? "— Pronta para os próximos desafios?" : "— Como está ficando o esboço?";
+                    } else if (Math.abs(audreyX - 390) < 150) {
+                        nomePersonagem = "Nicolas";
+                        textoDialogo = ep1_entregouDesenho ? "— Você desenha muito bem!" : "— Mal posso esperar para ver seu desenho!";
+                    } else if (Math.abs(audreyX - 530) < 150) {
+                        nomePersonagem = "Camila";
+                        textoDialogo = ep1_entregouDesenho ? "— Que traço sensacional!" : "— Como está ficando o esboço?";
+                    }
+                }
+
+                if ("Nicolas".equals(nomePersonagem)) {
+                    GerenciadorAudio.tocarVozNicolas();
+                } else if ("Raquel".equals(nomePersonagem)) {
+                    GerenciadorAudio.tocarVozRaquel();
+                } else {
+                    GerenciadorAudio.pararVozNicolas();
+                    GerenciadorAudio.pararVozRaquel();
+                }
+                repaint();
+            }
+        }
+    }
+
     @Override
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
@@ -3946,149 +4112,16 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             return;
         }
 
-        if (code == Configuracoes.getInstance().getTecla("FALAR")) {
-            if (!textoDialogo.isEmpty() && tamanhoTextoVisivel < textoDialogo.length()) {
-                tamanhoTextoVisivel = textoDialogo.length();
-                tamanhoTextoVisivelAcumulado = textoDialogo.length();
-                GerenciadorAudio.pararVozNicolas();
-                GerenciadorAudio.pararVozRaquel();
-                return;
-            }
+        boolean isFalarKey = (code == Configuracoes.getInstance().getTecla("FALAR"))
+                || code == KeyEvent.VK_F || code == KeyEvent.VK_SPACE
+                || code == KeyEvent.VK_ENTER || code == KeyEvent.VK_E;
 
-            if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
-                if (selectedDialogueOption == 0) {
-                    frame.mostrarImportadorReal();
-                } else {
-                    estaEmDialogoNicolas = false;
-                    textoDialogo = "";
-                    nomePersonagem = "";
-                    faseDialogoNicolas = 0;
-                    ep1_entregouDesenho = false; // Permite falar de novo para tentar entregar depois
-                }
-                repaint();
-                return;
-            }
-
-            if (indiceMapa == 2) {
-
-                // --- Diálogo automático de intro (avançado pela tecla F) ---
-                if (aguardandoAvanceSalaAuto && !dialogoSalaAutoConcluido) {
-                    GerenciadorAudio.tocarSomDialogo();
-                    faseDialogoSalaAuto++;
-                    switch (faseDialogoSalaAuto) {
-                        case 1:
-                            nomePersonagem = "Audrey";
-                            textoDialogo = "— Oi, com licença... Sou a Audrey, aluna nova.";
-                            break;
-                        case 2:
-                            nomePersonagem = "Raquel";
-                            textoDialogo = "— Ah, oi! Seja bem-vinda! Eu sou a Raquel. Estávamos, justamente, discutindo sobre o projeto do festival cultural.";
-                            break;
-                        case 3:
-                            nomePersonagem = "Nicolas";
-                            textoDialogo = "— Salve, Audrey! Sou o Nicollas. Cara, a Raquel quer ir pelo caminho mais clássico, mas, eu acho, que a gente devia meter uma parada mais urbana... tipo, um grafite expressionista.";
-                            break;
-                        case 4:
-                            nomePersonagem = "Nicolas";
-                            textoDialogo = "— Arte tem que ter impacto, sabe? Sentimento, puro sentimento bruto!";
-                            break;
-                        case 5:
-                            nomePersonagem = "Camila";
-                            textoDialogo = "— Sou a Camila. E, o Nicollas, esquece que o expressionismo é, justamente, sobre distorcer a realidade para expressar as emoções. Não precisa ser só grafite.";
-                            break;
-                        case 6:
-                            nomePersonagem = "Camila";
-                            textoDialogo = "— A arte ganha vida, de verdade, quando o conceito é forte. E você, Audrey? Curte alguma vertente?";
-                            break;
-                        case 7:
-                            nomePersonagem = "Audrey";
-                            textoDialogo = "— Eu gosto bastante de desenhar, na verdade. Para mim, a arte ajuda a colocar para fora coisas... coisas que as palavras não dão conta.";
-                            break;
-                        case 8:
-                            nomePersonagem = "Raquel";
-                            textoDialogo = "— Sério? Que incrível! Olha, a gente está precisando de ajuda, e de ideias novas para o grupo. Que tal um teste rápido, bem rápido, para ver o seu estilo?";
-                            break;
-                        case 9:
-                            nomePersonagem = "Nicolas";
-                            textoDialogo = "— Boa! Vamos ver, então, o seu nível artístico. Quero ver como você interpreta o tema: 'O Sentimento da Solidão Urbana'.";
-                            break;
-                        case 10:
-                            nomePersonagem = "Nicolas";
-                            textoDialogo = "— Pode ser algo tecnológico, um cenário bem vazio, ou, quem sabe, só alguém na multidão.";
-                            break;
-                        case 11:
-                            nomePersonagem = "Camila";
-                            textoDialogo = "— Mostra para a gente, Audrey, do que você é capaz. Estamos, de verdade, bem curiosos!";
-                            break;
-                        default:
-                            // Fim da intro
-                            dialogoSalaAutoConcluido = true;
-                            aguardandoAvanceSalaAuto = false;
-                            estaEmDialogoNicolas = false;
-                            textoDialogo = "";
-                            nomePersonagem = "";
-                            ep1_solidaoUrbanaAtiva = true; // Ativa a nova missão
-                            entregarXpPendente();
-
-                            // Exibir notificação na tela
-                            String teclaDiario = Configuracoes.getInstance().getNomeTecla("DIÁRIO");
-                            textoNotificacao = "Missão adicionada ao Diário! Pressione [" + teclaDiario
-                                    + "] para abrir o diário";
-                            mostrarNotificacaoMissao = true;
-                            contadorNotificacaoMissao = 0;
-                            break;
-                    }
-                    if ("Nicolas".equals(nomePersonagem)) {
-                        GerenciadorAudio.tocarVozNicolas();
-                    } else {
-                        GerenciadorAudio.pararVozNicolas();
-                    }
-                    return;
-                }
-
-                // --- Diálogos pós-intro: Avaliação do Desenho ou Lembrete ---
-                if (dialogoSalaAutoConcluido) {
-                    estaEmDialogoNicolas = true;
-
-                    if (ep1_solidaoUrbanaAtiva && !ep1_solidaoUrbanaConcluida && !ep1_entregouDesenho) {
-                        // Inicia sequência de diálogo de entrega
-                        nomePersonagem = "Audrey";
-                        textoDialogo = "— Pronto, pessoal. Terminei, finalmente, o esboço do tema que vocês pediram. O que acham?";
-                        ep1_entregouDesenho = true;
-                        faseDialogoNicolas = 100; // marcador para fluxo de entrega
-                    } else if (faseDialogoNicolas == 101) {
-                        nomePersonagem = "Raquel";
-                        textoDialogo = "— Perfeito! Você passou no teste com folga, Audrey. Agora, você é, oficialmente, a mente criativa do nosso grupo. Pronta para os próximos desafios?";
-                        faseDialogoNicolas = 102;
-                    } else if (faseDialogoNicolas == 102) {
-                        // Fim do Episódio 1! Fade out e save
-                        estaEmDialogoNicolas = false;
-                        textoDialogo = "";
-                        nomePersonagem = "";
-                        faseDialogoNicolas = 0;
-
-                        // Dar XP pela conclusão da missão
-                        ganharXP(10);
-                    } else {
-                        // Lembrete se a missão não foi concluída no diário
-                        if (Math.abs(audreyX - 250) < 150) {
-                            nomePersonagem = "Raquel";
-                            textoDialogo = ep1_entregouDesenho ? "— Pronta para os próximos desafios?" : "— Como está ficando o esboço?";
-                        } else if (Math.abs(audreyX - 390) < 150) {
-                            nomePersonagem = "Nicolas";
-                            textoDialogo = ep1_entregouDesenho ? "— Você desenha muito bem!" : "— Mal posso esperar para ver seu desenho!";
-                        } else if (Math.abs(audreyX - 530) < 150) {
-                            nomePersonagem = "Camila";
-                            textoDialogo = ep1_entregouDesenho ? "— Que traço sensacional!" : "— Como está ficando o esboço?";
-                        }
-                    }
-                    if ("Nicolas".equals(nomePersonagem)) {
-                        GerenciadorAudio.tocarVozNicolas();
-                    } else {
-                        GerenciadorAudio.pararVozNicolas();
-                    }
-                }
-            }
+        if (isFalarKey && (estaEmDialogoNicolas || aguardandoAvanceSalaAuto || !textoDialogo.isEmpty())) {
+            avancarDialogo();
+            return;
+        } else if (code == Configuracoes.getInstance().getTecla("FALAR")) {
+            avancarDialogo();
+            return;
         }
 
         if (code == Configuracoes.getInstance().getTecla("INTERAGIR")) {
@@ -4129,9 +4162,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     textoDialogo = "Ainda preciso conhecer o lugar e falar com o pessoal antes de entrar.";
                     return;
                 }
-                boolean exploracaoCompleta = visitouGinasio && visitouCorredor2 && visitouCorredor3 && visitouCorredor4 && visitouBiblioteca;
-                if (exploracaoCompleta) {
-                    explorouCorredor = true;
+                if (!explorouCorredor) {
+                    // Primeiro acesso: pedir para explorar a escola
+                    nomePersonagem = "Audrey";
+                    textoDialogo = "Acho melhor eu ir explorar um pouco a escola antes de entrar na sala de aula.";
+                    estaEmDialogoNicolas = true;
+                } else {
+                    // Já explorou: pode entrar
                     GerenciadorAudio.tocarSomAbrirPorta();
                     ultimaPosAoEntraSala = audreyX;
                     indiceMapa = 2;
@@ -4141,10 +4178,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     estaEmDialogoNicolas = false;
                     GerenciadorAudio.pararVozNicolas();
                     faseDialogoNicolas = 0;
-                } else {
-                    nomePersonagem = "Audrey";
-                    textoDialogo = "Acho melhor eu ir explorar um pouco a escola antes de entrar na sala de aula.";
-                    estaEmDialogoNicolas = true;
                 }
             } // Gabi no corredor (X=500, longe da porta em X=350)
             else if (indiceMapa == 1 && Math.abs(audreyX - 500) < 150 && textoDialogo.isEmpty()) {
@@ -4543,6 +4576,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         return;
                     }
                 }
+            } else if (estaEmDialogoNicolas || aguardandoAvanceSalaAuto || !textoDialogo.isEmpty()) {
+                avancarDialogo();
+                return;
             }
             return;
         }
