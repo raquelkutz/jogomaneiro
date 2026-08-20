@@ -111,7 +111,7 @@ public class JogoAudrey extends JFrame {
         Graphics2D g2d = img.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        if (relativePath.endsWith("ginasio.png")) {
+        if (relativePath.endsWith("ginasio.png") || relativePath.endsWith("ginasio.jpg")) {
             g2d.setColor(new Color(40, 140, 80));
             g2d.fillRect(0, 0, width, height);
             g2d.setColor(Color.WHITE);
@@ -790,7 +790,7 @@ public class JogoAudrey extends JFrame {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {}
 
-        garantirImagemExiste("ginasio.png");
+        garantirImagemExiste("ginasio.jpg");
         garantirImagemExiste("chave.png");
         garantirImagemExiste("livro.png");
         garantirImagemExiste("cutscene_sala_1.png");
@@ -998,12 +998,6 @@ class TelaCarregamento extends JPanel implements ActionListener {
         FontMetrics fmL = g2d.getFontMetrics();
         g2d.drawString(loading, (LARGURA - fmL.stringWidth(loading)) / 2, spinY + r + 30);
 
-        // Creditos rodape
-        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, 13f));
-        g2d.setColor(new Color(160, 140, 230));
-        String credito = "Desenvolvido com Java Swing";
-        FontMetrics fmC = g2d.getFontMetrics();
-        g2d.drawString(credito, (LARGURA - fmC.stringWidth(credito)) / 2, ALTURA - 25);
     }
 }
 
@@ -2310,7 +2304,7 @@ class MenuEmJogo extends JPanel implements ActionListener {
     }
 }
 
-class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseListener {
+class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
 
     private JogoAudrey frame;
     private final int LARGURA = 1000;
@@ -2319,12 +2313,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private Image fundoCenario1, fundoCenario2, fundoCenario3, fundoGinasio, fundoSalaAula1, fundoBiblioteca,
             imgArmarioAberto, imgNicolas;
     private Image imgChave, imgLivro;
-    private Image imgAlunoCorredor1, imgAlunoCorredor2;
+    private Image imgAlunoCorredor1, imgAlunoCorredor2, imgAlunoGinasio, imgIconeInteragir;
     private Image imgRaquel;
     private Image[] framesAndar = new Image[2];
     private Image imgParada;
     private Image imgPortraitAudrey, imgPortraitNicollas, imgPortraitGabi, imgPortraitIvi;
-    private Image imgPortraitRaquel, imgPortraitNicolas, imgPortraitCamila;
+    private Image imgPortraitRaquel, imgPortraitNicolas, imgPortraitCamila, imgPortraitAlunoGinasio;
 
     private final int AUDREY_LARGURA = 250;
     private final int AUDREY_ALTURA = 475;
@@ -2405,6 +2399,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private Image imgGabi;
     private Image imgGabiCorredor;
     private boolean ep1FalouGabiCorredor = false;
+    private Image imgIvi;
+    private Image imgIviCorredor;
+    private boolean ep1FalouIviCorredor = false;
 
     // -------------------------------------------
     private int indiceMapa = 0, faseDialogoNicolas = 0, selectedDialogueOption = 0;
@@ -2434,6 +2431,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean xpNicolasDado = false;
     private boolean xpCamilaDado = false;
     private boolean xpGabiDado = false;
+    private boolean xpIviDado = false;
 
     // --- DIÁLOGO AUTOMÁTICO DA SALA DE AULA ---
     // Sequencia de apresentação automática quando Audrey entra pela primeira vez
@@ -2467,6 +2465,26 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean ep1_solidaoUrbanaAtiva = false;
     private boolean ep1_solidaoUrbanaConcluida = false;
     private boolean ep1_entregouDesenho = false;
+
+    // --- CONTROLES TOUCH / MOBILE ---
+    private boolean touchEsquerdaPressionado = false;
+    private boolean touchDireitaPressionado = false;
+    private boolean touchInteragirPressionado = false;
+    private boolean touchInventarioPressionado = false;
+    private boolean touchDiarioPressionado = false;
+    private boolean touchObjetivosPressionado = false;
+    private boolean touchMenuPressionado = false;
+    private boolean touchFecharPressionado = false;
+
+    // Retângulos dos botões touch virtuais com bordas suaves (coordenadas virtuais 1000x750)
+    private final Rectangle touchBtnEsquerda = new Rectangle(40, 595, 90, 90);
+    private final Rectangle touchBtnDireita = new Rectangle(155, 595, 90, 90);
+    private final Rectangle touchBtnInteragir = new Rectangle(845, 575, 110, 110);
+    private final Rectangle touchBtnInventario = new Rectangle(845, 16, 62, 40);
+    private final Rectangle touchBtnDiario = new Rectangle(775, 16, 62, 40);
+    private final Rectangle touchBtnObjetivos = new Rectangle(700, 16, 67, 40);
+    private final Rectangle touchBtnMenu = new Rectangle(915, 16, 62, 40);
+    private final Rectangle touchBtnFechar = new Rectangle(20, 16, 62, 40);
 
     private Font fontCrayonHand;
     private BufferedImage shaderBuffer = new BufferedImage(1000, 750, BufferedImage.TYPE_INT_RGB);
@@ -2503,6 +2521,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         props.setProperty("ep1FalouNpc1", String.valueOf(ep1FalouNpc1));
         props.setProperty("ep1FalouNpc2", String.valueOf(ep1FalouNpc2));
         props.setProperty("ep1FalouNpc3", String.valueOf(ep1FalouNpc3));
+        props.setProperty("ep1FalouGabiCorredor", String.valueOf(ep1FalouGabiCorredor));
+        props.setProperty("ep1FalouIviCorredor", String.valueOf(ep1FalouIviCorredor));
         props.setProperty("faseDialogoGabi", String.valueOf(faseDialogoGabi));
         props.setProperty("faseDialogoIvi", String.valueOf(faseDialogoIvi));
         props.setProperty("ep1InteragiuBiblioteca", String.valueOf(ep1InteragiuBiblioteca));
@@ -2557,6 +2577,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         ep1FalouNpc1 = Boolean.parseBoolean(props.getProperty("ep1FalouNpc1", "false"));
         ep1FalouNpc2 = Boolean.parseBoolean(props.getProperty("ep1FalouNpc2", "false"));
         ep1FalouNpc3 = Boolean.parseBoolean(props.getProperty("ep1FalouNpc3", "false"));
+        ep1FalouGabiCorredor = Boolean.parseBoolean(props.getProperty("ep1FalouGabiCorredor", "false"));
+        ep1FalouIviCorredor = Boolean.parseBoolean(props.getProperty("ep1FalouIviCorredor", "false"));
         faseDialogoGabi = Integer.parseInt(props.getProperty("faseDialogoGabi", "0"));
         faseDialogoIvi = Integer.parseInt(props.getProperty("faseDialogoIvi", "0"));
         ep1InteragiuBiblioteca = Boolean.parseBoolean(props.getProperty("ep1InteragiuBiblioteca", "false"));
@@ -2595,6 +2617,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         setFocusable(true);
         addKeyListener(this);
         addMouseListener(this);
+        addMouseMotionListener(this);
         setDoubleBuffered(true);
 
         carregarFonts();
@@ -2616,7 +2639,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         fundoCenario1 = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("corredor1.png")).getImage(), LARGURA, ALTURA);
         fundoCenario2 = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("corredor2.png")).getImage(), LARGURA, ALTURA);
         fundoCenario3 = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("corredor3.png")).getImage(), LARGURA, ALTURA);
-        fundoGinasio = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("ginasio.png")).getImage(), LARGURA, ALTURA);
+        fundoGinasio = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("ginasio.jpg")).getImage(), LARGURA, ALTURA);
         fundoBiblioteca = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("bibliotecasala4.png")).getImage(), LARGURA, ALTURA);
         fundoSalaAula1 = redimensionarFundo(new ImageIcon(JogoAudrey.resolvePath("sala de aula 1.png")).getImage(), LARGURA, ALTURA);
         imgArmarioAberto = new ImageIcon(JogoAudrey.resolvePath("imagemarmario.png")).getImage();
@@ -2624,11 +2647,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 SALA_NICOLAS_LARGURA, SALA_NICOLAS_ALTURA);
         imgChave = new ImageIcon(JogoAudrey.resolvePath("chave.png")).getImage();
         imgLivro = new ImageIcon(JogoAudrey.resolvePath("livro.png")).getImage();
+        imgIconeInteragir = new ImageIcon(JogoAudrey.resolvePath("icone_interagir.png")).getImage();
 
         imgAlunoCorredor1 = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("aluno_corredor1.png")).getImage(), NPC_LARGURA,
                 NPC_ALTURA);
         imgAlunoCorredor2 = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("aluno_corredor2_backup.png")).getImage(), NPC_LARGURA,
                 NPC_ALTURA);
+        imgAlunoGinasio = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("aluno_ginasio.png")).getImage(), AUDREY_LARGURA,
+                AUDREY_ALTURA);
         imgPortraitAudrey = carregarImagem("pixil-frame-0 (5)-Photoroom.png");
         imgPortraitNicollas = carregarImagem("nicollas_caixa_dialogo.png");
         imgPortraitGabi = carregarImagem("gabi caixa de dialogo-Photoroom.png");
@@ -2636,6 +2662,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         imgPortraitRaquel = carregarImagem("quel_pixel_art_modified (1)-Photoroom (1).png");
         imgPortraitNicolas = carregarImagem("portrait_nicollas-removebg-preview.png");
         imgPortraitCamila = carregarImagem("camiz_pixel_art (1)-Photoroom (1).png");
+        imgPortraitAlunoGinasio = carregarImagem("aluno_ginasio.png");
         imgCamila = redimensionarImagem(new ImageIcon(
                 JogoAudrey.resolvePath("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview-Photoroom (1).png"))
                 .getImage(), SALA_NPC_LARGURA, SALA_CAMILA_ALTURA);
@@ -2647,6 +2674,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
         imgGabiCorredor = redimensionarImagem(
                 new ImageIcon(JogoAudrey.resolvePath("pixil-frame-0-Photoroom (1).png")).getImage(),
+                NPC_LARGURA, NPC_ALTURA);
+        imgIvi = redimensionarImagem(
+                new ImageIcon(JogoAudrey.resolvePath("1000115243-removebg-preview.png")).getImage(),
+                SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
+        imgIviCorredor = redimensionarImagem(
+                new ImageIcon(JogoAudrey.resolvePath("1000115243-removebg-preview.png")).getImage(),
                 NPC_LARGURA, NPC_ALTURA);
 
         framesAndar[0] = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("andarum.png")).getImage(), ANDAR1_LARGURA,
@@ -2766,26 +2799,49 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 g2d.drawImage(fundoCenario1, 0, 0, LARGURA, ALTURA, this);
             } else if (indiceMapa == 1) {
                 g2d.drawImage(fundoCenario2, 0, 0, LARGURA, ALTURA, this);
-                // Gabi no corredor 2 (X=500, longe da porta em X=350)
-                if (imgGabiCorredor != null) {
-                    int gabiCorredorX = 500;
+                if (!personagensNaBiblioteca) {
                     int npcBaseY = audreyY + 150;
-                    desenharSombraChao(g2d, gabiCorredorX + NPC_LARGURA / 2, npcBaseY - 55, (int) (NPC_LARGURA * 0.6));
-                    g2d.drawImage(imgGabiCorredor, gabiCorredorX + NPC_LARGURA, npcBaseY - NPC_ALTURA, -NPC_LARGURA,
-                            NPC_ALTURA, this);
-                    int labelW = 100;
-                    int labelH = 30;
-                    int labelX = gabiCorredorX + (NPC_LARGURA - labelW) / 2;
-                    int labelY = npcBaseY - NPC_ALTURA - labelH - 5;
-                    g2d.setColor(new Color(253, 246, 227, 220));
-                    g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
-                    g2d.setColor(new Color(210, 180, 140));
-                    g2d.setStroke(new BasicStroke(2));
-                    g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
-                    g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
-                    g2d.setColor(new Color(120, 80, 100));
-                    FontMetrics fmG = g2d.getFontMetrics();
-                    g2d.drawString("Gabi", labelX + (labelW - fmG.stringWidth("Gabi")) / 2, labelY + labelH - 8);
+                    // Gabi no corredor 2 (X=480, junto com a Ivi)
+                    if (imgGabiCorredor != null) {
+                        int gabiCorredorX = 480;
+                        desenharSombraChao(g2d, gabiCorredorX + NPC_LARGURA / 2, npcBaseY - 55, (int) (NPC_LARGURA * 0.6));
+                        g2d.drawImage(imgGabiCorredor, gabiCorredorX + NPC_LARGURA, npcBaseY - NPC_ALTURA, -NPC_LARGURA,
+                                NPC_ALTURA, this);
+                        int labelW = 100;
+                        int labelH = 30;
+                        int labelX = gabiCorredorX + (NPC_LARGURA - labelW) / 2;
+                        int labelY = npcBaseY - NPC_ALTURA - labelH - 5;
+                        g2d.setColor(new Color(253, 246, 227, 220));
+                        g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setColor(new Color(210, 180, 140));
+                        g2d.setStroke(new BasicStroke(2));
+                        g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
+                        g2d.setColor(new Color(120, 80, 100));
+                        FontMetrics fmG = g2d.getFontMetrics();
+                        g2d.drawString("Gabi", labelX + (labelW - fmG.stringWidth("Gabi")) / 2, labelY + labelH - 8);
+                    }
+                    // Ivi no corredor 2 (X=630, ao lado da Gabi)
+                    if (imgIviCorredor != null || imgPortraitIvi != null) {
+                        Image imgIviToDraw = (imgIviCorredor != null) ? imgIviCorredor : imgPortraitIvi;
+                        int iviCorredorX = 630;
+                        desenharSombraChao(g2d, iviCorredorX + NPC_LARGURA / 2, npcBaseY - 55, (int) (NPC_LARGURA * 0.6));
+                        g2d.drawImage(imgIviToDraw, iviCorredorX + NPC_LARGURA, npcBaseY - NPC_ALTURA, -NPC_LARGURA,
+                                NPC_ALTURA, this);
+                        int labelW = 80;
+                        int labelH = 30;
+                        int labelX = iviCorredorX + (NPC_LARGURA - labelW) / 2;
+                        int labelY = npcBaseY - NPC_ALTURA - labelH - 5;
+                        g2d.setColor(new Color(253, 246, 227, 220));
+                        g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setColor(new Color(210, 180, 140));
+                        g2d.setStroke(new BasicStroke(2));
+                        g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
+                        g2d.setColor(new Color(120, 80, 100));
+                        FontMetrics fmI = g2d.getFontMetrics();
+                        g2d.drawString("Ivi", labelX + (labelW - fmI.stringWidth("Ivi")) / 2, labelY + labelH - 8);
+                    }
                 }
             } else if (indiceMapa == 2) {
                 g2d.drawImage(fundoSalaAula1, 0, 0, LARGURA, ALTURA, this);
@@ -2884,10 +2940,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawString("Gabi", labelX + (labelW - fmG.stringWidth("Gabi")) / 2, labelY + labelH - 8);
                 }
                 // Ivi na posição X=300
-                if (imgPortraitIvi != null) {
+                if (imgIvi != null || imgPortraitIvi != null) {
+                    Image imgIviToDraw = (imgIvi != null) ? imgIvi : imgPortraitIvi;
                     int iX = 250;
                     desenharSombraChao(g2d, iX + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
-                    g2d.drawImage(imgPortraitIvi, iX + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
+                    g2d.drawImage(imgIviToDraw, iX + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
                             SALA_RAQUEL_ALTURA, this);
                     int labelW = 80;
                     int labelH = 30;
@@ -2902,6 +2959,29 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.setColor(new Color(120, 80, 100));
                     FontMetrics fmI = g2d.getFontMetrics();
                     g2d.drawString("Ivi", labelX + (labelW - fmI.stringWidth("Ivi")) / 2, labelY + labelH - 8);
+                }
+            }
+
+            // Desenhar NPC do Ginásio (Victor - Jogador de Futebol)
+            if (indiceMapa == 4) {
+                int npcBaseY = audreyY + 150;
+                int gX = 600;
+                if (imgAlunoGinasio != null) {
+                    desenharSombraChao(g2d, gX + AUDREY_LARGURA / 2, npcBaseY - 55, (int) (AUDREY_LARGURA * 0.6));
+                    g2d.drawImage(imgAlunoGinasio, gX, npcBaseY - AUDREY_ALTURA, AUDREY_LARGURA, AUDREY_ALTURA, this);
+                    int labelW = 100;
+                    int labelH = 30;
+                    int labelX = gX + (AUDREY_LARGURA - labelW) / 2;
+                    int labelY = npcBaseY - AUDREY_ALTURA - labelH - 5;
+                    g2d.setColor(new Color(253, 246, 227, 220));
+                    g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                    g2d.setColor(new Color(210, 180, 140));
+                    g2d.setStroke(new BasicStroke(2));
+                    g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                    g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
+                    g2d.setColor(new Color(120, 80, 100));
+                    FontMetrics fmG = g2d.getFontMetrics();
+                    g2d.drawString("Victor", labelX + (labelW - fmG.stringWidth("Victor")) / 2, labelY + labelH - 8);
                 }
             }
 
@@ -2991,6 +3071,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (mostrarAnimacaoRiscado) {
             desenharAnimacaoRiscado(g2d);
         }
+
+        // --- RENDERIZAR CONTROLES TOUCH ESTILO MINECRAFT PE ---
+        desenharControlesTouch(g2d);
 
         int brilhoVal = Configuracoes.getInstance().getBrilho();
         if (brilhoVal != 50) {
@@ -3238,8 +3321,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
 
             if (indiceMapa == 1 && !personagensNaBiblioteca) {
-                // Hint da porta (só aparece se NÃO estiver perto da Gabi)
-                if (Math.abs(audreyX - posPortaX) < 150 && Math.abs(audreyX - 500) >= 200) {
+                // Hint da porta (só aparece se NÃO estiver perto da Gabi nem da Ivi)
+                if (Math.abs(audreyX - posPortaX) < 150 && Math.abs(audreyX - 480) >= 120 && Math.abs(audreyX - 630) >= 120) {
                     if (explorouCorredor) {
                         desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para entrar", audreyX - 10,
                                 audreyY - 430, new Color(160, 120, 200));
@@ -3248,9 +3331,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                                 audreyY - 430, new Color(140, 100, 180));
                     }
                 }
-                // Hint da Gabi (só aparece se NÃO estiver perto da porta)
-                if (Math.abs(audreyX - 500) < 150 && Math.abs(audreyX - posPortaX) >= 200) {
+                // Hint da Gabi
+                if (Math.abs(audreyX - 480) < 100 && Math.abs(audreyX - posPortaX) >= 150) {
                     desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Gabi",
+                            audreyX - 10, audreyY - 430, new Color(160, 120, 200));
+                }
+                // Hint da Ivi
+                if (Math.abs(audreyX - 630) < 100 && Math.abs(audreyX - posPortaX) >= 150) {
+                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Ivi",
                             audreyX - 10, audreyY - 430, new Color(160, 120, 200));
                 }
             }
@@ -3289,6 +3377,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                             audreyX - 10, audreyY - 430, new Color(160, 120, 200));
                 }
             }
+
+            if (indiceMapa == 4 && Math.abs(audreyX - 600) < 150 && textoDialogo.isEmpty()) {
+                desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Victor",
+                        audreyX - 10, audreyY - 430, new Color(160, 120, 200));
+            }
         }
 
         if (!textoDialogo.isEmpty() || armarioEstaAberto) {
@@ -3311,6 +3404,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 portraitImg = imgPortraitGabi; 
             }else if ("Ivi".equals(nomePersonagem)) {
                 portraitImg = imgPortraitIvi;
+            }else if ("Victor".equals(nomePersonagem)) {
+                portraitImg = (imgPortraitAlunoGinasio != null) ? imgPortraitAlunoGinasio : imgAlunoGinasio;
             }
 
             int textXOffset = caixaX + 30;
@@ -4055,6 +4150,14 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 }
                 repaint();
             }
+        } else {
+            // Em outros mapas (corredor, biblioteca, etc.), avançar fecha o diálogo após todo o texto ser lido
+            estaEmDialogoNicolas = false;
+            textoDialogo = "";
+            nomePersonagem = "";
+            GerenciadorAudio.pararVozNicolas();
+            GerenciadorAudio.pararVozRaquel();
+            repaint();
         }
     }
 
@@ -4088,23 +4191,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIREITA")) {
-            boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
-            if (!emDialogoForcado) {
-                velX = (indiceMapa == 2) ? 20 : 12;
-                olhandoDireita = true;
-                estaMovendo = true;
-                GerenciadorAudio.tocarSomPassos();
-            }
+            moverDireita();
         }
 
         if (code == Configuracoes.getInstance().getTecla("ESQUERDA")) {
-            boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
-            if (!emDialogoForcado) {
-                velX = (indiceMapa == 2) ? -20 : -12;
-                olhandoDireita = false;
-                estaMovendo = true;
-                GerenciadorAudio.tocarSomPassos();
-            }
+            moverEsquerda();
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIÁRIO")) {
@@ -4125,179 +4216,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         if (code == Configuracoes.getInstance().getTecla("INTERAGIR")) {
-            // Pegar livro no armário
-            if (armarioEstaAberto && !livroJoiFoiPego) {
-                GerenciadorAudio.tocarSomColeta();
-                temLivro = true;
-                livroJoiFoiPego = true;
-                return;
-            }
-
-            // Sair da sala de aula
-            if (indiceMapa == 2 && estaProximoDaPuerta()) {
-                if (estaEmDialogoNicolas || !textoDialogo.isEmpty()) {
-                    return; // Impede saída durante diálogo
-                }
-                if (ep1_solidaoUrbanaAtiva && !ep1_entregouDesenho) {
-                    GerenciadorAudio.tocarSomErro();
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Audrey";
-                    textoDialogo = "Não posso sair sem antes entregar o desenho para o pessoal.";
-                    return;
-                }
-                GerenciadorAudio.tocarSomAbrirPorta();
-                indiceMapa = 1;
-                audreyX = ultimaPosAoEntraSala;
-                textoDialogo = "";
-                nomePersonagem = "";
-                estaEmDialogoNicolas = false;
-                GerenciadorAudio.pararVozNicolas();
-                faseDialogoNicolas = 0;
-            } // Entrar na sala de aula
-            else if (indiceMapa == 1 && Math.abs(audreyX - posPortaX) < 150) {
-                if (!sala1Aberta) {
-                    GerenciadorAudio.tocarSomErro();
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Audrey";
-                    textoDialogo = "Ainda preciso conhecer o lugar e falar com o pessoal antes de entrar.";
-                    return;
-                }
-                if (!explorouCorredor) {
-                    // Primeiro acesso: pedir para explorar a escola
-                    nomePersonagem = "Audrey";
-                    textoDialogo = "Acho melhor eu ir explorar um pouco a escola antes de entrar na sala de aula.";
-                    estaEmDialogoNicolas = true;
-                } else {
-                    // Já explorou: pode entrar
-                    GerenciadorAudio.tocarSomAbrirPorta();
-                    ultimaPosAoEntraSala = audreyX;
-                    indiceMapa = 2;
-                    audreyX = 100;
-                    textoDialogo = "";
-                    nomePersonagem = "";
-                    estaEmDialogoNicolas = false;
-                    GerenciadorAudio.pararVozNicolas();
-                    faseDialogoNicolas = 0;
-                }
-            } // Gabi no corredor (X=500, longe da porta em X=350)
-            else if (indiceMapa == 1 && Math.abs(audreyX - 500) < 150 && textoDialogo.isEmpty()) {
-                if (!ep1FalouGabiCorredor) {
-                    GerenciadorAudio.tocarSomDialogo();
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Gabi";
-                    textoDialogo = "Oi! Você é a aluna nova, né? Eu sou a Gabi! A sala de aula é bem ali, pode ir lá tranquila.";
-                    ep1FalouGabiCorredor = true;
-                    adicionarXpPendente(1);
-                    return;
-                } else {
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Gabi";
-                    textoDialogo = "Estou passando pelo corredor. Qualquer coisa é só chamar!";
-                    return;
-                }
-            } // Sair da sala de aula
-            else if (indiceMapa == 2 && Math.abs(audreyX - 50) < 150) {
-                if (estaEmDialogoNicolas || !textoDialogo.isEmpty()) {
-                    return; // Bloqueado de sair enquanto estiver em diálogo
-                }
-                GerenciadorAudio.tocarSomAbrirPorta();
-                entregarXpPendente();
-                indiceMapa = 1;
-                audreyX = ultimaPosAoEntraSala;
-            } // Sair da biblioteca
-            else if (indiceMapa == 6 && Math.abs(audreyX - 50) < 150) {
-                GerenciadorAudio.tocarSomAbrirPorta();
-                entregarXpPendente();
-                indiceMapa = 3;
-                audreyX = 750;
-            } // Entrar na biblioteca
-            else if (indiceMapa == 3 && Math.abs(audreyX - 750) < 150) {
-                GerenciadorAudio.tocarSomAbrirPorta();
-                indiceMapa = 6;
-                audreyX = 100;
-                visitouBiblioteca = true;
-                if (!ep1InteragiuBiblioteca) {
-                    ep1InteragiuBiblioteca = true;
-                    checarObjetivosEp1();
-                }
-            } // Gabi na biblioteca
-            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 550) < 150
-                    && textoDialogo.isEmpty()) {
-                if (!ep1FalouNpc2) {
-                    GerenciadorAudio.tocarSomDialogo();
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Gabi";
-                    textoDialogo = "Ah, você veio! A Ivi e eu estamos aqui na biblioteca agora. A sala de aula é logo ali!";
-                    ep1FalouNpc2 = true;
-                    adicionarXpPendente(1);
-                    checarObjetivosEp1();
-                    return;
-                } else {
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Gabi";
-                    textoDialogo = "Estamos aqui na biblioteca estudando. Qualquer coisa é só chamar!";
-                    return;
-                }
-            } // Ivi na biblioteca
-            else if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 300) < 150
-                    && textoDialogo.isEmpty()) {
-                if (!ep1FalouNpc3) {
-                    GerenciadorAudio.tocarSomDialogo();
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Ivi";
-                    textoDialogo = "Oi Audrey! A Gabi e eu viemos pra biblioteca estudar. Já foi na sala de aula?";
-                    ep1FalouNpc3 = true;
-                    adicionarXpPendente(1);
-                    checarObjetivosEp1();
-                    return;
-                } else {
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Ivi";
-                    textoDialogo = "Tem uns livros muito bons aqui! Vem conferir depois.";
-                    return;
-                }
-            } // Mural
-            else if (indiceMapa == 0 && Math.abs(audreyX - 250) < 100 && textoDialogo.isEmpty()) {
-                if (!ep1InteragiuMural) {
-                    GerenciadorAudio.tocarSomDialogo();
-                    ep1InteragiuMural = true;
-                    estaEmDialogoNicolas = true;
-                    nomePersonagem = "Audrey";
-                    textoDialogo = "Um mural de avisos da escola. 'Festival Cultural em breve!'";
-                    checarObjetivosEp1();
-                    return;
-                }
-            } // Porta Trancada
-            else if (indiceMapa == 3 && Math.abs(audreyX - 350) < 150 && textoDialogo.isEmpty()) {
-                GerenciadorAudio.tocarSomErro();
-                nomePersonagem = "Audrey";
-                textoDialogo = "A porta está trancada. Parece ser a sala da coordenação.";
-            } // Abrir armário
-            else if (indiceMapa == 0 && Math.abs(audreyX - posArmarioX) < 150 && textoDialogo.isEmpty()) {
-                nomePersonagem = "Audrey";
-
-                if (temChave) {
-                    GerenciadorAudio.tocarSomArmario();
-                    textoDialogo = "Destrancado! Vamos ver o que tem aqui...";
-                    armarioEstaAberto = true;
-                    temChave = false;
-                } else if (!livroJoiFoiPego) {
-                    GerenciadorAudio.tocarSomErro();
-                    if (missaoLeituraAtiva) {
-                        textoDialogo = "Está trancado... o garoto com o livro me deu a chave, mas ainda não encontrei!";
-                    } else if (faseDialogoLeitura > 0) {
-                        textoDialogo = "Está trancado... preciso continuar falando com o garoto do livro para pegar a chave.";
-                    } else {
-                        textoDialogo = "Está trancado. Não tenho a chave...";
-                    }
-                } else {
-                    GerenciadorAudio.tocarSomArmario();
-                    textoDialogo = "Vamos ver o que tem aqui...";
-                    armarioEstaAberto = true;
-                }
-                estaEmDialogoNicolas = false;
-                GerenciadorAudio.pararVozNicolas();
-            }
+            executarInteracao();
         }
 
         if (code == Configuracoes.getInstance().getTecla("FECHAR")) {
@@ -4313,9 +4232,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
     @Override
     public void keyReleased(KeyEvent e) {
-        velX = 0;
-        estaMovendo = false;
-        GerenciadorAudio.pararSomPassos();
+        pararMovimento();
     }
 
     @Override
@@ -4528,61 +4445,705 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         g2d.setClip(clipOriginal);
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
+    // =========================================================================
+    // --- MÉTODOS DE CONTROLE MOBILE / TOUCH (ESTILO MINECRAFT PE) ---
+    // =========================================================================
+
+    public void moverEsquerda() {
+        boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
+        if (!emDialogoForcado && !inventarioAberto && !diarioAberto && !armarioEstaAberto) {
+            velX = (indiceMapa == 2) ? -20 : -12;
+            olhandoDireita = false;
+            estaMovendo = true;
+            GerenciadorAudio.tocarSomPassos();
+        }
     }
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-        if (!diarioAberto) {
-            if (!armarioEstaAberto && estaEmDialogoNicolas && faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
-                int w = getWidth();
-                int h = getHeight();
-                double scaleX = (double) w / LARGURA;
-                double scaleY = (double) h / ALTURA;
-                double scale = Math.min(scaleX, scaleY);
-                int xOffset = (int) ((w - (LARGURA * scale)) / 2);
-                int yOffset = (int) ((h - (ALTURA * scale)) / 2);
+    public void moverDireita() {
+        boolean emDialogoForcado = aguardandoAvanceSalaAuto || faseDialogoNicolas >= 100;
+        if (!emDialogoForcado && !inventarioAberto && !diarioAberto && !armarioEstaAberto) {
+            velX = (indiceMapa == 2) ? 20 : 12;
+            olhandoDireita = true;
+            estaMovendo = true;
+            GerenciadorAudio.tocarSomPassos();
+        }
+    }
 
-                int realX = (int) ((e.getX() - xOffset) / scale);
-                int realY = (int) ((e.getY() - yOffset) / scale);
+    public void pararMovimento() {
+        velX = 0;
+        estaMovendo = false;
+        GerenciadorAudio.pararSomPassos();
+    }
 
-                int caixaW = 860;
-                int caixaH = 130;
-                int caixaX = (LARGURA - caixaW) / 2;
-                int caixaY = ALTURA - caixaH - 30;
+    public void executarInteracao() {
+        // Pegar livro no armário
+        if (armarioEstaAberto && !livroJoiFoiPego) {
+            GerenciadorAudio.tocarSomColeta();
+            temLivro = true;
+            livroJoiFoiPego = true;
+            return;
+        }
 
-                Image portraitImg = imgPortraitAudrey;
-                int textXOffset = caixaX + 30;
-                if (portraitImg != null) {
-                    int polaroidW = 160;
-                    textXOffset = caixaX + 15 + polaroidW + 25;
-                }
-
-                if (realX >= textXOffset - 20 && realX <= caixaX + caixaW - 20) {
-                    if (realY >= caixaY + 50 && realY <= caixaY + 80) {
-                        selectedDialogueOption = 0;
-                        repaint();
-                        frame.mostrarImportadorReal();
-                        return;
-                    } else if (realY >= caixaY + 81 && realY <= caixaY + 115) {
-                        selectedDialogueOption = 1;
-                        repaint();
-                        estaEmDialogoNicolas = false;
-                        textoDialogo = "";
-                        nomePersonagem = "";
-                        faseDialogoNicolas = 0;
-                        ep1_entregouDesenho = false;
-                        return;
-                    }
-                }
-            } else if (estaEmDialogoNicolas || aguardandoAvanceSalaAuto || !textoDialogo.isEmpty()) {
-                avancarDialogo();
+        // Sair da sala de aula
+        if (indiceMapa == 2 && estaProximoDaPuerta()) {
+            if (estaEmDialogoNicolas || !textoDialogo.isEmpty()) {
                 return;
+            }
+            if (ep1_solidaoUrbanaAtiva && !ep1_entregouDesenho) {
+                GerenciadorAudio.tocarSomErro();
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Audrey";
+                textoDialogo = "Não posso sair sem antes entregar o desenho para o pessoal.";
+                return;
+            }
+            GerenciadorAudio.tocarSomAbrirPorta();
+            indiceMapa = 1;
+            audreyX = ultimaPosAoEntraSala;
+            textoDialogo = "";
+            nomePersonagem = "";
+            estaEmDialogoNicolas = false;
+            GerenciadorAudio.pararVozNicolas();
+            faseDialogoNicolas = 0;
+            return;
+        }
+
+        // Entrar na sala de aula
+        if (indiceMapa == 1 && Math.abs(audreyX - posPortaX) < 150) {
+            if (!sala1Aberta) {
+                GerenciadorAudio.tocarSomErro();
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Audrey";
+                textoDialogo = "Ainda preciso conhecer o lugar e falar com o pessoal antes de entrar.";
+                return;
+            }
+            if (!explorouCorredor) {
+                nomePersonagem = "Audrey";
+                textoDialogo = "Acho melhor eu ir explorar um pouco a escola antes de entrar na sala de aula.";
+                estaEmDialogoNicolas = true;
+            } else {
+                GerenciadorAudio.tocarSomAbrirPorta();
+                ultimaPosAoEntraSala = audreyX;
+                indiceMapa = 2;
+                audreyX = 100;
+                textoDialogo = "";
+                nomePersonagem = "";
+                estaEmDialogoNicolas = false;
+                GerenciadorAudio.pararVozNicolas();
+                faseDialogoNicolas = 0;
             }
             return;
         }
 
+        // Gabi no corredor
+        if (indiceMapa == 1 && !personagensNaBiblioteca && Math.abs(audreyX - 480) < 110 && textoDialogo.isEmpty()) {
+            if (!ep1FalouGabiCorredor) {
+                GerenciadorAudio.tocarSomDialogo();
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Gabi";
+                textoDialogo = "Oi! Você é a aluna nova, né? Eu sou a Gabi e essa é a Ivi! A sala de aula é bem ali, pode ir lá tranquila.";
+                ep1FalouGabiCorredor = true;
+                ep1FalouNpc2 = true;
+                adicionarXpPendente(1);
+                checarObjetivosEp1();
+                return;
+            } else {
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Gabi";
+                textoDialogo = "A Ivi e eu estamos conversando aqui no corredor. Qualquer coisa é só chamar!";
+                return;
+            }
+        }
+
+        // Ivi no corredor
+        if (indiceMapa == 1 && !personagensNaBiblioteca && Math.abs(audreyX - 630) < 110 && textoDialogo.isEmpty()) {
+            if (!ep1FalouIviCorredor) {
+                GerenciadorAudio.tocarSomDialogo();
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Ivi";
+                textoDialogo = "Oi! Você deve ser a Audrey, né? Eu sou a Ivi! Seja muito bem-vinda à escola!";
+                ep1FalouIviCorredor = true;
+                ep1FalouNpc3 = true;
+                adicionarXpPendente(1);
+                checarObjetivosEp1();
+                return;
+            } else {
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Ivi";
+                textoDialogo = "Estamos aproveitando o tempinho antes da aula começar. Pode explorar à vontade!";
+                return;
+            }
+        }
+
+        // Falar com Nicolas na Sala de Aula
+        if (indiceMapa == 2 && Math.abs(audreyX - posNicolasXSalaAula) < 120 && textoDialogo.isEmpty()) {
+            avancarDialogo();
+            return;
+        }
+
+        // Sair da sala de aula
+        if (indiceMapa == 2 && Math.abs(audreyX - 50) < 150) {
+            if (estaEmDialogoNicolas || !textoDialogo.isEmpty()) {
+                return;
+            }
+            GerenciadorAudio.tocarSomAbrirPorta();
+            entregarXpPendente();
+            indiceMapa = 1;
+            audreyX = ultimaPosAoEntraSala;
+            return;
+        }
+
+        // Sair da biblioteca
+        if (indiceMapa == 6 && Math.abs(audreyX - 50) < 150) {
+            GerenciadorAudio.tocarSomAbrirPorta();
+            entregarXpPendente();
+            indiceMapa = 3;
+            audreyX = 750;
+            return;
+        }
+
+        // Entrar na biblioteca
+        if (indiceMapa == 3 && Math.abs(audreyX - 750) < 150) {
+            GerenciadorAudio.tocarSomAbrirPorta();
+            indiceMapa = 6;
+            audreyX = 100;
+            visitouBiblioteca = true;
+            if (!ep1InteragiuBiblioteca) {
+                ep1InteragiuBiblioteca = true;
+                checarObjetivosEp1();
+            }
+            return;
+        }
+
+        // Gabi na biblioteca
+        if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 550) < 150 && textoDialogo.isEmpty()) {
+            if (!ep1FalouNpc2) {
+                GerenciadorAudio.tocarSomDialogo();
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Gabi";
+                textoDialogo = "Ah, você veio! A Ivi e eu estamos aqui na biblioteca agora. A sala de aula é logo ali!";
+                ep1FalouNpc2 = true;
+                adicionarXpPendente(1);
+                checarObjetivosEp1();
+                return;
+            } else {
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Gabi";
+                textoDialogo = "Estamos aqui na biblioteca estudando. Qualquer coisa é só chamar!";
+                return;
+            }
+        }
+
+        // Ivi na biblioteca
+        if (indiceMapa == 6 && personagensNaBiblioteca && Math.abs(audreyX - 300) < 150 && textoDialogo.isEmpty()) {
+            if (!ep1FalouNpc3) {
+                GerenciadorAudio.tocarSomDialogo();
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Ivi";
+                textoDialogo = "Oi Audrey! A Gabi e eu viemos pra biblioteca estudar. Já foi na sala de aula?";
+                ep1FalouNpc3 = true;
+                adicionarXpPendente(1);
+                checarObjetivosEp1();
+                return;
+            } else {
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Ivi";
+                textoDialogo = "Tem uns livros muito bons aqui! Vem conferir depois.";
+                return;
+            }
+        }
+
+        // Victor no Ginásio (Esportes & Fitness)
+        if (indiceMapa == 4 && Math.abs(audreyX - 600) < 150 && textoDialogo.isEmpty()) {
+            GerenciadorAudio.tocarSomDialogo();
+            estaEmDialogoNicolas = true;
+            nomePersonagem = "Victor";
+            if (!missaoFitnessAtiva) {
+                textoDialogo = "E aí, Audrey! Bem-vinda ao ginásio! Eu sou o Victor, sou do time de futebol da escola!";
+                missaoFitnessAtiva = true;
+                adicionarXpPendente(1);
+                checarObjetivosEp1();
+            } else if (!missaoFitnessConcluida) {
+                textoDialogo = "O treino hoje tá ótimo! Se quiser participar de algum esporte, vê as metas no seu diário!";
+                adicionarXpPendente(1);
+            } else {
+                textoDialogo = "Valeu, Audrey! Sempre que quiser jogar uma pelada depois das aulas, pode aparecer aqui!";
+            }
+            return;
+        }
+
+        // Mural
+        if (indiceMapa == 0 && Math.abs(audreyX - 250) < 100 && textoDialogo.isEmpty()) {
+            if (!ep1InteragiuMural) {
+                GerenciadorAudio.tocarSomDialogo();
+                ep1InteragiuMural = true;
+                estaEmDialogoNicolas = true;
+                nomePersonagem = "Audrey";
+                textoDialogo = "Um mural de avisos da escola. 'Festival Cultural em breve!'";
+                checarObjetivosEp1();
+                return;
+            }
+        }
+
+        // Porta Trancada
+        if (indiceMapa == 3 && Math.abs(audreyX - 350) < 150 && textoDialogo.isEmpty()) {
+            GerenciadorAudio.tocarSomErro();
+            nomePersonagem = "Audrey";
+            textoDialogo = "A porta está trancada. Parece ser a sala da coordenação.";
+            return;
+        }
+
+        // Abrir armário
+        if (indiceMapa == 0 && Math.abs(audreyX - posArmarioX) < 150 && textoDialogo.isEmpty()) {
+            nomePersonagem = "Audrey";
+            if (temChave) {
+                GerenciadorAudio.tocarSomArmario();
+                textoDialogo = "Destrancado! Vamos ver o que tem aqui...";
+                armarioEstaAberto = true;
+                temChave = false;
+            } else if (!livroJoiFoiPego) {
+                GerenciadorAudio.tocarSomErro();
+                if (missaoLeituraAtiva) {
+                    textoDialogo = "Está trancado... o garoto com o livro me deu a chave, mas ainda não encontrei!";
+                } else if (faseDialogoLeitura > 0) {
+                    textoDialogo = "Está trancado... preciso continuar falando com o garoto do livro para pegar a chave.";
+                } else {
+                    textoDialogo = "Está trancado. Não tenho a chave...";
+                }
+            } else {
+                GerenciadorAudio.tocarSomArmario();
+                textoDialogo = "Vamos ver o que tem aqui...";
+                armarioEstaAberto = true;
+            }
+            estaEmDialogoNicolas = false;
+            GerenciadorAudio.pararVozNicolas();
+        }
+    }
+
+    private void desenharControlesTouch(Graphics2D g2d) {
+        if (armarioEstaAberto || inventarioAberto || diarioAberto) {
+            // Desenhar apenas o botão de fechar quando menus/armário estiverem abertos
+            desenharBotaoSuaveComIcone(g2d, touchBtnFechar.x, touchBtnFechar.y, touchBtnFechar.width, touchBtnFechar.height, 18,
+                    "FECHAR", touchFecharPressionado, new Color(205, 75, 75), "fechar");
+            return;
+        }
+
+        // =====================================================================
+        // --- 1. BOTÕES DIRECIONAIS: APENAS ESQUERDA (◀) E DIREITA (▶) ---
+        // =====================================================================
+        // Fundo suave em pílula atrás dos botões direcionais
+        g2d.setColor(new Color(0, 0, 0, 45));
+        g2d.fillRoundRect(touchBtnEsquerda.x - 8, touchBtnEsquerda.y - 8, 
+                (touchBtnDireita.x + touchBtnDireita.width) - touchBtnEsquerda.x + 16,
+                touchBtnEsquerda.height + 16, 32, 32);
+
+        // Botão ESQUERDA (◀)
+        desenharBotaoSuaveComIcone(g2d, touchBtnEsquerda.x, touchBtnEsquerda.y, touchBtnEsquerda.width, touchBtnEsquerda.height, 24,
+                "", touchEsquerdaPressionado, new Color(155, 120, 205), "seta_esquerda");
+
+        // Botão DIREITA (▶)
+        desenharBotaoSuaveComIcone(g2d, touchBtnDireita.x, touchBtnDireita.y, touchBtnDireita.width, touchBtnDireita.height, 24,
+                "", touchDireitaPressionado, new Color(155, 120, 205), "seta_direita");
+
+        // =====================================================================
+        // --- 2. BOTÃO DE INTERAÇÃO À DIREITA (MÃOZINHA / BALÃO DE FALA) ---
+        // =====================================================================
+        String labelAcao = "INTERAGIR";
+        String tipoIcone = "maozinha";
+        Color corAcao = new Color(60, 165, 105); // Verde esmeralda suave
+        if (!textoDialogo.isEmpty() || aguardandoAvanceSalaAuto || estaEmDialogoNicolas) {
+            labelAcao = "AVANÇAR";
+            tipoIcone = "balao";
+            corAcao = new Color(70, 140, 220); // Azul suave
+        }
+        desenharBotaoSuaveComIcone(g2d, touchBtnInteragir.x, touchBtnInteragir.y, touchBtnInteragir.width, touchBtnInteragir.height, 32,
+                labelAcao, touchInteragirPressionado, corAcao, tipoIcone);
+
+        // =====================================================================
+        // --- 3. BARRA SUPERIOR DE ATALHOS RÁPIDOS (PÍLULAS SUAVES) ---
+        // =====================================================================
+        // Pausa / Menu
+        desenharBotaoSuaveComIcone(g2d, touchBtnMenu.x, touchBtnMenu.y, touchBtnMenu.width, touchBtnMenu.height, 16,
+                "MENU", touchMenuPressionado, new Color(130, 125, 145), "menu");
+
+        // Inventário
+        desenharBotaoSuaveComIcone(g2d, touchBtnInventario.x, touchBtnInventario.y, touchBtnInventario.width, touchBtnInventario.height, 16,
+                "ITENS", touchInventarioPressionado || inventarioAberto, new Color(125, 155, 110), "itens");
+
+        // Diário
+        desenharBotaoSuaveComIcone(g2d, touchBtnDiario.x, touchBtnDiario.y, touchBtnDiario.width, touchBtnDiario.height, 16,
+                "DIÁRIO", touchDiarioPressionado || diarioAberto, new Color(145, 105, 165), "diario");
+
+        // Missões
+        desenharBotaoSuaveComIcone(g2d, touchBtnObjetivos.x, touchBtnObjetivos.y, touchBtnObjetivos.width, touchBtnObjetivos.height, 16,
+                "MISSÕES", touchObjetivosPressionado || mostrarObjetivos, new Color(85, 140, 175), "missoes");
+
+        // Fechar (✕) se diálogo estiver aberto
+        if (!textoDialogo.isEmpty()) {
+            desenharBotaoSuaveComIcone(g2d, touchBtnFechar.x, touchBtnFechar.y, touchBtnFechar.width, touchBtnFechar.height, 16,
+                    "FECHAR", touchFecharPressionado, new Color(195, 75, 75), "fechar");
+        }
+    }
+
+    /**
+     * Renderiza botões com bordas suaves, gradientes translúcidos e ícones vetoriais detalhados
+     * (mãozinha de interação, setas suaves, balão de fala, etc.)
+     */
+    private void desenharBotaoSuaveComIcone(Graphics2D g2d, int x, int y, int w, int h, int arc, String label, boolean pressionado, Color corTema, String tipoIcone) {
+        // 1. Sombra suave inferior
+        g2d.setColor(new Color(0, 0, 0, 55));
+        g2d.fillRoundRect(x + 2, y + 4, w, h, arc, arc);
+
+        // 2. Fundo Glassmorphism
+        if (pressionado) {
+            g2d.setColor(new Color(corTema.getRed(), corTema.getGreen(), corTema.getBlue(), 225));
+            g2d.fillRoundRect(x, y + 2, w, h, arc, arc);
+
+            // Brilho superior
+            g2d.setColor(new Color(255, 255, 255, 110));
+            g2d.fillRoundRect(x + 4, y + 5, w - 8, (h - 8) / 2, arc - 4, arc - 4);
+        } else {
+            g2d.setColor(new Color(28, 20, 36, 180));
+            g2d.fillRoundRect(x, y, w, h, arc, arc);
+
+            // Reflexo superior
+            g2d.setColor(new Color(255, 255, 255, 28));
+            g2d.fillRoundRect(x + 2, y + 2, w - 4, (h - 4) / 2, arc - 2, arc - 2);
+        }
+
+        // 3. Borda suave arredondada
+        if (pressionado) {
+            g2d.setColor(new Color(255, 255, 255, 245));
+            g2d.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        } else {
+            g2d.setColor(new Color(corTema.getRed(), corTema.getGreen(), corTema.getBlue(), 200));
+            g2d.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        }
+        g2d.drawRoundRect(x, y + (pressionado ? 2 : 0), w, h, arc, arc);
+
+        // 4. Desenhar Ícone Vetorial Específico
+        int cx = x + w / 2;
+        int cy = (label == null || label.isEmpty()) ? (y + h / 2) : (y + (h / 2) - 6);
+
+        if ("seta_esquerda".equals(tipoIcone)) {
+            desenharIconeSeta(g2d, cx, cy, 32, -1, 0, pressionado);
+        } else if ("seta_direita".equals(tipoIcone)) {
+            desenharIconeSeta(g2d, cx, cy, 32, 1, 0, pressionado);
+        } else if ("seta_cima".equals(tipoIcone)) {
+            desenharIconeSeta(g2d, cx, cy, 32, 0, -1, pressionado);
+        } else if ("seta_baixo".equals(tipoIcone)) {
+            desenharIconeSeta(g2d, cx, cy, 32, 0, 1, pressionado);
+        } else if ("losango".equals(tipoIcone)) {
+            desenharIconeLosango(g2d, cx, cy, 26, pressionado);
+        } else if ("maozinha".equals(tipoIcone)) {
+            desenharIconeMaozinha(g2d, cx, cy, 42, pressionado);
+        } else if ("balao".equals(tipoIcone)) {
+            desenharIconeBalaoFala(g2d, cx, cy, 42, pressionado);
+        } else if ("pular".equals(tipoIcone)) {
+            desenharIconePular(g2d, cx, cy, 30, pressionado);
+        } else if ("menu".equals(tipoIcone)) {
+            desenharIconeMenu(g2d, cx, cy - 2, 18, pressionado);
+        } else if ("itens".equals(tipoIcone)) {
+            desenharIconeMochila(g2d, cx, cy - 2, 18, pressionado);
+        } else if ("diario".equals(tipoIcone)) {
+            desenharIconeDiario(g2d, cx, cy - 2, 18, pressionado);
+        } else if ("missoes".equals(tipoIcone)) {
+            desenharIconeAlvo(g2d, cx, cy - 2, 18, pressionado);
+        } else if ("fechar".equals(tipoIcone)) {
+            desenharIconeFechar(g2d, cx, cy - 2, 18, pressionado);
+        }
+
+        // 5. Label de Texto (se presente)
+        if (label != null && !label.isEmpty()) {
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 12));
+            FontMetrics fmTxt = g2d.getFontMetrics();
+            int txTxt = x + (w - fmTxt.stringWidth(label)) / 2;
+            int tyTxt = y + h - 8 + (pressionado ? 2 : 0);
+
+            // Sombra do texto
+            g2d.setColor(new Color(0, 0, 0, 160));
+            g2d.drawString(label, txTxt + 1, tyTxt + 1);
+            g2d.setColor(new Color(248, 245, 252));
+            g2d.drawString(label, txTxt, tyTxt);
+        }
+    }
+
+    // =========================================================================
+    // --- DESENHADORES VETORIAIS DE ÍCONES (SETAS, MÃOZINHA, BALÃO, ETC.) ---
+    // =========================================================================
+
+    /**
+     * Desenha uma mãozinha elegante e nítida com dedo indicador e dedos delineados.
+     */
+    private void desenharIconeMaozinha(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        if (imgIconeInteragir != null) {
+            int yOff = pressionado ? 2 : 0;
+            int cyEff = cy + yOff;
+            int iw = (int)(size * 1.1);
+            int ih = (int)(size * 1.1);
+            g2d.drawImage(imgIconeInteragir, cx - iw / 2, cyEff - ih / 2, iw, ih, null);
+            return;
+        }
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        // 1. Sombra da mão
+        g2d.setColor(new Color(0, 0, 0, 90));
+        desenharGeometriaMao(g2d, cx + 1, cyEff + 2, r);
+
+        // 2. Preenchimento da mão (tom marfim suave com luz)
+        g2d.setColor(new Color(255, 248, 240));
+        desenharGeometriaMao(g2d, cx, cyEff, r);
+
+        // 3. Contorno da mão
+        g2d.setColor(new Color(45, 30, 55));
+        g2d.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        desenharContornoMao(g2d, cx, cyEff, r);
+
+        // 4. Detalhes internos das dobras dos dedos
+        g2d.setColor(new Color(215, 185, 175));
+        g2d.setStroke(new BasicStroke(1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawLine(cx - r / 6, cyEff - r / 5, cx - r / 6, cyEff + r / 4);
+        g2d.drawLine(cx + r / 7, cyEff - r / 5, cx + r / 7, cyEff + r / 4);
+    }
+
+    private void desenharGeometriaMao(Graphics2D g2d, int cx, int cy, int r) {
+        // Palma
+        g2d.fillRoundRect(cx - r / 2, cy - r / 6, r, (int)(r * 0.85f), r / 3, r / 3);
+        // Polegar
+        g2d.fillRoundRect(cx - (int)(r * 0.82f), cy + r / 12, (int)(r * 0.5f), (int)(r * 0.42f), r / 4, r / 4);
+        // Dedo Indicador
+        g2d.fillRoundRect(cx - (int)(r * 0.48f), cy - (int)(r * 0.82f), (int)(r * 0.26f), (int)(r * 0.78f), r / 5, r / 5);
+        // Dedo Médio
+        g2d.fillRoundRect(cx - (int)(r * 0.18f), cy - (int)(r * 0.92f), (int)(r * 0.26f), (int)(r * 0.84f), r / 5, r / 5);
+        // Dedo Anelar
+        g2d.fillRoundRect(cx + (int)(r * 0.12f), cy - (int)(r * 0.82f), (int)(r * 0.26f), (int)(r * 0.78f), r / 5, r / 5);
+        // Dedo Mínimo
+        g2d.fillRoundRect(cx + (int)(r * 0.42f), cy - (int)(r * 0.62f), (int)(r * 0.26f), (int)(r * 0.62f), r / 5, r / 5);
+    }
+
+    private void desenharContornoMao(Graphics2D g2d, int cx, int cy, int r) {
+        Path2D p = new Path2D.Float();
+        // Base punho esquerdo
+        p.moveTo(cx - r / 3, cy + (int)(r * 0.65f));
+        // Polegar
+        p.lineTo(cx - (int)(r * 0.8f), cy + r / 10);
+        p.quadTo(cx - (int)(r * 0.9f), cy, cx - (int)(r * 0.6f), cy);
+        p.lineTo(cx - r / 2, cy - r / 6);
+        // Indicador
+        p.lineTo(cx - (int)(r * 0.48f), cy - (int)(r * 0.82f));
+        p.quadTo(cx - (int)(r * 0.35f), cy - (int)(r * 0.92f), cx - (int)(r * 0.22f), cy - (int)(r * 0.82f));
+        p.lineTo(cx - (int)(r * 0.22f), cy - r / 3);
+        // Médio
+        p.lineTo(cx - (int)(r * 0.18f), cy - (int)(r * 0.92f));
+        p.quadTo(cx - (int)(r * 0.05f), cy - r, cx + (int)(r * 0.08f), cy - (int)(r * 0.92f));
+        p.lineTo(cx + (int)(r * 0.08f), cy - r / 3);
+        // Anelar
+        p.lineTo(cx + (int)(r * 0.12f), cy - (int)(r * 0.82f));
+        p.quadTo(cx + (int)(r * 0.25f), cy - (int)(r * 0.92f), cx + (int)(r * 0.38f), cy - (int)(r * 0.82f));
+        p.lineTo(cx + (int)(r * 0.38f), cy - r / 4);
+        // Mínimo
+        p.lineTo(cx + (int)(r * 0.42f), cy - (int)(r * 0.62f));
+        p.quadTo(cx + (int)(r * 0.55f), cy - (int)(r * 0.72f), cx + (int)(r * 0.68f), cy - (int)(r * 0.62f));
+        p.lineTo(cx + (int)(r * 0.68f), cy + r / 8);
+        // Base palma
+        p.quadTo(cx + r / 2, cy + (int)(r * 0.65f), cx + r / 4, cy + (int)(r * 0.65f));
+        p.lineTo(cx - r / 3, cy + (int)(r * 0.65f));
+        g2d.draw(p);
+    }
+
+    /**
+     * Desenha setas vetoriais suaves estilizadas para o D-Pad.
+     */
+    private void desenharIconeSeta(Graphics2D g2d, int cx, int cy, int size, int dx, int dy, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        // 1. Sombra da seta
+        g2d.setColor(new Color(0, 0, 0, 90));
+        desenharPathSetaSuave(g2d, cx + 1, cyEff + 2, r, dx, dy);
+
+        // 2. Preenchimento da seta
+        g2d.setColor(Color.WHITE);
+        desenharPathSetaSuave(g2d, cx, cyEff, r, dx, dy);
+
+        // 3. Contorno da seta
+        g2d.setColor(new Color(60, 45, 75, 200));
+        g2d.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        Path2D p = criarPathSeta(cx, cyEff, r, dx, dy);
+        g2d.draw(p);
+    }
+
+    private void desenharPathSetaSuave(Graphics2D g2d, int cx, int cy, int r, int dx, int dy) {
+        Path2D p = criarPathSeta(cx, cy, r, dx, dy);
+        g2d.fill(p);
+    }
+
+    private Path2D criarPathSeta(int cx, int cy, int r, int dx, int dy) {
+        Path2D p = new Path2D.Float();
+        if (dx == -1) { // Seta Esquerda
+            p.moveTo(cx + r * 0.5f, cy - r * 0.65f);
+            p.lineTo(cx - r * 0.55f, cy);
+            p.lineTo(cx + r * 0.5f, cy + r * 0.65f);
+            p.lineTo(cx + r * 0.2f, cy);
+            p.closePath();
+        } else if (dx == 1) { // Seta Direita
+            p.moveTo(cx - r * 0.5f, cy - r * 0.65f);
+            p.lineTo(cx + r * 0.55f, cy);
+            p.lineTo(cx - r * 0.5f, cy + r * 0.65f);
+            p.lineTo(cx - r * 0.2f, cy);
+            p.closePath();
+        } else if (dy == -1) { // Seta Cima
+            p.moveTo(cx - r * 0.65f, cy + r * 0.5f);
+            p.lineTo(cx, cy - r * 0.55f);
+            p.lineTo(cx + r * 0.65f, cy + r * 0.5f);
+            p.lineTo(cx, cy + r * 0.2f);
+            p.closePath();
+        } else if (dy == 1) { // Seta Baixo
+            p.moveTo(cx - r * 0.65f, cy - r * 0.5f);
+            p.lineTo(cx, cy + r * 0.55f);
+            p.lineTo(cx + r * 0.65f, cy - r * 0.5f);
+            p.lineTo(cx, cy - r * 0.2f);
+            p.closePath();
+        }
+        return p;
+    }
+
+    private void desenharIconeLosango(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        Path2D p = new Path2D.Float();
+        p.moveTo(cx, cyEff - r);
+        p.lineTo(cx + r, cyEff);
+        p.lineTo(cx, cyEff + r);
+        p.lineTo(cx - r, cyEff);
+        p.closePath();
+
+        g2d.setColor(new Color(0, 0, 0, 80));
+        g2d.translate(1, 2);
+        g2d.fill(p);
+        g2d.translate(-1, -2);
+
+        g2d.setColor(new Color(255, 255, 255, 230));
+        g2d.fill(p);
+        g2d.setColor(new Color(60, 45, 75, 220));
+        g2d.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.draw(p);
+    }
+
+    private void desenharIconeBalaoFala(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        // Sombra
+        g2d.setColor(new Color(0, 0, 0, 90));
+        g2d.fillRoundRect(cx - (int)(r * 0.7f) + 1, cyEff - (int)(r * 0.6f) + 2, (int)(r * 1.4f), (int)(r * 0.95f), r / 2, r / 2);
+
+        // Corpo do balão
+        g2d.setColor(Color.WHITE);
+        g2d.fillRoundRect(cx - (int)(r * 0.7f), cyEff - (int)(r * 0.6f), (int)(r * 1.4f), (int)(r * 0.95f), r / 2, r / 2);
+
+        // Rabicho
+        Path2D p = new Path2D.Float();
+        p.moveTo(cx - (int)(r * 0.3f), cyEff + (int)(r * 0.35f));
+        p.lineTo(cx - (int)(r * 0.55f), cyEff + (int)(r * 0.7f));
+        p.lineTo(cx, cyEff + (int)(r * 0.35f));
+        p.closePath();
+        g2d.fill(p);
+
+        // Contorno
+        g2d.setColor(new Color(45, 30, 55));
+        g2d.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawRoundRect(cx - (int)(r * 0.7f), cyEff - (int)(r * 0.6f), (int)(r * 1.4f), (int)(r * 0.95f), r / 2, r / 2);
+        g2d.draw(p);
+
+        // Três pontinhos
+        g2d.setColor(new Color(45, 30, 55));
+        int dot = Math.max(3, size / 10);
+        g2d.fillOval(cx - (int)(r * 0.4f), cyEff - dot / 2 - 2, dot, dot);
+        g2d.fillOval(cx - dot / 2, cyEff - dot / 2 - 2, dot, dot);
+        g2d.fillOval(cx + (int)(r * 0.4f) - dot, cyEff - dot / 2 - 2, dot, dot);
+    }
+
+    private void desenharIconePular(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        // Duplo chevron para cima
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawLine(cx - r / 2, cyEff - r / 5, cx, cyEff - r * 3 / 4);
+        g2d.drawLine(cx, cyEff - r * 3 / 4, cx + r / 2, cyEff - r / 5);
+
+        g2d.drawLine(cx - r / 2, cyEff + r / 4, cx, cyEff - r / 3);
+        g2d.drawLine(cx, cyEff - r / 3, cx + r / 2, cyEff + r / 4);
+    }
+
+    private void desenharIconeMenu(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        g2d.setColor(Color.WHITE);
+        g2d.fillRoundRect(cx - r + 1, cyEff - r, (int)(r * 0.6f), r * 2, 3, 3);
+        g2d.fillRoundRect(cx + r / 3, cyEff - r, (int)(r * 0.6f), r * 2, 3, 3);
+    }
+
+    private void desenharIconeMochila(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        g2d.setColor(Color.WHITE);
+        g2d.fillRoundRect(cx - (int)(r * 0.8f), cyEff - (int)(r * 0.6f), (int)(r * 1.6f), (int)(r * 1.4f), 5, 5);
+        g2d.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawArc(cx - r / 3, cyEff - r - 1, r * 2 / 3, r * 2 / 3, 0, 180);
+        g2d.setColor(new Color(50, 40, 60));
+        g2d.drawLine(cx - (int)(r * 0.8f), cyEff, cx + (int)(r * 0.8f), cyEff);
+    }
+
+    private void desenharIconeDiario(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        g2d.setColor(Color.WHITE);
+        g2d.fillRoundRect(cx - (int)(r * 0.75f), cyEff - (int)(r * 0.9f), (int)(r * 1.5f), (int)(r * 1.7f), 4, 4);
+        g2d.setColor(new Color(50, 40, 60));
+        g2d.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawLine(cx - r / 2, cyEff - r / 3, cx + r / 2, cyEff - r / 3);
+        g2d.drawLine(cx - r / 2, cyEff, cx + r / 2, cyEff);
+        g2d.drawLine(cx - r / 2, cyEff + r / 3, cx + r / 3, cyEff + r / 3);
+    }
+
+    private void desenharIconeAlvo(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(1.8f));
+        g2d.drawOval(cx - r + 1, cyEff - r + 1, (r - 1) * 2, (r - 1) * 2);
+        g2d.fillOval(cx - r / 3, cyEff - r / 3, r * 2 / 3, r * 2 / 3);
+    }
+
+    private void desenharIconeFechar(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
+        int yOff = pressionado ? 2 : 0;
+        int cyEff = cy + yOff;
+        int r = size / 2;
+
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawLine(cx - (int)(r * 0.6f), cyEff - (int)(r * 0.6f), cx + (int)(r * 0.6f), cyEff + (int)(r * 0.6f));
+        g2d.drawLine(cx + (int)(r * 0.6f), cyEff - (int)(r * 0.6f), cx - (int)(r * 0.6f), cyEff + (int)(r * 0.6f));
+    }
+
+    private Point getGameCoordinates(MouseEvent e) {
         int w = getWidth();
         int h = getHeight();
         double scaleX = (double) w / LARGURA;
@@ -4593,7 +5154,10 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
         int realX = (int) ((e.getX() - xOffset) / scale);
         int realY = (int) ((e.getY() - yOffset) / scale);
+        return new Point(realX, realY);
+    }
 
+    private void processarCliqueDiario(int realX, int realY) {
         int diarioX = 100;
         int diarioY = 50;
         int textX = diarioX + 40;
@@ -4628,8 +5192,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 ganharXP(10);
             }
         }
-        // Solidao Urbana Episodio 1
-        // (A missão só é concluída ao enviar a imagem, marcação manual removida)
 
         // Missões Level 3
         if (missaoLeituraConcluida && missaoArteConcluida && missaoFitnessConcluida) {
@@ -4661,7 +5223,186 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     }
 
     @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        Point p = getGameCoordinates(e);
+        int realX = p.x;
+        int realY = p.y;
+
+        // 1. Botões do Topo (Menu, Mochila, Diário, Missões, Fechar)
+        if (touchBtnMenu.contains(realX, realY)) {
+            touchMenuPressionado = true;
+            frame.mostrarMenuEmJogo();
+            repaint();
+            return;
+        }
+        if (touchBtnInventario.contains(realX, realY)) {
+            touchInventarioPressionado = true;
+            inventarioAberto = !inventarioAberto;
+            repaint();
+            return;
+        }
+        if (touchBtnDiario.contains(realX, realY)) {
+            touchDiarioPressionado = true;
+            diarioAberto = !diarioAberto;
+            repaint();
+            return;
+        }
+        if (touchBtnObjetivos.contains(realX, realY)) {
+            touchObjetivosPressionado = true;
+            mostrarObjetivos = !mostrarObjetivos;
+            repaint();
+            return;
+        }
+        if (touchBtnFechar.contains(realX, realY)) {
+            touchFecharPressionado = true;
+            if (armarioEstaAberto) {
+                armarioEstaAberto = false;
+            }
+            if (inventarioAberto) inventarioAberto = false;
+            if (diarioAberto) diarioAberto = false;
+            entregarXpPendente();
+            textoDialogo = "";
+            nomePersonagem = "";
+            estaEmDialogoNicolas = false;
+            repaint();
+            return;
+        }
+
+        // 2. Se o diário estiver aberto, processar cliques apenas nas caixas de missões
+        if (diarioAberto) {
+            processarCliqueDiario(realX, realY);
+            return;
+        }
+
+        // 3. Se o inventário estiver aberto, tocar fora fecha
+        if (inventarioAberto) {
+            if (realX < 150 || realX > 850 || realY < 100 || realY > 650) {
+                inventarioAberto = false;
+                repaint();
+            }
+            return;
+        }
+
+        // 4. Se estiver em diálogo com opções de escolha (faseDialogoNicolas == 100)
+        if (!armarioEstaAberto && estaEmDialogoNicolas && faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
+            int caixaW = 860;
+            int caixaH = 130;
+            int caixaX = (LARGURA - caixaW) / 2;
+            int caixaY = ALTURA - caixaH - 30;
+
+            Image portraitImg = imgPortraitAudrey;
+            int textXOffset = caixaX + 30;
+            if (portraitImg != null) {
+                int polaroidW = 160;
+                textXOffset = caixaX + 15 + polaroidW + 25;
+            }
+
+            if (realX >= textXOffset - 20 && realX <= caixaX + caixaW - 20) {
+                if (realY >= caixaY + 50 && realY <= caixaY + 80) {
+                    selectedDialogueOption = 0;
+                    repaint();
+                    frame.mostrarImportadorReal();
+                    return;
+                } else if (realY >= caixaY + 81 && realY <= caixaY + 115) {
+                    selectedDialogueOption = 1;
+                    repaint();
+                    estaEmDialogoNicolas = false;
+                    textoDialogo = "";
+                    nomePersonagem = "";
+                    faseDialogoNicolas = 0;
+                    ep1_entregouDesenho = false;
+                    return;
+                }
+            }
+        }
+
+        // 5. Se estiver em diálogo normal e clicar no botão de avançar / interagir
+        if (estaEmDialogoNicolas || aguardandoAvanceSalaAuto || !textoDialogo.isEmpty()) {
+            if (touchBtnInteragir.contains(realX, realY)) {
+                touchInteragirPressionado = true;
+                avancarDialogo();
+                repaint();
+                return;
+            }
+            // Clique fora dos botões em diálogo não faz nada (proteção contra clique acidental)
+            return;
+        }
+
+        // 6. Botão Principal de Ação / Interagir
+        if (touchBtnInteragir.contains(realX, realY)) {
+            touchInteragirPressionado = true;
+            executarInteracao();
+            repaint();
+            return;
+        }
+
+        // 7. Botão Direcional Esquerda (◀)
+        if (touchBtnEsquerda.contains(realX, realY)) {
+            touchEsquerdaPressionado = true;
+            touchDireitaPressionado = false;
+            moverEsquerda();
+            repaint();
+            return;
+        }
+
+        // 8. Botão Direcional Direita (▶)
+        if (touchBtnDireita.contains(realX, realY)) {
+            touchDireitaPressionado = true;
+            touchEsquerdaPressionado = false;
+            moverDireita();
+            repaint();
+            return;
+        }
+
+        // NOTA: Cliques fora dos botões não movem nem interagem, garantindo controle 100% preciso via botões!
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        Point p = getGameCoordinates(e);
+        int realX = p.x;
+        int realY = p.y;
+
+        // Apenas anda se o dedo/mouse estiver estritamente dentro dos botões direcionais
+        if (touchBtnEsquerda.contains(realX, realY)) {
+            touchEsquerdaPressionado = true;
+            touchDireitaPressionado = false;
+            moverEsquerda();
+            repaint();
+        } else if (touchBtnDireita.contains(realX, realY)) {
+            touchDireitaPressionado = true;
+            touchEsquerdaPressionado = false;
+            moverDireita();
+            repaint();
+        } else if (touchEsquerdaPressionado || touchDireitaPressionado) {
+            // Se o dedo saiu dos botões durante o arrasto, para o movimento imediatamente
+            touchEsquerdaPressionado = false;
+            touchDireitaPressionado = false;
+            pararMovimento();
+            repaint();
+        }
+    }
+
+    @Override
     public void mouseReleased(MouseEvent e) {
+        touchEsquerdaPressionado = false;
+        touchDireitaPressionado = false;
+        touchInteragirPressionado = false;
+        touchInventarioPressionado = false;
+        touchDiarioPressionado = false;
+        touchObjetivosPressionado = false;
+        touchMenuPressionado = false;
+        touchFecharPressionado = false;
+        pararMovimento();
+        repaint();
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
     }
 
     @Override
@@ -4682,11 +5423,17 @@ class MenuSlots extends JPanel {
     private JButton[] btnApagarSlots = new JButton[3];
     private Font fontCrayonHand, fontTitulo;
     private Color corPrincipal = new Color(255, 230, 235); // Rosa pastel claro
+    private Image imgIconeLixeira;
 
     public MenuSlots(JogoAudrey frame) {
         this.frame = frame;
         setBackground(new Color(255, 245, 235)); // Creme pastel
         setLayout(null);
+        try {
+            imgIconeLixeira = new ImageIcon(JogoAudrey.resolvePath("icone_lixeira.png")).getImage();
+        } catch (Exception e) {
+            imgIconeLixeira = null;
+        }
         carregarFonts();
         criarComponentes();
     }
@@ -4754,7 +5501,7 @@ class MenuSlots extends JPanel {
     }
 
     private JButton criarBotaoLixeira(int slot) {
-        JButton botao = new JButton("🗑") {
+        JButton botao = new JButton("") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
@@ -4773,15 +5520,23 @@ class MenuSlots extends JPanel {
                         : isHovered ? new Color(255, 160, 160) : new Color(255, 200, 200));
                 g2d.fillRoundRect(0, offsetY, w, h - 4, r, r);
 
-                FontMetrics fm = g2d.getFontMetrics(getFont());
-                int tx = (w - fm.stringWidth(getText())) / 2;
-                int ty = offsetY + (h - 4 - fm.getHeight()) / 2 + fm.getAscent();
-                g2d.setColor(new Color(180, 80, 80));
-                g2d.drawString(getText(), tx, ty);
+                if (imgIconeLixeira != null) {
+                    int iw = (int)(w * 0.65);
+                    int ih = (int)(h * 0.65);
+                    int ix = (w - iw) / 2;
+                    int iy = offsetY + (h - 4 - ih) / 2;
+                    g2d.drawImage(imgIconeLixeira, ix, iy, iw, ih, null);
+                } else {
+                    g2d.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+                    FontMetrics fm = g2d.getFontMetrics(g2d.getFont());
+                    int tx = (w - fm.stringWidth("🗑")) / 2;
+                    int ty = offsetY + (h - 4 - fm.getHeight()) / 2 + fm.getAscent();
+                    g2d.setColor(new Color(180, 80, 80));
+                    g2d.drawString("🗑", tx, ty);
+                }
                 g2d.dispose();
             }
         };
-        botao.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 34));
         botao.setContentAreaFilled(false);
         botao.setBorderPainted(false);
         botao.setFocusPainted(false);
