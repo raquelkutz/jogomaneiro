@@ -364,6 +364,132 @@ public class JogoAudrey extends JFrame {
         jogoPanel.requestFocus();
     }
 
+    private Game minigame;
+
+    public void iniciarEasterEgg() {
+        // Painel de introdução animado antes do minigame
+        JPanel introPanel = new JPanel() {
+            private float alpha = 0f;
+            private int fase = 0; // 0=fade texto, 1=aguarda, 2=fade out
+            private long startTime = System.currentTimeMillis();
+            private javax.swing.Timer timer;
+            private String[] linhas = {
+               
+            };
+
+            {
+                setBackground(Color.BLACK);
+                timer = new javax.swing.Timer(30, ev -> {
+                    long elapsed = System.currentTimeMillis() - startTime;
+                    if (fase == 0) {
+                        alpha = Math.min(1f, elapsed / 2000f);
+                        if (elapsed > 2000) { fase = 1; startTime = System.currentTimeMillis(); }
+                    } else if (fase == 1) {
+                        if (elapsed > 2500) { fase = 2; startTime = System.currentTimeMillis(); }
+                    } else if (fase == 2) {
+                        alpha = Math.max(0f, 1f - elapsed / 1000f);
+                        if (elapsed > 1000) {
+                            timer.stop();
+                            // Iniciar o minigame de verdade
+                            mainPanel.remove(this.getParent().getComponent(indexOf()));
+                            if (minigame == null) {
+                                minigame = new Game();
+                                minigame.parentFrame = JogoAudrey.this;
+                                mainPanel.add(minigame, "minigame");
+                            }
+                            cardLayout.show(mainPanel, "minigame");
+                            minigame.requestFocusInWindow();
+                        }
+                    }
+                    repaint();
+                });
+                timer.start();
+            }
+
+            private int indexOf() {
+                for (int i = 0; i < getParent().getComponentCount(); i++) {
+                    if (getParent().getComponent(i) == this) return i;
+                }
+                return 0;
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+
+                // Fundo com vinheta
+                java.awt.RadialGradientPaint vinheta = new java.awt.RadialGradientPaint(
+                    w / 2f, h / 2f, Math.max(w, h) / 1.5f,
+                    new float[]{0f, 1f},
+                    new Color[]{new Color(10, 10, 10), Color.BLACK}
+                );
+                g2.setPaint(vinheta);
+                g2.fillRect(0, 0, w, h);
+
+                // Texto animado
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                Font fontBase = new Font("Serif", Font.ITALIC, 28);
+                g2.setFont(fontBase);
+                FontMetrics fm = g2.getFontMetrics();
+                int totalH = linhas.length * fm.getHeight();
+                int startY = h / 2 - totalH / 2;
+                for (int i = 0; i < linhas.length; i++) {
+                    String linha = linhas[i];
+                    if (linha.isEmpty()) continue;
+                    // Cor vermelha escura para efeito sombrio
+                    g2.setColor(new Color(180, 20, 20));
+                    // Sombra
+                    g2.drawString(linha, w / 2 - fm.stringWidth(linha) / 2 + 2, startY + i * fm.getHeight() + 2);
+                    // Texto branco
+                    g2.setColor(new Color(230, 230, 230));
+                    g2.drawString(linha, w / 2 - fm.stringWidth(linha) / 2, startY + i * fm.getHeight());
+                }
+
+                // Texto "clique para pular" piscando
+                if (fase == 1) {
+                    long t = System.currentTimeMillis();
+                    float blink = (float)(Math.sin(t / 300.0) * 0.5 + 0.5);
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, blink * 0.6f));
+                    g2.setFont(new Font("Serif", Font.PLAIN, 14));
+                    g2.setColor(Color.GRAY);
+                    String pular = "pressione qualquer tecla para pular";
+                    FontMetrics fmS = g2.getFontMetrics();
+                    g2.drawString(pular, w / 2 - fmS.stringWidth(pular) / 2, h - 50);
+                }
+                g2.dispose();
+            }
+        };
+        introPanel.setFocusable(true);
+        // Pular animação com clique ou tecla
+        introPanel.addKeyListener(new KeyAdapter() {
+            @Override public void keyPressed(KeyEvent e) {
+                introPanel.dispatchEvent(new MouseEvent(introPanel, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false));
+            }
+        });
+        introPanel.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                // Pular para fase final rapidamente
+            }
+        });
+
+        mainPanel.add(introPanel, "easterEggIntro");
+        cardLayout.show(mainPanel, "easterEggIntro");
+        introPanel.requestFocusInWindow();
+    }
+
+    public void voltarDoEasterEgg() {
+        if (minigame != null) {
+            mainPanel.remove(minigame);
+            minigame = null;
+        }
+        cardLayout.show(mainPanel, "jogo");
+        jogoPanel.requestFocusInWindow();
+    }
+
     public void continuarJogoSalvo(int slot) {
         if (Database.saveExiste(slot)) {
             this.slotAtual = slot;
@@ -2410,6 +2536,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private int posArmarioX = 650;
     private int posNicolasXSalaAula = 500;
     private int posPortaX = 300;
+    private int cliquesNaPortaCenario1 = 0;
 
     private int puertaSaidaX = 20;
     private int puertaSaidaLargura = 80;
@@ -5231,6 +5358,23 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         Point p = getGameCoordinates(e);
         int realX = p.x;
         int realY = p.y;
+        
+        // Easter egg: clicar 3 vezes na porta do corredor 1
+        if (indiceMapa == 1 && realX >= 0 && realX <= 500 && realY >= 0 && realY <= 750) {
+            cliquesNaPortaCenario1++;
+            System.out.println("Easter Egg: Clicou na porta! Clique " + cliquesNaPortaCenario1 + "/3");
+            if (cliquesNaPortaCenario1 >= 3) {
+                cliquesNaPortaCenario1 = 0;
+                System.out.println("Easter Egg: Iniciando segundo jogo...");
+                try {
+                    frame.iniciarEasterEgg();
+                    System.out.println("Easter Egg: Jogo embutido iniciado com sucesso!");
+                } catch (Exception ex) {
+                    System.out.println("Easter Egg ERRO: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+        }
 
         // 1. Botões do Topo (Menu, Mochila, Diário, Missões, Fechar)
         if (touchBtnMenu.contains(realX, realY)) {
