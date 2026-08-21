@@ -442,7 +442,14 @@ public class Game extends Canvas implements Runnable {
         }
     }
     
-    public static void main(String [] args) {
-        new Game();
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("The Backrooms - Java 3D");
+        Game game = new Game();
+        frame.setSize(800, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(game);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        game.requestFocus();
     }
 }
