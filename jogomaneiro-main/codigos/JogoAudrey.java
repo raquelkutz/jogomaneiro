@@ -367,118 +367,13 @@ public class JogoAudrey extends JFrame {
     private Game minigame;
 
     public void iniciarEasterEgg() {
-        // Painel de introdução animado antes do minigame
-        JPanel introPanel = new JPanel() {
-            private float alpha = 0f;
-            private int fase = 0; // 0=fade texto, 1=aguarda, 2=fade out
-            private long startTime = System.currentTimeMillis();
-            private javax.swing.Timer timer;
-            private String[] linhas = {
-               
-            };
-
-            {
-                setBackground(Color.BLACK);
-                timer = new javax.swing.Timer(30, ev -> {
-                    long elapsed = System.currentTimeMillis() - startTime;
-                    if (fase == 0) {
-                        alpha = Math.min(1f, elapsed / 2000f);
-                        if (elapsed > 2000) { fase = 1; startTime = System.currentTimeMillis(); }
-                    } else if (fase == 1) {
-                        if (elapsed > 2500) { fase = 2; startTime = System.currentTimeMillis(); }
-                    } else if (fase == 2) {
-                        alpha = Math.max(0f, 1f - elapsed / 1000f);
-                        if (elapsed > 1000) {
-                            timer.stop();
-                            // Iniciar o minigame de verdade
-                            mainPanel.remove(this.getParent().getComponent(indexOf()));
-                            if (minigame == null) {
-                                minigame = new Game();
-                                minigame.parentFrame = JogoAudrey.this;
-                                mainPanel.add(minigame, "minigame");
-                            }
-                            cardLayout.show(mainPanel, "minigame");
-                            minigame.requestFocusInWindow();
-                        }
-                    }
-                    repaint();
-                });
-                timer.start();
-            }
-
-            private int indexOf() {
-                for (int i = 0; i < getParent().getComponentCount(); i++) {
-                    if (getParent().getComponent(i) == this) return i;
-                }
-                return 0;
-            }
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                int w = getWidth(), h = getHeight();
-
-                // Fundo com vinheta
-                java.awt.RadialGradientPaint vinheta = new java.awt.RadialGradientPaint(
-                    w / 2f, h / 2f, Math.max(w, h) / 1.5f,
-                    new float[]{0f, 1f},
-                    new Color[]{new Color(10, 10, 10), Color.BLACK}
-                );
-                g2.setPaint(vinheta);
-                g2.fillRect(0, 0, w, h);
-
-                // Texto animado
-                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-                Font fontBase = new Font("Serif", Font.ITALIC, 28);
-                g2.setFont(fontBase);
-                FontMetrics fm = g2.getFontMetrics();
-                int totalH = linhas.length * fm.getHeight();
-                int startY = h / 2 - totalH / 2;
-                for (int i = 0; i < linhas.length; i++) {
-                    String linha = linhas[i];
-                    if (linha.isEmpty()) continue;
-                    // Cor vermelha escura para efeito sombrio
-                    g2.setColor(new Color(180, 20, 20));
-                    // Sombra
-                    g2.drawString(linha, w / 2 - fm.stringWidth(linha) / 2 + 2, startY + i * fm.getHeight() + 2);
-                    // Texto branco
-                    g2.setColor(new Color(230, 230, 230));
-                    g2.drawString(linha, w / 2 - fm.stringWidth(linha) / 2, startY + i * fm.getHeight());
-                }
-
-                // Texto "clique para pular" piscando
-                if (fase == 1) {
-                    long t = System.currentTimeMillis();
-                    float blink = (float)(Math.sin(t / 300.0) * 0.5 + 0.5);
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, blink * 0.6f));
-                    g2.setFont(new Font("Serif", Font.PLAIN, 14));
-                    g2.setColor(Color.GRAY);
-                    String pular = "pressione qualquer tecla para pular";
-                    FontMetrics fmS = g2.getFontMetrics();
-                    g2.drawString(pular, w / 2 - fmS.stringWidth(pular) / 2, h - 50);
-                }
-                g2.dispose();
-            }
-        };
-        introPanel.setFocusable(true);
-        // Pular animação com clique ou tecla
-        introPanel.addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent e) {
-                introPanel.dispatchEvent(new MouseEvent(introPanel, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false));
-            }
-        });
-        introPanel.addMouseListener(new MouseAdapter() {
-            @Override public void mousePressed(MouseEvent e) {
-                // Pular para fase final rapidamente
-            }
-        });
-
-        mainPanel.add(introPanel, "easterEggIntro");
-        cardLayout.show(mainPanel, "easterEggIntro");
-        introPanel.requestFocusInWindow();
+        if (minigame == null) {
+            minigame = new Game();
+            minigame.parentFrame = JogoAudrey.this;
+            mainPanel.add(minigame, "minigame");
+        }
+        cardLayout.show(mainPanel, "minigame");
+        minigame.requestFocusInWindow();
     }
 
     public void voltarDoEasterEgg() {
@@ -2536,7 +2431,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private int posArmarioX = 650;
     private int posNicolasXSalaAula = 500;
     private int posPortaX = 300;
-    private int cliquesNaPortaCenario1 = 0;
+    private int cliquesArmarioEasterEgg = 0;
 
     private int puertaSaidaX = 20;
     private int puertaSaidaLargura = 80;
@@ -2926,6 +2821,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 g2d.drawImage(fundoCenario1, 0, 0, LARGURA, ALTURA, this);
             } else if (indiceMapa == 1) {
                 g2d.drawImage(fundoCenario2, 0, 0, LARGURA, ALTURA, this);
+
+                // Easter egg invisível no armário do Corredor 2 (sem highlight visual)
+
                 if (!personagensNaBiblioteca) {
                     int npcBaseY = audreyY + 150;
                     // Gabi no corredor 2 (X=480, junto com a Ivi)
@@ -3164,7 +3062,40 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 double escala = Math.min((double) LARGURA / imgW, (double) (ALTURA - 150) / imgH);
                 int lw = (int) (imgW * escala);
                 int lh = (int) (imgH * escala);
-                g2d.drawImage(imgArmarioAberto, (LARGURA - lw) / 2, (ALTURA - 150 - lh) / 2, lw, lh, this);
+                int lx = (LARGURA - lw) / 2;
+                int ly = (ALTURA - 150 - lh) / 2;
+                g2d.drawImage(imgArmarioAberto, lx, ly, lw, lh, this);
+
+                // Destaque em VERMELHO VIVO nos dois armários de cima (Jogo Secreto)
+                int topX = lx + (int)(lw * 0.05);
+                int topY = ly + 15;
+                int topW = (int)(lw * 0.9);
+                int topH = (int)(lh * 0.38);
+
+                int alphaFill = (cliquesArmarioEasterEgg > 0) ? 160 : 110;
+                g2d.setColor(new Color(255, 0, 0, alphaFill)); // VERMELHO VIVO
+                g2d.fillRect(topX, topY, topW, topH);
+
+                g2d.setColor(new Color(255, 255, 255));
+                g2d.setStroke(new BasicStroke(3f));
+                g2d.drawRect(topX + 1, topY + 1, topW - 2, topH - 2);
+                g2d.setColor(new Color(255, 0, 0));
+                g2d.setStroke(new BasicStroke(2f));
+                g2d.drawRect(topX + 3, topY + 3, topW - 6, topH - 6);
+                g2d.setStroke(new BasicStroke(1f));
+
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 16f));
+                String labelEntrada = (cliquesArmarioEasterEgg > 0) 
+                    ? "★ ENTRADA SECRETA: " + cliquesArmarioEasterEgg + "/3 CLIQUES!" 
+                    : "★ ARMÁRIO SECRETO (CLIQUE 3X PARA ENTRAR) ★";
+                FontMetrics fmEntrada = g2d.getFontMetrics();
+                int labelX = topX + (topW - fmEntrada.stringWidth(labelEntrada)) / 2;
+                int labelY = topY + topH / 2 + 5;
+
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(labelEntrada, labelX + 2, labelY + 2);
+                g2d.setColor(Color.YELLOW);
+                g2d.drawString(labelEntrada, labelX, labelY);
             }
 
             if (!livroJoiFoiPego) {
@@ -3246,7 +3177,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     }
 
     private void desenharTelaInventario(Graphics2D g2d) {
-        g2d.setColor(new Color(0, 0, 0, 200));
+        g2d.setColor(new Color(0, 0, 0, 210));
         g2d.fillRect(0, 0, LARGURA, ALTURA);
 
         int caixaX = 150;
@@ -3254,90 +3185,212 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         int caixaLargura = LARGURA - 300;
         int caixaAltura = ALTURA - 100;
 
-        g2d.setColor(new Color(50, 50, 80, 250));
-        g2d.fillRoundRect(caixaX, caixaY, caixaLargura, caixaAltura, 20, 20);
+        Paint paintAntigo = g2d.getPaint();
+        Stroke strokeAntigo = g2d.getStroke();
+        Object hintTexto = g2d.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        g2d.setColor(new Color(200, 200, 0));
-        g2d.setStroke(new BasicStroke(4));
-        g2d.drawRoundRect(caixaX, caixaY, caixaLargura, caixaAltura, 20, 20);
+        Point2D centro = new Point2D.Float(caixaX + caixaLargura / 2f, caixaY + caixaAltura / 2f);
+        float raio = Math.max(caixaLargura, caixaAltura) / 1.35f;
+        g2d.setPaint(new RadialGradientPaint(centro, raio,
+                new float[] { 0f, 0.6f, 1f },
+                new Color[] { new Color(68, 62, 112, 252), new Color(42, 38, 72, 252), new Color(22, 20, 42, 254) }));
+        g2d.fillRoundRect(caixaX, caixaY, caixaLargura, caixaAltura, 30, 30);
 
-        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 32));
-        g2d.setColor(new Color(255, 215, 0));
-        g2d.drawString("INVENTÁRIO", caixaX + 150, caixaY + 50);
+        g2d.setColor(new Color(255, 220, 80, 25));
+        g2d.setStroke(new BasicStroke(10f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawRoundRect(caixaX + 2, caixaY + 2, caixaLargura - 4, caixaAltura - 4, 28, 28);
 
-        g2d.setColor(new Color(200, 200, 0));
-        g2d.drawLine(caixaX + 20, caixaY + 70, caixaX + caixaLargura - 20, caixaY + 70);
+        g2d.setColor(new Color(255, 220, 80, 50));
+        g2d.setStroke(new BasicStroke(4f));
+        g2d.drawRoundRect(caixaX - 1, caixaY - 1, caixaLargura + 2, caixaAltura + 2, 32, 32);
 
-        int itemY = caixaY + 120;
+        g2d.setStroke(new BasicStroke(2.5f));
+        g2d.drawRoundRect(caixaX, caixaY, caixaLargura, caixaAltura, 30, 30);
+
+        desenharCantoDecorativo(g2d, caixaX + 8, caixaY + 8, 1, 1);
+        desenharCantoDecorativo(g2d, caixaX + caixaLargura - 8, caixaY + 8, -1, 1);
+        desenharCantoDecorativo(g2d, caixaX + 8, caixaY + caixaAltura - 8, 1, -1);
+        desenharCantoDecorativo(g2d, caixaX + caixaLargura - 8, caixaY + caixaAltura - 8, -1, -1);
+
+        int tituloY = caixaY + 55;
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 36));
+        FontMetrics fmTitulo = g2d.getFontMetrics();
+        String titulo = "INVENTÁRIO";
+        int tituloX = caixaX + (caixaLargura - fmTitulo.stringWidth(titulo)) / 2;
+        g2d.setColor(new Color(0, 0, 0, 160));
+        g2d.drawString(titulo, tituloX + 3, tituloY + 3);
+        g2d.setColor(new Color(255, 225, 90));
+        g2d.drawString(titulo, tituloX, tituloY);
+
+        GradientPaint gradLinha = new GradientPaint(
+                caixaX + 80, 0, new Color(255, 215, 0, 0),
+                caixaX + caixaLargura / 2f, 0, new Color(255, 223, 100, 230));
+        g2d.setPaint(gradLinha);
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawLine(caixaX + 80, tituloY + 20, caixaX + caixaLargura - 80, tituloY + 20);
+        g2d.setPaint(paintAntigo);
+
         int itemCount = 0;
+        if (temChave) itemCount++;
+        if (temLivro) itemCount++;
+        if (temCadernoEsboco) itemCount++;
+        if (temCronograma) itemCount++;
+
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+        String contador = itemCount + " / 4";
+        FontMetrics fmCont = g2d.getFontMetrics();
+        int contX = caixaX + caixaLargura - fmCont.stringWidth(contador) - 35;
+        g2d.setColor(new Color(255, 223, 100, 80));
+        g2d.fillRoundRect(contX - 12, tituloY - 18, fmCont.stringWidth(contador) + 24, 22, 14, 14);
+        g2d.setColor(new Color(255, 223, 100));
+        g2d.drawString(contador, contX, tituloY - 2);
+
+        int itemY = caixaY + 130;
 
         if (temChave) {
-            if (imgChave != null) {
-                Image chaveGrande = getCachedResizedImage(imgChave, 60, 60);
-                g2d.drawImage(chaveGrande, caixaX + 50, itemY - 30, this);
-            }
+            desenharCartaoItem(g2d, caixaX, caixaLargura, itemY, imgChave != null ? getCachedResizedImage(imgChave, 52, 52) : null);
 
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 20));
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("Chave do Armário", caixaX + 130, itemY + 10);
+            g2d.setColor(new Color(255, 245, 210));
+            g2d.drawString("Chave do Armário", caixaX + 155, itemY + 12);
 
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
-            g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("Obtida de: Garoto com livro (sala de aula)", caixaX + 130, itemY + 35);
+            g2d.setColor(new Color(190, 188, 210));
+            g2d.drawString("Obtida de: Garoto com livro (sala de aula)", caixaX + 155, itemY + 38);
 
-            itemY += 80;
-            itemCount++;
+            itemY += 90;
         }
 
         if (temLivro) {
-            if (imgLivro != null) {
-                Image livroGrande = getCachedResizedImage(imgLivro, 60, 60);
-                g2d.drawImage(livroGrande, caixaX + 50, itemY - 30, this);
-            }
+            desenharCartaoItem(g2d, caixaX, caixaLargura, itemY, imgLivro != null ? getCachedResizedImage(imgLivro, 52, 52) : null);
 
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 20));
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("Livro Misterioso", caixaX + 130, itemY + 10);
+            g2d.setColor(new Color(255, 245, 210));
+            g2d.drawString("Livro Misterioso", caixaX + 155, itemY + 12);
 
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
-            g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("Encontrado no armário", caixaX + 130, itemY + 35);
+            g2d.setColor(new Color(190, 188, 210));
+            g2d.drawString("Encontrado no armário", caixaX + 155, itemY + 38);
 
-            itemCount++;
-            itemY += 80;
+            itemY += 90;
         }
 
         if (temCadernoEsboco) {
+            desenharCartaoItem(g2d, caixaX, caixaLargura, itemY, null);
+
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 20));
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("Caderno de Esbocos", caixaX + 130, itemY + 10);
+            g2d.setColor(new Color(255, 245, 210));
+            g2d.drawString("Caderno de Esbocos", caixaX + 155, itemY + 12);
+
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
-            g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("Obtido de: Lider Arte", caixaX + 130, itemY + 35);
-            itemCount++;
-            itemY += 80;
+            g2d.setColor(new Color(190, 188, 210));
+            g2d.drawString("Obtido de: Lider Arte", caixaX + 155, itemY + 38);
+
+            itemY += 90;
         }
 
         if (temCronograma) {
+            desenharCartaoItem(g2d, caixaX, caixaLargura, itemY, null);
+
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 20));
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("Cronograma de Treinos", caixaX + 130, itemY + 10);
+            g2d.setColor(new Color(255, 245, 210));
+            g2d.drawString("Cronograma de Treinos", caixaX + 155, itemY + 12);
+
             g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
-            g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("Obtido de: Lider Fitness", caixaX + 130, itemY + 35);
-            itemCount++;
-            itemY += 80;
+            g2d.setColor(new Color(190, 188, 210));
+            g2d.drawString("Obtido de: Lider Fitness", caixaX + 155, itemY + 38);
+
+            itemY += 90;
         }
 
         if (itemCount == 0) {
-            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 18));
-            g2d.setColor(new Color(200, 100, 100));
-            g2d.drawString("Inventário vazio", caixaX + 250, itemY + 50);
+            String vazio = "Inventário vazio";
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 22));
+            FontMetrics fmVazio = g2d.getFontMetrics();
+            int vazioX = caixaX + (caixaLargura - fmVazio.stringWidth(vazio)) / 2;
+            int vazioCentroY = caixaY + caixaAltura / 2 + 10;
+
+            g2d.setColor(new Color(255, 255, 255, 10));
+            g2d.fillRoundRect(vazioX - 30, vazioCentroY - 32, fmVazio.stringWidth(vazio) + 60, 44, 16, 16);
+
+            g2d.setColor(new Color(200, 100, 100, 80));
+            g2d.drawRoundRect(vazioX - 30, vazioCentroY - 32, fmVazio.stringWidth(vazio) + 60, 44, 16, 16);
+
+            g2d.setColor(new Color(220, 120, 120));
+            g2d.drawString(vazio, vazioX, vazioCentroY);
         }
 
-        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 16));
-        g2d.setColor(new Color(150, 150, 150));
-        g2d.drawString("Pressione [B] para fechar o inventario", caixaX + 50, caixaY + caixaAltura - 20);
+        int rodapeY = caixaY + caixaAltura - 30;
+        String rodape = "[B] Fechar inventário";
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 15));
+        FontMetrics fmRodape = g2d.getFontMetrics();
+        int rodapeX = caixaX + (caixaLargura - fmRodape.stringWidth(rodape)) / 2;
+
+        int pillLargura = fmRodape.stringWidth(rodape) + 36;
+        int pillAltura = 26;
+        int pillX = rodapeX - 18;
+        int pillY = rodapeY - 18;
+
+        g2d.setColor(new Color(255, 255, 255, 10));
+        g2d.fillRoundRect(pillX, pillY, pillLargura, pillAltura, pillAltura, pillAltura);
+        g2d.setColor(new Color(255, 223, 100, 40));
+        g2d.drawRoundRect(pillX, pillY, pillLargura, pillAltura, pillAltura, pillAltura);
+
+        g2d.setColor(new Color(170, 170, 195));
+        g2d.drawString(rodape, rodapeX, rodapeY);
+
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, hintTexto);
+        g2d.setStroke(strokeAntigo);
+    }
+
+    private void desenharCantoDecorativo(Graphics2D g2d, int x, int y, int dirX, int dirY) {
+        g2d.setColor(new Color(255, 223, 100, 55));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.drawLine(x, y, x + dirX * 16, y);
+        g2d.drawLine(x, y, x, y + dirY * 16);
+        g2d.setColor(new Color(255, 223, 100, 100));
+        g2d.fillOval(x - 2, y - 2, 5, 5);
+    }
+
+    private void desenharCartaoItem(Graphics2D g2d, int caixaX, int caixaLargura, int itemY, Image icone) {
+        int cartaoX = caixaX + 30;
+        int cartaoY = itemY - 42;
+        int cartaoLargura = caixaLargura - 60;
+        int cartaoAltura = 78;
+
+        GradientPaint gradCartao = new GradientPaint(
+                cartaoX, cartaoY, new Color(255, 255, 255, 18),
+                cartaoX, cartaoY + cartaoAltura, new Color(255, 255, 255, 6));
+        g2d.setPaint(gradCartao);
+        g2d.fillRoundRect(cartaoX, cartaoY, cartaoLargura, cartaoAltura, 18, 18);
+        g2d.setPaint(new GradientPaint(cartaoX, cartaoY, new Color(255, 215, 0, 55),
+                cartaoX + cartaoLargura, cartaoY, new Color(255, 215, 0, 20)));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.drawRoundRect(cartaoX, cartaoY, cartaoLargura, cartaoAltura, 18, 18);
+
+        int slotX = cartaoX + 16;
+        int slotY = cartaoY + 13;
+        int slotTam = 52;
+
+        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.fillRoundRect(slotX, slotY, slotTam, slotTam, 14, 14);
+
+        GradientPaint gradSlot = new GradientPaint(
+                slotX, slotY, new Color(255, 215, 0, 90),
+                slotX + slotTam, slotY + slotTam, new Color(255, 200, 0, 40));
+        g2d.setPaint(gradSlot);
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawRoundRect(slotX, slotY, slotTam, slotTam, 14, 14);
+        g2d.setPaint(null);
+
+        if (icone != null) {
+            int ix = slotX + (slotTam - icone.getWidth(null)) / 2;
+            int iy = slotY + (slotTam - icone.getHeight(null)) / 2;
+            g2d.setColor(new Color(255, 255, 200, 20));
+            g2d.fillOval(ix - 4, iy - 4, icone.getWidth(null) + 8, icone.getHeight(null) + 8);
+            g2d.drawImage(icone, ix, iy, null);
+        }
     }
 
     private void desenharObjetivos(Graphics2D g2d) {
@@ -4427,149 +4480,434 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     }
 
     private void desenharDiario(Graphics2D g2d) {
-        g2d.setColor(new Color(0, 0, 0, 150));
-        g2d.fillRect(0, 0, LARGURA, ALTURA);
+        // --- Overlay escuro com gradiente suave ---
+        for (int i = 0; i < ALTURA; i += 2) {
+            float ratio = (float) i / ALTURA;
+            int alpha = (int) (120 + 60 * ratio);
+            g2d.setColor(new Color(0, 0, 0, Math.min(alpha, 180)));
+            g2d.fillRect(0, i, LARGURA, 2);
+        }
 
-        int diarioX = 100;
-        int diarioY = 50;
-        int diarioW = 800;
-        int diarioH = 650;
+        int diarioX = 80;
+        int diarioY = 30;
+        int diarioW = 840;
+        int diarioH = 680;
+        int meioX = diarioX + diarioW / 2;
 
-        // Fundo do diario
-        g2d.setColor(new Color(255, 250, 240));
-        g2d.fillRoundRect(diarioX, diarioY, diarioW, diarioH, 30, 30);
-        g2d.setColor(new Color(200, 180, 150));
-        g2d.setStroke(new BasicStroke(4));
-        g2d.drawRoundRect(diarioX, diarioY, diarioW, diarioH, 30, 30);
-        g2d.drawLine(diarioX + diarioW / 2, diarioY, diarioX + diarioW / 2, diarioY + diarioH);
+        // --- Sombra exterior do livro ---
+        g2d.setColor(new Color(0, 0, 0, 60));
+        g2d.fillRoundRect(diarioX + 6, diarioY + 8, diarioW, diarioH, 20, 20);
 
-        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 40));
-        g2d.setColor(new Color(100, 50, 50));
-        g2d.drawString("Meu Diário", diarioX + 80, diarioY + 60);
+        // --- Capa do livro (fundo marrom escuro) ---
+        g2d.setColor(new Color(101, 67, 33));
+        g2d.fillRoundRect(diarioX - 4, diarioY - 4, diarioW + 8, diarioH + 8, 24, 24);
 
+        // --- Páginas internas (fundo creme com leve gradiente) ---
+        for (int py = 0; py < diarioH; py++) {
+            float ratio = (float) py / diarioH;
+            int r = (int) (255 - 8 * ratio);
+            int gr = (int) (250 - 12 * ratio);
+            int b = (int) (235 - 15 * ratio);
+            g2d.setColor(new Color(r, gr, b));
+            g2d.fillRect(diarioX, diarioY + py, diarioW, 1);
+        }
+
+        // --- Bordas arredondadas do livro ---
+        g2d.setColor(new Color(139, 90, 43));
+        g2d.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawRoundRect(diarioX, diarioY, diarioW, diarioH, 20, 20);
+
+        // --- Lombada central (divisão das páginas) ---
+        g2d.setColor(new Color(120, 75, 30));
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawLine(meioX, diarioY + 10, meioX, diarioY + diarioH - 10);
+        // Sombra da lombada
+        g2d.setColor(new Color(80, 50, 20, 60));
+        g2d.fillRect(meioX - 3, diarioY + 10, 3, diarioH - 20);
+        g2d.setColor(new Color(255, 255, 255, 40));
+        g2d.fillRect(meioX + 1, diarioY + 10, 2, diarioH - 20);
+
+        // --- Cantos decorativos (ornamentos de canto) ---
+        desenharCantoDiario(g2d, diarioX + 12, diarioY + 12, false, false);
+        desenharCantoDiario(g2d, diarioX + diarioW - 12, diarioY + 12, true, false);
+        desenharCantoDiario(g2d, diarioX + 12, diarioY + diarioH - 12, false, true);
+        desenharCantoDiario(g2d, diarioX + diarioW - 12, diarioY + diarioH - 12, true, true);
+
+        // =====================================================================
+        // PÁGINA ESQUERDA
+        // =====================================================================
         Shape clipOriginal = g2d.getClip();
-        g2d.setClip(diarioX + 6, diarioY + 6, diarioW / 2 - 12, diarioH - 12);
+        g2d.setClip(diarioX + 4, diarioY + 4, diarioW / 2 - 8, diarioH - 8);
 
-        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 16));
+        int leftX = diarioX + 30;
+        int leftY = diarioY + 20;
 
-        int textX = diarioX + 40;
-        int textY = diarioY + 120;
+        // --- Título da página esquerda ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 32));
+        g2d.setColor(new Color(101, 67, 33));
+        g2d.drawString("Meu Diário", leftX + 40, leftY + 30);
 
-        g2d.drawString("Leitura (Nível " + nivelLeitura + ")", textX, textY);
-        if (missaoLeituraAtiva && !missaoLeituraConcluida) {
-            g2d.setColor(Color.RED);
-            desenharTextoEnvolvido(g2d, "Ler um livro na VIDA REAL", textX + 20, textY + 30, 270, 24);
-            g2d.drawRect(textX + 300, textY + 5, 30, 30); // Checkbox
-            g2d.setColor(new Color(100, 50, 50));
-        } else if (missaoLeituraConcluida) {
-            g2d.setColor(new Color(50, 150, 50));
-            desenharTextoEnvolvido(g2d, "Ler um livro (Concluido!)", textX + 20, textY + 30, 270, 24);
-            g2d.setColor(new Color(100, 50, 50));
-        } else {
-            desenharTextoEnvolvido(g2d, "Fale com o grupo de Leitura", textX + 20, textY + 30, 270, 24);
-        }
+        // --- Linha decorativa sob o título ---
+        g2d.setColor(new Color(180, 140, 100, 120));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.drawLine(leftX + 30, leftY + 42, leftX + 280, leftY + 42);
+        // Pequeno diamante decorativo
+        g2d.setColor(new Color(180, 140, 100));
+        int diamondX = leftX + 165;
+        int diamondY = leftY + 42;
+        int[] xPts = {diamondX, diamondX + 5, diamondX, diamondX - 5};
+        int[] yPts = {diamondY - 5, diamondY, diamondY + 5, diamondY};
+        g2d.fillPolygon(xPts, yPts, 4);
 
-        textY += 100;
-        g2d.drawString("Arte (Nível " + nivelArte + ")", textX, textY);
-        if (missaoArteAtiva && !missaoArteConcluida) {
-            g2d.setColor(Color.RED);
-            desenharTextoEnvolvido(g2d, "Recriar obra na VIDA REAL", textX + 20, textY + 30, 270, 24);
-            g2d.drawRect(textX + 300, textY + 5, 30, 30);
-            g2d.setColor(new Color(100, 50, 50));
-        } else if (missaoArteConcluida) {
-            g2d.setColor(new Color(50, 150, 50));
-            desenharTextoEnvolvido(g2d, "Recriar obra (Concluido!)", textX + 20, textY + 30, 270, 24);
-            g2d.setColor(new Color(100, 50, 50));
-        } else {
-            desenharTextoEnvolvido(g2d, "Fale com o grupo de Arte", textX + 20, textY + 30, 270, 24);
-        }
+        // --- Resumo de Progresso ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+        g2d.setColor(new Color(120, 80, 50));
+        int totalMissoes = (missaoLeituraConcluida ? 1 : 0) + (missaoArteConcluida ? 1 : 0) + (missaoFitnessConcluida ? 1 : 0);
+        int totalNiveis = nivelLeitura + nivelArte + nivelFitness;
+        g2d.drawString("Missões concluídas: " + totalMissoes + "/3    |    XP total: " + xp, leftX + 10, leftY + 62);
 
-        textY += 100;
-        g2d.drawString("Fitness (Nível " + nivelFitness + ")", textX, textY);
-        if (missaoFitnessAtiva && !missaoFitnessConcluida) {
-            g2d.setColor(Color.RED);
-            desenharTextoEnvolvido(g2d, "12 polichinelos na VIDA REAL", textX + 20, textY + 30, 270, 24);
-            g2d.drawRect(textX + 300, textY + 5, 30, 30);
-            g2d.setColor(new Color(100, 50, 50));
-        } else if (missaoFitnessConcluida) {
-            g2d.setColor(new Color(50, 150, 50));
-            desenharTextoEnvolvido(g2d, "12 polichinelos (Concluido!)", textX + 20, textY + 30, 270, 24);
-            g2d.setColor(new Color(100, 50, 50));
-        } else {
-            desenharTextoEnvolvido(g2d, "Fale com o grupo Fitness", textX + 20, textY + 30, 270, 24);
-        }
+        int textX = leftX + 10;
+        int textY = leftY + 100;
 
-        // Missao Especial Episodio 1: Solidao Urbana
-        textY += 100;
-        g2d.drawString("Episódio 1: Missão Especial", textX, textY);
+        // --- Seção: Leitura ---
+        desenharSecaoMissao(g2d, textX, textY, "Leitura", nivelLeitura,
+                missaoLeituraAtiva, missaoLeituraConcluida,
+                "Ler um livro na VIDA REAL", "Ler um livro (Concluído!)",
+                "Fale com o grupo de Leitura", true);
+        g2d.setClip(diarioX + 4, diarioY + 4, diarioW / 2 - 8, diarioH - 8);
+
+        textY += 110;
+
+        // --- Seção: Arte ---
+        desenharSecaoMissao(g2d, textX, textY, "Arte", nivelArte,
+                missaoArteAtiva, missaoArteConcluida,
+                "Recriar obra na VIDA REAL", "Recriar obra (Concluído!)",
+                "Fale com o grupo de Arte", false);
+        g2d.setClip(diarioX + 4, diarioY + 4, diarioW / 2 - 8, diarioH - 8);
+
+        textY += 110;
+
+        // --- Seção: Fitness ---
+        desenharSecaoMissao(g2d, textX, textY, "Fitness", nivelFitness,
+                missaoFitnessAtiva, missaoFitnessConcluida,
+                "12 polichinelos na VIDA REAL", "12 polichinelos (Concluído!)",
+                "Fale com o grupo Fitness", true);
+        g2d.setClip(diarioX + 4, diarioY + 4, diarioW / 2 - 8, diarioH - 8);
+
+        textY += 110;
+
+        // --- Seção: Episódio 1 - Missão Especial ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 16));
+        g2d.setColor(new Color(139, 0, 0));
+        g2d.drawString("★ Episódio 1: Missão Especial", textX, textY);
+
+        // Linha decorativa
+        g2d.setColor(new Color(139, 0, 0, 80));
+        g2d.setStroke(new BasicStroke(1f));
+        g2d.drawLine(textX, textY + 5, textX + 260, textY + 5);
+
         if (ep1_solidaoUrbanaAtiva && !ep1_solidaoUrbanaConcluida) {
-            g2d.setColor(Color.RED);
-            desenharTextoEnvolvido(g2d, "Desenhar 'A Solidão Urbana' no mundo real", textX + 20, textY + 30, 270, 24);
-            g2d.setColor(new Color(100, 50, 50));
+            g2d.setColor(new Color(180, 0, 0));
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+            desenharTextoEnvolvido(g2d, "▸ Desenhar 'A Solidão Urbana' no mundo real", textX + 15, textY + 25, 260, 22);
+            // Checkbox vazio
+            g2d.setColor(new Color(180, 0, 0));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(textX + 280, textY + 8, 24, 24, 4, 4);
         } else if (ep1_solidaoUrbanaConcluida) {
-            g2d.setColor(new Color(50, 150, 50));
-            desenharTextoEnvolvido(g2d, "Desenhar 'A Solidão Urbana' (Concluido!)", textX + 20, textY + 30, 270, 24);
-            g2d.setColor(new Color(100, 50, 50));
+            g2d.setColor(new Color(34, 139, 34));
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+            desenharTextoEnvolvido(g2d, "✓ Desenhar 'A Solidão Urbana' (Concluído!)", textX + 15, textY + 25, 260, 22);
         } else {
-            desenharTextoEnvolvido(g2d, "Fale com os professores na Sala 1", textX + 20, textY + 30, 270, 24);
+            g2d.setColor(new Color(100, 70, 40));
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+            desenharTextoEnvolvido(g2d, "▸ Fale com os professores na Sala 1", textX + 15, textY + 25, 260, 22);
         }
 
-        // Nota inferior (página esquerda)
-        desenharTextoEnvolvido(g2d, "Marque a caixa só DEPOIS de concluir na vida real!", diarioX + 40,
-                diarioY + diarioH - 50, 340, 24);
+        // --- Nota inferior da página esquerda ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.ITALIC, 11));
+        g2d.setColor(new Color(150, 100, 60, 180));
+        desenharTextoEnvolvido(g2d, "* Marque a caixa só DEPOIS de concluir na vida real!", diarioX + 30,
+                diarioY + diarioH - 45, 330, 18);
+
+        // --- Número da página esquerda ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 12));
+        g2d.setColor(new Color(150, 120, 90));
+        g2d.drawString("— 1 —", meioX - 80, diarioY + diarioH - 12);
 
         g2d.setClip(clipOriginal);
 
-        // Página direita
-        g2d.setClip(diarioX + diarioW / 2 + 6, diarioY + 6, diarioW / 2 - 12, diarioH - 12);
+        // =====================================================================
+        // PÁGINA DIREITA
+        // =====================================================================
+        g2d.setClip(meioX + 4, diarioY + 4, diarioW / 2 - 8, diarioH - 8);
 
-        // Custom missions
-        int rightX = diarioX + diarioW / 2 + 40;
-        int rightY = diarioY + 80;
-        g2d.drawString("Missões Livres (Level 3)", rightX, rightY);
+        int rightX = meioX + 30;
+        int rightY = diarioY + 20;
+
+        // --- Título da página direita ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 26));
+        g2d.setColor(new Color(101, 67, 33));
+        g2d.drawString("Missões Livres", rightX + 30, rightY + 30);
+
+        // --- Subtítulo ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+        g2d.setColor(new Color(130, 90, 50));
+        g2d.drawString("Level 3 — Crie suas próprias missões!", rightX + 10, rightY + 52);
+
+        // Linha decorativa
+        g2d.setColor(new Color(180, 140, 100, 120));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.drawLine(rightX, rightY + 60, rightX + 330, rightY + 60);
+
+        int rightContentY = rightY + 85;
 
         if (missaoLeituraConcluida && missaoArteConcluida && missaoFitnessConcluida) {
-            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 16));
-            g2d.drawString("Agora você cria suas próprias missões!", rightX, rightY + 30);
+            // --- Missões desbloqueadas ---
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+            g2d.setColor(new Color(60, 120, 60));
+            g2d.drawString("Todas as missões iniciais concluídas!", rightX + 10, rightContentY);
+            g2d.setColor(new Color(80, 100, 80));
+            g2d.drawString("Agora você cria suas próprias missões:", rightX + 10, rightContentY + 22);
 
+            rightContentY += 55;
+
+            // --- Missão: Leitura Level 3 ---
             if (nivelLeitura < 3) {
-                g2d.setColor(Color.BLUE);
-                g2d.drawString("Criar e Concluir Missao Leitura", rightX, rightY + 80);
-                g2d.drawRect(rightX + 280, rightY + 60, 30, 30);
+                g2d.setColor(new Color(30, 80, 160));
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 15));
+                g2d.drawString("📖 Missão Leitura", rightX + 15, rightContentY);
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+                g2d.setColor(new Color(60, 90, 140));
+                g2d.drawString("Criar e concluir uma missão de leitura", rightX + 30, rightContentY + 22);
+                // Checkbox
+                g2d.setColor(new Color(30, 80, 160));
+                g2d.setStroke(new BasicStroke(2f));
+                g2d.drawRoundRect(rightX + 290, rightContentY - 5, 24, 24, 4, 4);
             } else {
-                g2d.setColor(new Color(50, 150, 50));
-                g2d.drawString("Leitura Level 3 Atingido!", rightX, rightY + 80);
+                g2d.setColor(new Color(34, 139, 34));
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 15));
+                g2d.drawString("✓ Leitura Level 3 Atingido!", rightX + 15, rightContentY);
+                // Mini barra de progresso completa
+                desenharBarraProgresso(g2d, rightX + 15, rightContentY + 8, 250, 8, 1.0f, new Color(34, 139, 34));
             }
 
+            rightContentY += 55;
+
+            // --- Missão: Arte Level 3 ---
             if (nivelArte < 3) {
-                g2d.setColor(Color.BLUE);
-                g2d.drawString("Criar e Concluir Missao Arte", rightX, rightY + 130);
-                g2d.drawRect(rightX + 280, rightY + 110, 30, 30);
+                g2d.setColor(new Color(160, 80, 30));
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 15));
+                g2d.drawString("🎨 Missão Arte", rightX + 15, rightContentY);
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+                g2d.setColor(new Color(140, 90, 50));
+                g2d.drawString("Criar e concluir uma missão de arte", rightX + 30, rightContentY + 22);
+                // Checkbox
+                g2d.setColor(new Color(160, 80, 30));
+                g2d.setStroke(new BasicStroke(2f));
+                g2d.drawRoundRect(rightX + 290, rightContentY - 5, 24, 24, 4, 4);
             } else {
-                g2d.setColor(new Color(50, 150, 50));
-                g2d.drawString("Arte Level 3 Atingido!", rightX, rightY + 130);
+                g2d.setColor(new Color(34, 139, 34));
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 15));
+                g2d.drawString("✓ Arte Level 3 Atingido!", rightX + 15, rightContentY);
+                desenharBarraProgresso(g2d, rightX + 15, rightContentY + 8, 250, 8, 1.0f, new Color(34, 139, 34));
             }
 
+            rightContentY += 55;
+
+            // --- Missão: Fitness Level 3 ---
             if (nivelFitness < 3) {
-                g2d.setColor(Color.BLUE);
-                g2d.drawString("Criar e Concluir Missao Fitness", rightX, rightY + 180);
-                g2d.drawRect(rightX + 280, rightY + 160, 30, 30);
+                g2d.setColor(new Color(34, 120, 80));
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 15));
+                g2d.drawString("💪 Missão Fitness", rightX + 15, rightContentY);
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+                g2d.setColor(new Color(50, 110, 70));
+                g2d.drawString("Criar e concluir uma missão fitness", rightX + 30, rightContentY + 22);
+                // Checkbox
+                g2d.setColor(new Color(34, 120, 80));
+                g2d.setStroke(new BasicStroke(2f));
+                g2d.drawRoundRect(rightX + 290, rightContentY - 5, 24, 24, 4, 4);
             } else {
-                g2d.setColor(new Color(50, 150, 50));
-                g2d.drawString("Fitness Level 3 Atingido!", rightX, rightY + 180);
+                g2d.setColor(new Color(34, 139, 34));
+                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 15));
+                g2d.drawString("✓ Fitness Level 3 Atingido!", rightX + 15, rightContentY);
+                desenharBarraProgresso(g2d, rightX + 15, rightContentY + 8, 250, 8, 1.0f, new Color(34, 139, 34));
             }
+
+            rightContentY += 60;
+
+            // --- Resumo Geral ---
+            g2d.setColor(new Color(101, 67, 33));
+            g2d.setStroke(new BasicStroke(1f));
+            g2d.drawLine(rightX, rightContentY, rightX + 330, rightContentY);
+            rightContentY += 18;
+
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14));
+            g2d.setColor(new Color(101, 67, 33));
+            g2d.drawString("Resumo Geral:", rightX + 10, rightContentY);
+            rightContentY += 22;
+
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+            g2d.setColor(new Color(80, 60, 40));
+            g2d.drawString("Leitura: Nível " + nivelLeitura + "/3", rightX + 20, rightContentY);
+            desenharBarraProgresso(g2d, rightX + 160, rightContentY - 10, 140, 8, nivelLeitura / 3.0f, new Color(30, 80, 160));
+            rightContentY += 20;
+
+            g2d.drawString("Arte: Nível " + nivelArte + "/3", rightX + 20, rightContentY);
+            desenharBarraProgresso(g2d, rightX + 160, rightContentY - 10, 140, 8, nivelArte / 3.0f, new Color(160, 80, 30));
+            rightContentY += 20;
+
+            g2d.drawString("Fitness: Nível " + nivelFitness + "/3", rightX + 20, rightContentY);
+            desenharBarraProgresso(g2d, rightX + 160, rightContentY - 10, 140, 8, nivelFitness / 3.0f, new Color(34, 120, 80));
+            rightContentY += 25;
+
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 13));
+            g2d.setColor(new Color(101, 67, 33));
+            g2d.drawString("Total de Níveis: " + totalNiveis + "/9    |    XP: " + xp, rightX + 10, rightContentY);
+
         } else {
-            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 16));
-            g2d.drawString("(Complete as missões iniciais primeiro)", rightX, rightY + 30);
+            // --- Missões ainda bloqueadas ---
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+            g2d.setColor(new Color(120, 90, 60));
+            g2d.drawString("(Complete as missões iniciais", rightX + 30, rightContentY + 10);
+            g2d.drawString(" para desbloquear estas missões)", rightX + 30, rightContentY + 30);
+
+            // Indicadores visuais das missões bloqueadas
+            rightContentY += 70;
+            g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
+
+            g2d.setColor(new Color(150, 120, 90, 150));
+            g2d.drawString("🔒 Leitura — Nível " + nivelLeitura + "/3", rightX + 20, rightContentY);
+            desenharBarraProgresso(g2d, rightX + 20, rightContentY + 8, 280, 6, nivelLeitura / 3.0f, new Color(180, 180, 180));
+            rightContentY += 30;
+
+            g2d.drawString("🔒 Arte — Nível " + nivelArte + "/3", rightX + 20, rightContentY);
+            desenharBarraProgresso(g2d, rightX + 20, rightContentY + 8, 280, 6, nivelArte / 3.0f, new Color(180, 180, 180));
+            rightContentY += 30;
+
+            g2d.drawString("🔒 Fitness — Nível " + nivelFitness + "/3", rightX + 20, rightContentY);
+            desenharBarraProgresso(g2d, rightX + 20, rightContentY + 8, 280, 6, nivelFitness / 3.0f, new Color(180, 180, 180));
         }
 
-        g2d.setColor(new Color(100, 50, 50));
-        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 16));
+        // --- Nota inferior da página direita ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.ITALIC, 11));
+        g2d.setColor(new Color(150, 100, 60, 180));
+        g2d.drawString("* Cada missão completa dá +10 XP", rightX + 10, diarioY + diarioH - 45);
+
+        // --- Número da página direita ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 12));
+        g2d.setColor(new Color(150, 120, 90));
+        g2d.drawString("— 2 —", meioX + 50, diarioY + diarioH - 12);
+
+        // --- Instrução de fechar (centralizada) ---
+        g2d.setColor(new Color(100, 70, 40));
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 13));
         String fechar = "Pressione [" + Configuracoes.getInstance().getNomeTecla("DIÁRIO") + "] para fechar";
         FontMetrics fmF = g2d.getFontMetrics();
-        g2d.drawString(fechar, rightX + (400 - fmF.stringWidth(fechar)) / 2, diarioY + diarioH - 20);
+        g2d.drawString(fechar, diarioX + (diarioW - fmF.stringWidth(fechar)) / 2, diarioY + diarioH - 30);
 
         g2d.setClip(clipOriginal);
+    }
+
+    private void desenharCantoDiario(Graphics2D g2d, int cx, int cy, boolean espelhadoX, boolean espelhadoY) {
+        int dir = espelhadoX ? -1 : 1;
+        int baixo = espelhadoY ? -1 : 1;
+        g2d.setColor(new Color(180, 140, 100, 100));
+        g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2d.drawLine(cx, cy, cx + dir * 12, cy);
+        g2d.drawLine(cx, cy, cx, cy + baixo * 12);
+        g2d.setColor(new Color(180, 140, 100, 60));
+        g2d.fillOval(cx - 2, cy - 2, 4, 4);
+    }
+
+    private void desenharSecaoMissao(Graphics2D g2d, int x, int y, String nomeHabilidade, int nivel,
+            boolean ativa, boolean concluida,
+            String textoAtiva, String textoConcluida, String textoInativa,
+            boolean usarCheckbox) {
+        // --- Ícone da habilidade ---
+        String icone;
+        Color corHabilidade;
+        switch (nomeHabilidade) {
+            case "Leitura":
+                icone = "📖";
+                corHabilidade = new Color(30, 80, 160);
+                break;
+            case "Arte":
+                icone = "🎨";
+                corHabilidade = new Color(160, 80, 30);
+                break;
+            case "Fitness":
+                icone = "💪";
+                corHabilidade = new Color(34, 120, 80);
+                break;
+            default:
+                icone = "●";
+                corHabilidade = new Color(100, 100, 100);
+        }
+
+        // --- Título da seção ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 18));
+        g2d.setColor(corHabilidade);
+        g2d.drawString(icone + " " + nomeHabilidade + " (Nível " + nivel + "/3)", x, y);
+
+        // --- Barra de progresso do nível ---
+        float progressoNivel = nivel / 3.0f;
+        desenharBarraProgresso(g2d, x + 20, y + 6, 220, 8, progressoNivel, corHabilidade);
+
+        // --- Linha separadora ---
+        g2d.setColor(new Color(corHabilidade.getRed(), corHabilidade.getGreen(), corHabilidade.getBlue(), 60));
+        g2d.setStroke(new BasicStroke(0.8f));
+        g2d.drawLine(x + 10, y + 22, x + 300, y + 22);
+
+        // --- Texto da missão ---
+        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.PLAIN, 14));
+
+        if (ativa && !concluida) {
+            g2d.setColor(new Color(180, 30, 30));
+            desenharTextoEnvolvido(g2d, "▸ " + textoAtiva, x + 15, y + 40, 260, 20);
+            // Checkbox pulsante
+            g2d.setColor(new Color(180, 30, 30));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(x + 280, y + 22, 22, 22, 4, 4);
+        } else if (concluida) {
+            g2d.setColor(new Color(34, 139, 34));
+            desenharTextoEnvolvido(g2d, "✓ " + textoConcluida, x + 15, y + 40, 260, 20);
+            // Checkbox marcado
+            g2d.setColor(new Color(34, 139, 34));
+            g2d.fillRoundRect(x + 280, y + 22, 22, 22, 4, 4);
+            g2d.setColor(Color.WHITE);
+            g2d.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.drawLine(x + 285, y + 33, x + 289, y + 37);
+            g2d.drawLine(x + 289, y + 37, x + 297, y + 27);
+        } else {
+            g2d.setColor(new Color(100, 70, 40));
+            desenharTextoEnvolvido(g2d, "▸ " + textoInativa, x + 15, y + 40, 260, 20);
+        }
+    }
+
+    private void desenharBarraProgresso(Graphics2D g2d, int x, int y, int largura, int altura, float progresso, Color cor) {
+        // Fundo da barra
+        g2d.setColor(new Color(200, 190, 175));
+        g2d.fillRoundRect(x, y, largura, altura, altura, altura);
+
+        // Preenchimento
+        int preenchimento = (int) (largura * Math.min(progresso, 1.0f));
+        if (preenchimento > 0) {
+            // Gradiente na barra
+            GradientPaint gp = new GradientPaint(x, y, cor, x + preenchimento, y,
+                    new Color(Math.min(cor.getRed() + 40, 255), Math.min(cor.getGreen() + 40, 255), Math.min(cor.getBlue() + 40, 255)));
+            g2d.setPaint(gp);
+            g2d.fillRoundRect(x, y, preenchimento, altura, altura, altura);
+
+            // Brilho superior
+            g2d.setColor(new Color(255, 255, 255, 80));
+            g2d.fillRoundRect(x, y, preenchimento, altura / 2, altura, altura);
+        }
+
+        // Borda da barra
+        g2d.setColor(new Color(150, 140, 125));
+        g2d.setStroke(new BasicStroke(1f));
+        g2d.drawRoundRect(x, y, largura, altura, altura, altura);
     }
 
     // =========================================================================
@@ -5239,13 +5577,54 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         int cyEff = cy + yOff;
         int r = size / 2;
 
-        g2d.setColor(Color.WHITE);
-        g2d.fillRoundRect(cx - (int)(r * 0.75f), cyEff - (int)(r * 0.9f), (int)(r * 1.5f), (int)(r * 1.7f), 4, 4);
-        g2d.setColor(new Color(50, 40, 60));
-        g2d.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2d.drawLine(cx - r / 2, cyEff - r / 3, cx + r / 2, cyEff - r / 3);
-        g2d.drawLine(cx - r / 2, cyEff, cx + r / 2, cyEff);
-        g2d.drawLine(cx - r / 2, cyEff + r / 3, cx + r / 3, cyEff + r / 3);
+        // --- Sombra do livro ---
+        g2d.setColor(new Color(0, 0, 0, 50));
+        g2d.fillRoundRect(cx - (int)(r * 0.73f) + 2, cyEff - (int)(r * 0.88f) + 2,
+                (int)(r * 1.46f), (int)(r * 1.76f), 6, 6);
+
+        // --- Capa do livro (marrom escuro) ---
+        g2d.setColor(new Color(139, 90, 43));
+        g2d.fillRoundRect(cx - (int)(r * 0.78f), cyEff - (int)(r * 0.92f),
+                (int)(r * 1.56f), (int)(r * 1.84f), 6, 6);
+
+        // --- Páginas internas (creme) ---
+        g2d.setColor(new Color(255, 250, 240));
+        g2d.fillRoundRect(cx - (int)(r * 0.68f), cyEff - (int)(r * 0.85f),
+                (int)(r * 1.36f), (int)(r * 1.7f), 4, 4);
+
+        // --- Lombada central ---
+        g2d.setColor(new Color(120, 75, 30));
+        g2d.setStroke(new BasicStroke(1.2f));
+        g2d.drawLine(cx, cyEff - (int)(r * 0.82f), cx, cyEff + (int)(r * 0.82f));
+
+        // --- Linhas de texto (simulando texto escrito) ---
+        g2d.setColor(new Color(100, 80, 60, 180));
+        g2d.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        int linhaY1 = cyEff - (int)(r * 0.45f);
+        int linhaY2 = cyEff - (int)(r * 0.15f);
+        int linhaY3 = cyEff + (int)(r * 0.15f);
+        int linhaY4 = cyEff + (int)(r * 0.45f);
+
+        // Linhas na página esquerda
+        g2d.drawLine(cx - (int)(r * 0.55f), linhaY1, cx - (int)(r * 0.1f), linhaY1);
+        g2d.drawLine(cx - (int)(r * 0.55f), linhaY2, cx - (int)(r * 0.15f), linhaY2);
+        g2d.drawLine(cx - (int)(r * 0.55f), linhaY3, cx - (int)(r * 0.2f), linhaY3);
+
+        // Linhas na página direita
+        g2d.drawLine(cx + (int)(r * 0.1f), linhaY1, cx + (int)(r * 0.55f), linhaY1);
+        g2d.drawLine(cx + (int)(r * 0.1f), linhaY2, cx + (int)(r * 0.5f), linhaY2);
+        g2d.drawLine(cx + (int)(r * 0.1f), linhaY3, cx + (int)(r * 0.4f), linhaY3);
+        g2d.drawLine(cx + (int)(r * 0.1f), linhaY4, cx + (int)(r * 0.55f), linhaY4);
+
+        // --- Marca de "X" pequena na primeira linha (indicando concluído) ---
+        if (pressionado) {
+            g2d.setColor(new Color(34, 139, 34));
+            g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            int mkX = cx - (int)(r * 0.35f);
+            int mkY = linhaY1;
+            g2d.drawLine(mkX - 3, mkY - 3, mkX + 3, mkY + 3);
+            g2d.drawLine(mkX + 3, mkY - 3, mkX - 3, mkY + 3);
+        }
     }
 
     private void desenharIconeAlvo(Graphics2D g2d, int cx, int cy, int size, boolean pressionado) {
@@ -5285,34 +5664,38 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     }
 
     private void processarCliqueDiario(int realX, int realY) {
-        int diarioX = 100;
-        int diarioY = 50;
-        int textX = diarioX + 40;
+        int diarioX = 80;
+        int diarioY = 30;
+        int meioX = diarioX + 420;
+        int leftX = diarioX + 30;
+        int leftY = diarioY + 20;
+        int textX = leftX + 10;
 
-        // Leitura Level 2
+        // --- Página esquerda: Checkboxes das missões principais ---
+        // Leitura: checkbox em (textX + 280, leftY + 100 + 22)
         if (missaoLeituraAtiva && !missaoLeituraConcluida) {
-            if (realX >= textX + 300 && realX <= textX + 330 && realY >= diarioY + 120 + 5
-                    && realY <= diarioY + 120 + 35) {
+            if (realX >= textX + 275 && realX <= textX + 305 && realY >= leftY + 117
+                    && realY <= leftY + 147) {
                 missaoLeituraConcluida = true;
                 nivelLeitura = 2;
                 GerenciadorAudio.tocarSomColeta();
                 ganharXP(10);
             }
         }
-        // Arte Level 2
+        // Arte: checkbox em (textX + 280, leftY + 210 + 22)
         if (missaoArteAtiva && !missaoArteConcluida) {
-            if (realX >= textX + 300 && realX <= textX + 330 && realY >= diarioY + 220 + 5
-                    && realY <= diarioY + 220 + 35) {
+            if (realX >= textX + 275 && realX <= textX + 305 && realY >= leftY + 227
+                    && realY <= leftY + 257) {
                 missaoArteConcluida = true;
                 nivelArte = 2;
                 GerenciadorAudio.tocarSomColeta();
                 ganharXP(10);
             }
         }
-        // Fitness Level 2
+        // Fitness: checkbox em (textX + 280, leftY + 320 + 22)
         if (missaoFitnessAtiva && !missaoFitnessConcluida) {
-            if (realX >= textX + 300 && realX <= textX + 330 && realY >= diarioY + 320 + 5
-                    && realY <= diarioY + 320 + 35) {
+            if (realX >= textX + 275 && realX <= textX + 305 && realY >= leftY + 337
+                    && realY <= leftY + 367) {
                 missaoFitnessConcluida = true;
                 nivelFitness = 2;
                 GerenciadorAudio.tocarSomColeta();
@@ -5320,27 +5703,38 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
         }
 
-        // Missões Level 3
+        // --- Página direita: Missões Level 3 ---
         if (missaoLeituraConcluida && missaoArteConcluida && missaoFitnessConcluida) {
-            int rightX = diarioX + 800 / 2 + 40;
-            int rightY = diarioY + 80;
+            int rightX = meioX + 30;
+            int rightY = diarioY + 20;
+            int rightContentY = rightY + 85;
 
+            // Leitura L3: checkbox em (rightX + 290, rightContentY - 5)
             if (nivelLeitura < 3) {
-                if (realX >= rightX + 280 && realX <= rightX + 310 && realY >= rightY + 60 && realY <= rightY + 90) {
+                if (realX >= rightX + 285 && realX <= rightX + 315 && realY >= rightContentY - 10
+                        && realY <= rightContentY + 20) {
                     nivelLeitura = 3;
                     GerenciadorAudio.tocarSomColeta();
                     ganharXP(10);
                 }
             }
+            rightContentY += 55;
+
+            // Arte L3: checkbox em (rightX + 290, rightContentY - 5)
             if (nivelArte < 3) {
-                if (realX >= rightX + 280 && realX <= rightX + 310 && realY >= rightY + 110 && realY <= rightY + 140) {
+                if (realX >= rightX + 285 && realX <= rightX + 315 && realY >= rightContentY - 10
+                        && realY <= rightContentY + 20) {
                     nivelArte = 3;
                     GerenciadorAudio.tocarSomColeta();
                     ganharXP(10);
                 }
             }
+            rightContentY += 55;
+
+            // Fitness L3: checkbox em (rightX + 290, rightContentY - 5)
             if (nivelFitness < 3) {
-                if (realX >= rightX + 280 && realX <= rightX + 310 && realY >= rightY + 160 && realY <= rightY + 190) {
+                if (realX >= rightX + 285 && realX <= rightX + 315 && realY >= rightContentY - 10
+                        && realY <= rightContentY + 20) {
                     nivelFitness = 3;
                     GerenciadorAudio.tocarSomColeta();
                     ganharXP(10);
@@ -5359,21 +5753,52 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         int realX = p.x;
         int realY = p.y;
         
-        // Easter egg: clicar 3 vezes na porta do corredor 1
-        if (indiceMapa == 1 && realX >= 0 && realX <= 500 && realY >= 0 && realY <= 750) {
-            cliquesNaPortaCenario1++;
-            System.out.println("Easter Egg: Clicou na porta! Clique " + cliquesNaPortaCenario1 + "/3");
-            if (cliquesNaPortaCenario1 >= 3) {
-                cliquesNaPortaCenario1 = 0;
-                System.out.println("Easter Egg: Iniciando segundo jogo...");
+        // Easter egg: Clicar 3 vezes seguidas no armário em Vermelho Vivo (Corredor 2 ou Armário Aberto)
+        boolean ehArmarioDeCima = false;
+        if (armarioEstaAberto) {
+            int imgW = (imgArmarioAberto != null) ? imgArmarioAberto.getWidth(this) : 800;
+            int imgH = (imgArmarioAberto != null) ? imgArmarioAberto.getHeight(this) : 600;
+            if (imgW <= 0) imgW = 800;
+            if (imgH <= 0) imgH = 600;
+            double escala = Math.min((double) LARGURA / imgW, (double) (ALTURA - 150) / imgH);
+            int lw = (int) (imgW * escala);
+            int lh = (int) (imgH * escala);
+            int lx = (LARGURA - lw) / 2;
+            int ly = (ALTURA - 150 - lh) / 2;
+
+            // Os dois armários de cima ocupam a metade superior da imagem dos armários
+            if (realX >= lx && realX <= lx + lw && realY >= ly && realY <= ly + (lh / 2)) {
+                ehArmarioDeCima = true;
+            }
+        } else if (indiceMapa == 1) {
+            // No Corredor 2 (indiceMapa == 1), na área do armário
+            if (realX >= 50 && realX <= 250 && realY >= 150 && realY <= 370) {
+                ehArmarioDeCima = true;
+            }
+        } else if (indiceMapa == 0 && Math.abs(audreyX - posArmarioX) < 250) {
+            // No Corredor 1 (indiceMapa == 0), na área do armário
+            if (realX >= 500 && realX <= 800 && realY >= 50 && realY <= 450) {
+                ehArmarioDeCima = true;
+            }
+        }
+
+        if (ehArmarioDeCima) {
+            cliquesArmarioEasterEgg++;
+            System.out.println("Easter Egg: Clicou nos armários de cima! Clique " + cliquesArmarioEasterEgg + "/3");
+            if (cliquesArmarioEasterEgg >= 3) {
+                cliquesArmarioEasterEgg = 0;
+                System.out.println("Easter Egg: 3 cliques seguidos nos armários de cima! Iniciando minigame...");
                 try {
                     frame.iniciarEasterEgg();
-                    System.out.println("Easter Egg: Jogo embutido iniciado com sucesso!");
+                    System.out.println("Easter Egg: Jogo 3D iniciado com sucesso!");
                 } catch (Exception ex) {
                     System.out.println("Easter Egg ERRO: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }
+        } else {
+            // Clicou fora dos dois armários de cima: reseta a contagem de cliques seguidos
+            cliquesArmarioEasterEgg = 0;
         }
 
         // 1. Botões do Topo (Menu, Mochila, Diário, Missões, Fechar)

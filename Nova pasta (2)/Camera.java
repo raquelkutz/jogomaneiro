@@ -6,7 +6,7 @@ import java.awt.event.MouseEvent;
 public class Camera implements KeyListener, MouseMotionListener {
     public double xPos, yPos, xDir, yDir, xPlane, yPlane;
     public boolean left, right, forward, back;
-    public boolean esc, quit, run, revive;
+    public boolean esc, quit, run, revive, space;
     public double MOVE_SPEED = 0.04;
     public final double ROT_SPEED = 0.03;
     public final double MOUSE_SENSITIVITY = 0.002;
@@ -25,12 +25,12 @@ public class Camera implements KeyListener, MouseMotionListener {
     public void update() {
         double buffer = 0.3;
         if(forward) {
-            if(Map.map[(int)(yPos)][(int)(xPos + xDir * MOVE_SPEED + xDir * buffer)] == 0) xPos += xDir * MOVE_SPEED;
-            if(Map.map[(int)(yPos + yDir * MOVE_SPEED + yDir * buffer)][(int)xPos] == 0) yPos += yDir * MOVE_SPEED;
+            if(Map.isWalkable((int)(xPos + xDir * MOVE_SPEED + xDir * buffer), (int)yPos)) xPos += xDir * MOVE_SPEED;
+            if(Map.isWalkable((int)xPos, (int)(yPos + yDir * MOVE_SPEED + yDir * buffer))) yPos += yDir * MOVE_SPEED;
         }
         if(back) {
-            if(Map.map[(int)(yPos)][(int)(xPos - xDir * MOVE_SPEED - xDir * buffer)] == 0) xPos -= xDir * MOVE_SPEED;
-            if(Map.map[(int)(yPos - yDir * MOVE_SPEED - yDir * buffer)][(int)xPos] == 0) yPos -= yDir * MOVE_SPEED;
+            if(Map.isWalkable((int)(xPos - xDir * MOVE_SPEED - xDir * buffer), (int)yPos)) xPos -= xDir * MOVE_SPEED;
+            if(Map.isWalkable((int)xPos, (int)(yPos - yDir * MOVE_SPEED - yDir * buffer))) yPos -= yDir * MOVE_SPEED;
         }
         if(right) rotate(-ROT_SPEED);
         if(left)  rotate(ROT_SPEED);
@@ -52,6 +52,7 @@ public class Camera implements KeyListener, MouseMotionListener {
         if(key.getKeyCode() == KeyEvent.VK_UP    || key.getKeyCode() == KeyEvent.VK_W) forward = true;
         if(key.getKeyCode() == KeyEvent.VK_DOWN  || key.getKeyCode() == KeyEvent.VK_S) back = true;
         if(key.getKeyCode() == KeyEvent.VK_ESCAPE) esc = true;
+        if(key.getKeyCode() == KeyEvent.VK_SPACE || key.getKeyCode() == KeyEvent.VK_ENTER) space = true;
         if(key.getKeyCode() == KeyEvent.VK_Q) quit = true;
         if(key.getKeyCode() == KeyEvent.VK_SHIFT) run = true;
         if(key.getKeyCode() == KeyEvent.VK_R) revive = true;
@@ -64,6 +65,7 @@ public class Camera implements KeyListener, MouseMotionListener {
         if(key.getKeyCode() == KeyEvent.VK_UP    || key.getKeyCode() == KeyEvent.VK_W) forward = false;
         if(key.getKeyCode() == KeyEvent.VK_DOWN  || key.getKeyCode() == KeyEvent.VK_S) back = false;
         if(key.getKeyCode() == KeyEvent.VK_ESCAPE) esc = false;
+        if(key.getKeyCode() == KeyEvent.VK_SPACE || key.getKeyCode() == KeyEvent.VK_ENTER) space = false;
         if(key.getKeyCode() == KeyEvent.VK_Q) quit = false;
         if(key.getKeyCode() == KeyEvent.VK_SHIFT) run = false;
         if(key.getKeyCode() == KeyEvent.VK_R) revive = false;

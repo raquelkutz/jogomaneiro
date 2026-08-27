@@ -4,6 +4,11 @@ public class Screen {
     public int[][] map;
     public int width, height;
     public Texture texture;
+    public Texture textureDoorOpen;
+    public Texture textureDoorLocked;
+    public Texture textureMoggado;
+    public Texture textureChegando;
+    public Texture textureScary;
     public double[] zBuffer;
 
     public Screen(int[][] m, int w, int h, Texture tex) {
@@ -11,11 +16,16 @@ public class Screen {
         width = w;
         height = h;
         texture = tex;
+        textureDoorOpen = Texture.createDoorTexture(tex, false);
+        textureDoorLocked = Texture.createDoorTexture(tex, true);
+        textureMoggado = Texture.createGraffitiTexture(tex, "VOCÊ SERÁ MOGGADO", "FUJA SE PUDER!", new Color(220, 20, 20));
+        textureChegando = Texture.createGraffitiTexture(tex, "ELE ESTÁ CHEGANDO", "OLHE PARA TRÁS!", new Color(200, 30, 30));
+        textureScary = Texture.createGraffitiTexture(tex, "NÃO HÁ SAÍDA", "SOCORRO!!!", new Color(180, 10, 10));
         zBuffer = new double[width];
     }
 
     public void update(Camera camera, int[] pixels) {
-        // Renderização do teto e chão via Floor Casting para ter perspectiva
+        // Renderização do teto e chão via Floor Casting com iluminação dinâmica
         for(int y = 0; y < height; y++) {
             float rayDirX0 = (float)(camera.xDir - camera.xPlane);
             float rayDirY0 = (float)(camera.yDir - camera.yPlane);
@@ -44,24 +54,82 @@ public class Screen {
                 int cellY = (int)(floorY);
                 float tx = floorX - cellX;
                 float ty = floorY - cellY;
+                if (tx < 0) tx += 1.0f;
+                if (ty < 0) ty += 1.0f;
                 
+                // Cálculo de luz vinda das luminárias do teto (a cada 3 blocos)
+                int gridX = (cellX % 3 + 3) % 3;
+                int gridY = (cellY % 3 + 3) % 3;
+                boolean isLightTile = (gridX == 0 && gridY == 0);
+                boolean insidePanel = isLightTile && (tx > 0.15f && tx < 0.85f && ty > 0.35f && ty < 0.65f);
+                boolean isPanelFrame = isLightTile && (tx > 0.10f && tx < 0.90f && ty > 0.30f && ty < 0.70f);
+
+                // Distância até o centro da luminária mais próxima para cálculo de iluminação ambiente
+                float dxL = gridX + tx - 0.5f;
+                float dyL = gridY + ty - 0.5f;
+                float distToLight = (float)Math.sqrt(dxL * dxL + dyL * dyL);
+                float lightBoost = Math.max(0.0f, 1.0f - distToLight / 2.6f);
+
                 int color;
                 if (!isFloor) {
-                    color = new Color(60, 50, 20).getRGB(); // Teto mais claro (amarelado escuro)
-                    // Painéis de luz fluorescente amarela - maiores e mais brilhantes!
-                    if (tx > 0.25 && tx < 0.75 && ty > 0.2 && ty < 0.8) {
-                        if (cellX % 2 == 0 && cellY % 2 == 0) {
-                            color = new Color(255, 240, 140).getRGB(); // Luz amarela brilhante
+                    if (insidePanel) {
+                        // Painel de luz fluorescente amarela/branca reluzente (como na foto)
+                        color = new Color(255, 252, 230).getRGB();
+                    } else if (isPanelFrame) {
+                        // Moldura metálica da luminária
+                        color = new Color(210, 200, 150).getRGB();
+                    } else {
+                        // Placas de gesso bege/creme do teto
+                        int rC = (int)(185 + lightBoost * 60);
+                        int gC = (int)(180 + lightBoost * 55);
+                        int bC = (int)(145 + lightBoost * 40);
+                        // Linhas do grid do teto
+                        if (tx < 0.03f || ty < 0.03f) {
+                            rC = (int)(rC * 0.85); gC = (int)(gC * 0.85); bC = (int)(bC * 0.85);
                         }
+                        color = new Color(Math.min(255, rC), Math.min(255, gC), Math.min(255, bC)).getRGB();
                     }
                 } else {
-                    color = new Color(55, 48, 25).getRGB(); // Chão mais claro e amarelado
+                    if (cellX >= 0 && cellX < Map.MAP_WIDTH && cellY >= 0 && cellY < Map.MAP_HEIGHT && Map.map[cellY][cellX] == 7) {
+                        // Buraco no chão (Abismo profundo com borda de perigo, strictly on the floor of dead-end rooms)
+                        if (tx < 0.15f || tx > 0.85f || ty < 0.15f || ty > 0.85f) {
+                            // Borda de carpete
+                            int rF = (int)(110 + lightBoost * 60);
+                            int gF = (int)(125 + lightBoost * 65);
+                            int bF = (int)(70 + lightBoost * 40);
+                            color = new Color(Math.min(255, rF), Math.min(255, gF), Math.min(255, bF)).getRGB();
+                        } else if (tx < 0.25f || tx > 0.75f || ty < 0.25f || ty > 0.75f) {
+                            // Borda de aviso vermelha
+                            color = new Color(190, 30, 20).getRGB();
+                        } else {
+                            // Abismo escuro profundo
+                            color = new Color(6, 6, 12).getRGB();
+                        }
+                    } else {
+                        // Carpete dourado/bege — cor da imagem de referência
+                        // Base: marrom-dourado (RGB ~155, 115, 55)
+                        int baseR = 155, baseG = 112, baseB = 52;
+
+                        // Variação de ruído pseudo-aleatória para simular a textura fina do carpete
+                        int nx = (int)(floorX * 60);
+                        int ny = (int)(floorY * 60);
+                        int hash = ((nx * 7 + ny * 13) ^ (nx * 31 + ny * 5)) & 0xFF;
+                        float noise = (hash / 255.0f) * 0.18f - 0.09f; // ±9% variação
+
+                        int rF = (int)((baseR + lightBoost * 50) * (1.0f + noise));
+                        int gF = (int)((baseG + lightBoost * 38) * (1.0f + noise));
+                        int bF = (int)((baseB + lightBoost * 20) * (1.0f + noise));
+
+                        // Sombra suave em certas direções para dar volume ao carpet
+                        if (hash % 5 == 0) { rF = (int)(rF * 0.88); gF = (int)(gF * 0.88); bF = (int)(bF * 0.88); }
+
+                        color = new Color(Math.min(255, Math.max(0, rF)), Math.min(255, Math.max(0, gF)), Math.min(255, Math.max(0, bF))).getRGB();
+                    }
                 }
 
-                // Fog mais suave no teto e chão (alcance maior = mais luz)
-                double fogRatio = Math.min(1.0, rowDistance / 10.0);
-                // Adicionar tom amarelado ao fog (não ir totalmente para preto)
-                int fogR = 30, fogG = 25, fogB = 5; // Cor da névoa amarelada
+                // Névoa liminar da Backrooms (fade para tom amarelado/esverdeado liminar em vez de preto)
+                double fogRatio = Math.min(1.0, rowDistance / 22.0);
+                int fogR = 65, fogG = 70, fogB = 40;
                 int r = (color >> 16) & 255;
                 int g = (color >> 8) & 255;
                 int b = color & 255;
@@ -69,7 +137,7 @@ public class Screen {
                 g = (int)(g * (1 - fogRatio) + fogG * fogRatio);
                 b = (int)(b * (1 - fogRatio) + fogB * fogRatio);
                 
-                pixels[x + y * width] = new Color(r,g,b).getRGB();
+                pixels[x + y * width] = new Color(Math.min(255, r), Math.min(255, g), Math.min(255, b)).getRGB();
 
                 floorX += floorStepX;
                 floorY += floorStepY;
@@ -140,69 +208,81 @@ public class Screen {
             int drawEnd = lineHeight / 2 + height / 2;
             if (drawEnd >= height) drawEnd = height - 1;
 
-            // Salvar a distância da parede no ZBuffer para ocultar sprites depois
             zBuffer[x] = perpWallDist;
 
-            // Calcular X da textura
+            int wallType = (mapX >= 0 && mapX < Map.MAP_WIDTH && mapY >= 0 && mapY < Map.MAP_HEIGHT) ? map[mapY][mapX] : 1;
+            Texture currentTex = texture;
+            if (wallType == 2) currentTex = textureDoorOpen;
+            else if (wallType == 3) currentTex = textureDoorLocked;
+            else if (wallType == 4) currentTex = textureMoggado;
+            else if (wallType == 5) currentTex = textureChegando;
+            else if (wallType == 6) currentTex = textureScary;
+
             double wallX;
             if (side == 0) wallX = camera.yPos + perpWallDist * rayDirY;
             else           wallX = camera.xPos + perpWallDist * rayDirX;
             wallX -= Math.floor(wallX);
 
-            double texXDouble = wallX * (double)texture.SIZE;
-            if(side == 0 && rayDirX > 0) texXDouble = texture.SIZE - texXDouble - 1;
-            if(side == 1 && rayDirY < 0) texXDouble = texture.SIZE - texXDouble - 1;
+            double texXDouble = wallX * (double)currentTex.SIZE;
+            if(side == 0 && rayDirX > 0) texXDouble = currentTex.SIZE - texXDouble - 1;
+            if(side == 1 && rayDirY < 0) texXDouble = currentTex.SIZE - texXDouble - 1;
             int texX = (int)texXDouble;
             if (texX < 0) texX = 0;
-            if (texX >= texture.SIZE) texX = texture.SIZE - 1;
+            if (texX >= currentTex.SIZE) texX = currentTex.SIZE - 1;
             double texXfrac = texXDouble - texX;
-            // Limitar texXfrac para que texX+1 não saia dos limites
-            int texX1 = Math.min(texX + 1, texture.SIZE - 1);
+            int texX1 = Math.min(texX + 1, currentTex.SIZE - 1);
+
+            // Iluminação vinda das luminárias do teto próximas a esta parede
+            int gridX = (mapX % 3 + 3) % 3;
+            int gridY = (mapY % 3 + 3) % 3;
+            float dxW = gridX - 0.5f;
+            float dyW = gridY - 0.5f;
+            float distW = (float)Math.sqrt(dxW * dxW + dyW * dyW);
+            float wallLightBoost = Math.max(0.0f, 1.0f - distW / 2.8f);
 
             for (int y = drawStart; y < drawEnd; y++) {
-                int texYFull = ((y * 256 - height * 128 + lineHeight * 128) * texture.SIZE) / lineHeight;
+                int texYFull = ((y * 256 - height * 128 + lineHeight * 128) * currentTex.SIZE) / lineHeight;
                 int texY = (texYFull / 256);
                 double texYfrac = (texYFull & 255) / 256.0;
                 if (texY < 0) { texY = 0; texYfrac = 0; }
-                if (texY >= texture.SIZE - 1) { texY = texture.SIZE - 2; texYfrac = 1.0; }
-                int texY1 = Math.min(texY + 1, texture.SIZE - 1);
+                if (texY >= currentTex.SIZE - 1) { texY = currentTex.SIZE - 2; texYfrac = 1.0; }
+                int texY1 = Math.min(texY + 1, currentTex.SIZE - 1);
                 
-                int c00 = texture.pixels[texX  + (texY  * texture.SIZE)];
-                int c10 = texture.pixels[texX1 + (texY  * texture.SIZE)];
-                int c01 = texture.pixels[texX  + (texY1 * texture.SIZE)];
-                int c11 = texture.pixels[texX1 + (texY1 * texture.SIZE)];
+                // Amostragem direta da textura (sem interpolação bugada)
+                int c = currentTex.pixels[texX + texY * currentTex.SIZE];
+                int r = (c >> 16) & 255;
+                int g = (c >> 8) & 255;
+                int b = c & 255;
                 
-                int r00 = (c00 >> 16) & 255, g00 = (c00 >> 8) & 255, b00 = c00 & 255;
-                int r10 = (c10 >> 16) & 255, g10 = (c10 >> 8) & 255, b10 = c10 & 255;
-                int r01 = (c01 >> 16) & 255, g01 = (c01 >> 8) & 255, b01 = c01 & 255;
-                int r11 = (c11 >> 16) & 255, g11 = (c11 >> 8) & 255, b11 = c11 & 255;
-                
-                int r = (int)(r00 * (1 - texXfrac) * (1 - texYfrac) + r10 * texXfrac * (1 - texYfrac) + r01 * (1 - texXfrac) * texYfrac + r11 * texXfrac * texYfrac);
-                int g = (int)(g00 * (1 - texXfrac) * (1 - texYfrac) + g10 * texXfrac * (1 - texYfrac) + g01 * (1 - texXfrac) * texYfrac + g11 * texXfrac * texYfrac);
-                int b = (int)(b00 * (1 - texXfrac) * (1 - texYfrac) + b10 * texXfrac * (1 - texYfrac) + b01 * (1 - texXfrac) * texYfrac + b11 * texXfrac * texYfrac);
+                // Aplicar iluminação das luminárias
+                r = (int)(r * (0.85 + wallLightBoost * 0.45));
+                g = (int)(g * (0.85 + wallLightBoost * 0.45));
+                b = (int)(b * (0.85 + wallLightBoost * 0.35));
+
                 if (side == 1) {
-                    r = (r >> 1);
-                    g = (g >> 1);
-                    b = (b >> 1);
+                    r = (int)(r * 0.85);
+                    g = (int)(g * 0.85);
+                    b = (int)(b * 0.85);
                 }
                 
-                // Fog nas paredes com tom amarelado
-                double fogRatio = Math.min(1.0, perpWallDist / 10.0);
-                int fogR = 30, fogG = 25, fogB = 5;
+                // Fog liminar com o tom da iluminação da Backrooms
+                double fogRatio = Math.min(1.0, perpWallDist / 22.0);
+                int fogR = 65, fogG = 70, fogB = 40;
                 r = (int)(r * (1 - fogRatio) + fogR * fogRatio);
                 g = (int)(g * (1 - fogRatio) + fogG * fogRatio);
                 b = (int)(b * (1 - fogRatio) + fogB * fogRatio);
                 
-                pixels[x + y * width] = (r << 16) | (g << 8) | b;
+                pixels[x + y * width] = (Math.min(255, r) << 16) | (Math.min(255, g) << 8) | Math.min(255, b);
+
             }
         }
         
-        // Vinheta mais suave (escurece só as bordas, não o centro)
+        // Vinheta suave nas bordas
         for(int y=0; y<height; y++) {
             for(int x=0; x<width; x++) {
                 double dist = Math.sqrt((x-width/2.0)*(x-width/2.0) + (y-height/2.0)*(y-height/2.0));
-                if (dist > height/1.2) { // Borda mais recuada
-                    double dark = Math.min(0.7, (dist - height/1.2)/(height/3.0)); // max 70% dark
+                if (dist > height/1.2) {
+                    double dark = Math.min(0.6, (dist - height/1.2)/(height/3.0));
                     int p = pixels[x + y*width];
                     int r = (p >> 16) & 255;
                     int g = (p >> 8) & 255;
@@ -229,9 +309,9 @@ public class Screen {
         if (transformY > 0) { // Se o monstro estiver na frente da câmera
             int spriteScreenX = (int)((width / 2) * (1 + transformX / transformY));
 
-            double scale = (entity.type == 1) ? 0.6 : 1.0;
-            // Desloca a moeda para baixo para encostar no chão (metade da diferença de tamanho)
-            int vMoveScreen = (entity.type == 1) ? (int)((height / transformY) * 0.20) : 0;
+            double scale = (entity.type == 1) ? 0.90 : 1.1;
+            // Moedas ligeiramente abaixo do centro
+            int vMoveScreen = (entity.type == 1) ? (int)((height / transformY) * 0.08) : 0;
 
             int spriteHeight = Math.abs((int)((height / transformY) * scale)); // Calcular altura
             int drawStartY = -spriteHeight / 2 + height / 2 + vMoveScreen;
@@ -279,14 +359,19 @@ public class Screen {
                         // Usar o canal alpha real para transparência
                         // Pega alpha do pixel original (antes do bilinear)
                         int alpha = (c00 >> 24) & 0xFF;
-                        if (alpha > 128) { // Pixel opaco suficiente para desenhar
-                            // Fog
-                            double fogRatio = Math.min(1.0, transformY / 10.0);
-                            int fogR = 30, fogG = 25, fogB = 5;
+                        if (alpha > 128) {
+                            // Fog alinhada com as paredes
+                            double fogRatio = Math.min(1.0, transformY / 22.0);
+                            int fogR = 65, fogG = 70, fogB = 40;
                             r = (int)(r * (1 - fogRatio) + fogR * fogRatio);
                             g = (int)(g * (1 - fogRatio) + fogG * fogRatio);
                             b = (int)(b * (1 - fogRatio) + fogB * fogRatio);
-                            pixels[stripe + y * width] = new Color(r,g,b).getRGB();
+                            // Escurecimento por distância (profundidade 3D)
+                            double depthDim = Math.max(0.35, 1.0 - transformY / 28.0);
+                            r = (int)(Math.min(255, r * depthDim));
+                            g = (int)(Math.min(255, g * depthDim));
+                            b = (int)(Math.min(255, b * depthDim));
+                            pixels[stripe + y * width] = (r << 16) | (g << 8) | b;
                         }
                     }
                 }

@@ -13,16 +13,16 @@ public class GenerateTexture {
             g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, 
                               java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             
-            // Fundo amarelado
-            g.setColor(new Color(200, 190, 80));
+            // Fundo amarelo monocromático clássico da Backrooms Level 0 (como a imagem de referência)
+            g.setColor(new Color(215, 195, 110));
             g.fillRect(0, 0, size, size);
             
-            // Padrão de setas e linhas
+            // Padrão de textura sutil de papel de parede (stripes e chevrons)
             for (int i = 0; i < size; i += 16) {
-                g.setColor(new Color(180, 170, 60));
+                g.setColor(new Color(195, 175, 90));
                 g.fillRect(i, 0, 2, size);
                 
-                g.setColor(new Color(150, 140, 40));
+                g.setColor(new Color(180, 160, 80));
                 for (int j = 0; j < size; j += 16) {
                     g.fillPolygon(new int[]{i+4, i+8, i+12, i+8}, new int[]{j+8, j+2, j+8, j+5}, 4);
                     g.fillPolygon(new int[]{i+4, i+8, i+12, i+8}, new int[]{j+14, j+8, j+14, j+11}, 4);
