@@ -257,8 +257,8 @@ public class GerenciadorAudio {
                             if (vol <= 0) {
                                 gain.setValue(gain.getMinimum());
                             } else {
-                                float maxDb = gain.getMaximum();
-                                float minDb = -18.0f;
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
                                 float valorDb = minDb + (maxDb - minDb) * (vol / 100.0f);
                                 gain.setValue(valorDb);
                             }
@@ -385,8 +385,8 @@ public class GerenciadorAudio {
                             if (vol <= 0) {
                                 gain.setValue(gain.getMinimum());
                             } else {
-                                float maxDb = gain.getMaximum();
-                                float minDb = -18.0f;
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
                                 float valorDb = minDb + (maxDb - minDb) * (vol / 100.0f);
                                 gain.setValue(valorDb);
                             }
@@ -416,6 +416,465 @@ public class GerenciadorAudio {
             if (clipVozRaquel != null && clipVozRaquel.isRunning()) {
                 clipVozRaquel.stop();
             }
+        }
+    }
+
+    // Voz da personagem Audrey (tocada quando ela fala, estilo Undertale)
+    private static volatile Clip clipVozAudrey;
+    private static volatile boolean tocandoVozAudrey = false;
+    private static volatile Thread threadVozAudrey = null;
+    private static final Object LOCK_VOZ_AUDREY = new Object();
+
+    private static void carregarClipVozAudrey() {
+        if (clipVozAudrey != null && clipVozAudrey.isOpen()) {
+            return;
+        }
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("voz-audrey.wav"));
+            if (!f.exists()) {
+                logVoz("Arquivo de voz da Audrey nao encontrado: voz-audrey.wav");
+                return;
+            }
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(f);
+            clipVozAudrey = AudioSystem.getClip();
+            clipVozAudrey.open(audioStream);
+            logVoz("Clip de voz Audrey carregado com sucesso!");
+        } catch (Exception e) {
+            logVoz("Erro ao carregar voz da Audrey: " + e.getMessage());
+        }
+    }
+
+    public static void tocarVozAudrey() {
+        synchronized (LOCK_VOZ_AUDREY) {
+            if (tocandoVozAudrey && threadVozAudrey != null && threadVozAudrey.isAlive()) {
+                return;
+            }
+            tocandoVozAudrey = true;
+            if (threadVozAudrey != null && threadVozAudrey.isAlive()) {
+                threadVozAudrey.interrupt();
+            }
+            threadVozAudrey = new Thread(() -> {
+                carregarClipVozAudrey();
+                if (clipVozAudrey == null || !clipVozAudrey.isOpen()) {
+                    synchronized (LOCK_VOZ_AUDREY) {
+                        tocandoVozAudrey = false;
+                    }
+                    return;
+                }
+                while (tocandoVozAudrey && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        clipVozAudrey.stop();
+                        clipVozAudrey.setFramePosition(0);
+
+                        try {
+                            FloatControl gain = (FloatControl) clipVozAudrey.getControl(FloatControl.Type.MASTER_GAIN);
+                            int vol = Configuracoes.getInstance().getVolumeEfeitos();
+                            if (vol <= 0) {
+                                gain.setValue(gain.getMinimum());
+                            } else {
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
+                                float valorDb = minDb + (maxDb - minDb) * (vol / 100.0f);
+                                gain.setValue(valorDb);
+                            }
+                        } catch (Exception ignorado) {
+                        }
+
+                        clipVozAudrey.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        logVoz("Erro ao tocar blip Audrey: " + e.getMessage());
+                    }
+                }
+            });
+            threadVozAudrey.start();
+        }
+    }
+
+    public static void pararVozAudrey() {
+        synchronized (LOCK_VOZ_AUDREY) {
+            tocandoVozAudrey = false;
+            if (threadVozAudrey != null) {
+                threadVozAudrey.interrupt();
+                threadVozAudrey = null;
+            }
+            if (clipVozAudrey != null && clipVozAudrey.isRunning()) {
+                clipVozAudrey.stop();
+            }
+        }
+    }
+
+    // Voz da personagem Camila (tocada quando ela fala, estilo Undertale)
+    private static volatile Clip clipVozCamila;
+    private static volatile boolean tocandoVozCamila = false;
+    private static volatile Thread threadVozCamila = null;
+    private static final Object LOCK_VOZ_CAMILA = new Object();
+
+    private static void carregarClipVozCamila() {
+        if (clipVozCamila != null && clipVozCamila.isOpen()) return;
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("voz-camila.wav"));
+            if (!f.exists()) return;
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(f);
+            clipVozCamila = AudioSystem.getClip();
+            clipVozCamila.open(audioStream);
+        } catch (Exception e) {
+            logVoz("Erro ao carregar voz da Camila: " + e.getMessage());
+        }
+    }
+
+    public static void tocarVozCamila() {
+        synchronized (LOCK_VOZ_CAMILA) {
+            if (tocandoVozCamila && threadVozCamila != null && threadVozCamila.isAlive()) return;
+            tocandoVozCamila = true;
+            if (threadVozCamila != null && threadVozCamila.isAlive()) threadVozCamila.interrupt();
+            threadVozCamila = new Thread(() -> {
+                carregarClipVozCamila();
+                if (clipVozCamila == null || !clipVozCamila.isOpen()) {
+                    synchronized (LOCK_VOZ_CAMILA) { tocandoVozCamila = false; }
+                    return;
+                }
+                while (tocandoVozCamila && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        clipVozCamila.stop();
+                        clipVozCamila.setFramePosition(0);
+                        try {
+                            FloatControl gain = (FloatControl) clipVozCamila.getControl(FloatControl.Type.MASTER_GAIN);
+                            int vol = Configuracoes.getInstance().getVolumeEfeitos();
+                            if (vol <= 0) gain.setValue(gain.getMinimum());
+                            else {
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
+                                gain.setValue(minDb + (maxDb - minDb) * (vol / 100.0f));
+                            }
+                        } catch (Exception ignorado) {}
+                        clipVozCamila.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        logVoz("Erro ao tocar blip Camila: " + e.getMessage());
+                    }
+                }
+            });
+            threadVozCamila.start();
+        }
+    }
+
+    public static void pararVozCamila() {
+        synchronized (LOCK_VOZ_CAMILA) {
+            tocandoVozCamila = false;
+            if (threadVozCamila != null) {
+                threadVozCamila.interrupt();
+                threadVozCamila = null;
+            }
+            if (clipVozCamila != null && clipVozCamila.isRunning()) clipVozCamila.stop();
+        }
+    }
+
+    // Voz da personagem Gabi (tocada quando ela fala, estilo Undertale)
+    private static volatile Clip clipVozGabi;
+    private static volatile boolean tocandoVozGabi = false;
+    private static volatile Thread threadVozGabi = null;
+    private static final Object LOCK_VOZ_GABI = new Object();
+
+    private static void carregarClipVozGabi() {
+        if (clipVozGabi != null && clipVozGabi.isOpen()) return;
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("voz-gabi.wav"));
+            if (!f.exists()) return;
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(f);
+            clipVozGabi = AudioSystem.getClip();
+            clipVozGabi.open(audioStream);
+        } catch (Exception e) {
+            logVoz("Erro ao carregar voz da Gabi: " + e.getMessage());
+        }
+    }
+
+    public static void tocarVozGabi() {
+        synchronized (LOCK_VOZ_GABI) {
+            if (tocandoVozGabi && threadVozGabi != null && threadVozGabi.isAlive()) return;
+            tocandoVozGabi = true;
+            if (threadVozGabi != null && threadVozGabi.isAlive()) threadVozGabi.interrupt();
+            threadVozGabi = new Thread(() -> {
+                carregarClipVozGabi();
+                if (clipVozGabi == null || !clipVozGabi.isOpen()) {
+                    synchronized (LOCK_VOZ_GABI) { tocandoVozGabi = false; }
+                    return;
+                }
+                while (tocandoVozGabi && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        clipVozGabi.stop();
+                        clipVozGabi.setFramePosition(0);
+                        try {
+                            FloatControl gain = (FloatControl) clipVozGabi.getControl(FloatControl.Type.MASTER_GAIN);
+                            int vol = Configuracoes.getInstance().getVolumeEfeitos();
+                            if (vol <= 0) gain.setValue(gain.getMinimum());
+                            else {
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
+                                gain.setValue(minDb + (maxDb - minDb) * (vol / 100.0f));
+                            }
+                        } catch (Exception ignorado) {}
+                        clipVozGabi.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        logVoz("Erro ao tocar blip Gabi: " + e.getMessage());
+                    }
+                }
+            });
+            threadVozGabi.start();
+        }
+    }
+
+    public static void pararVozGabi() {
+        synchronized (LOCK_VOZ_GABI) {
+            tocandoVozGabi = false;
+            if (threadVozGabi != null) {
+                threadVozGabi.interrupt();
+                threadVozGabi = null;
+            }
+            if (clipVozGabi != null && clipVozGabi.isRunning()) clipVozGabi.stop();
+        }
+    }
+
+    // Voz da personagem Ivi (tocada quando ela fala, estilo Undertale)
+    private static volatile Clip clipVozIvi;
+    private static volatile boolean tocandoVozIvi = false;
+    private static volatile Thread threadVozIvi = null;
+    private static final Object LOCK_VOZ_IVI = new Object();
+
+    private static void carregarClipVozIvi() {
+        if (clipVozIvi != null && clipVozIvi.isOpen()) return;
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("voz-ivi.wav"));
+            if (!f.exists()) return;
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(f);
+            clipVozIvi = AudioSystem.getClip();
+            clipVozIvi.open(audioStream);
+        } catch (Exception e) {
+            logVoz("Erro ao carregar voz da Ivi: " + e.getMessage());
+        }
+    }
+
+    public static void tocarVozIvi() {
+        synchronized (LOCK_VOZ_IVI) {
+            if (tocandoVozIvi && threadVozIvi != null && threadVozIvi.isAlive()) return;
+            tocandoVozIvi = true;
+            if (threadVozIvi != null && threadVozIvi.isAlive()) threadVozIvi.interrupt();
+            threadVozIvi = new Thread(() -> {
+                carregarClipVozIvi();
+                if (clipVozIvi == null || !clipVozIvi.isOpen()) {
+                    synchronized (LOCK_VOZ_IVI) { tocandoVozIvi = false; }
+                    return;
+                }
+                while (tocandoVozIvi && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        clipVozIvi.stop();
+                        clipVozIvi.setFramePosition(0);
+                        try {
+                            FloatControl gain = (FloatControl) clipVozIvi.getControl(FloatControl.Type.MASTER_GAIN);
+                            int vol = Configuracoes.getInstance().getVolumeEfeitos();
+                            if (vol <= 0) gain.setValue(gain.getMinimum());
+                            else {
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
+                                gain.setValue(minDb + (maxDb - minDb) * (vol / 100.0f));
+                            }
+                        } catch (Exception ignorado) {}
+                        clipVozIvi.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        logVoz("Erro ao tocar blip Ivi: " + e.getMessage());
+                    }
+                }
+            });
+            threadVozIvi.start();
+        }
+    }
+
+    public static void pararVozIvi() {
+        synchronized (LOCK_VOZ_IVI) {
+            tocandoVozIvi = false;
+            if (threadVozIvi != null) {
+                threadVozIvi.interrupt();
+                threadVozIvi = null;
+            }
+            if (clipVozIvi != null && clipVozIvi.isRunning()) clipVozIvi.stop();
+        }
+    }
+
+    // Voz da personagem Maysa (tocada quando ela fala, estilo Undertale)
+    private static volatile Clip clipVozMaysa;
+    private static volatile boolean tocandoVozMaysa = false;
+    private static volatile Thread threadVozMaysa = null;
+    private static final Object LOCK_VOZ_MAYSA = new Object();
+
+    private static void carregarClipVozMaysa() {
+        if (clipVozMaysa != null && clipVozMaysa.isOpen()) return;
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("voz-maysa.wav"));
+            if (!f.exists()) return;
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(f);
+            clipVozMaysa = AudioSystem.getClip();
+            clipVozMaysa.open(audioStream);
+        } catch (Exception e) {
+            logVoz("Erro ao carregar voz da Maysa: " + e.getMessage());
+        }
+    }
+
+    public static void tocarVozMaysa() {
+        synchronized (LOCK_VOZ_MAYSA) {
+            if (tocandoVozMaysa && threadVozMaysa != null && threadVozMaysa.isAlive()) return;
+            tocandoVozMaysa = true;
+            if (threadVozMaysa != null && threadVozMaysa.isAlive()) threadVozMaysa.interrupt();
+            threadVozMaysa = new Thread(() -> {
+                carregarClipVozMaysa();
+                if (clipVozMaysa == null || !clipVozMaysa.isOpen()) {
+                    synchronized (LOCK_VOZ_MAYSA) { tocandoVozMaysa = false; }
+                    return;
+                }
+                while (tocandoVozMaysa && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        clipVozMaysa.stop();
+                        clipVozMaysa.setFramePosition(0);
+                        try {
+                            FloatControl gain = (FloatControl) clipVozMaysa.getControl(FloatControl.Type.MASTER_GAIN);
+                            int vol = Configuracoes.getInstance().getVolumeEfeitos();
+                            if (vol <= 0) gain.setValue(gain.getMinimum());
+                            else {
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
+                                gain.setValue(minDb + (maxDb - minDb) * (vol / 100.0f));
+                            }
+                        } catch (Exception ignorado) {}
+                        clipVozMaysa.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        logVoz("Erro ao tocar blip Maysa: " + e.getMessage());
+                    }
+                }
+            });
+            threadVozMaysa.start();
+        }
+    }
+
+    public static void pararVozMaysa() {
+        synchronized (LOCK_VOZ_MAYSA) {
+            tocandoVozMaysa = false;
+            if (threadVozMaysa != null) {
+                threadVozMaysa.interrupt();
+                threadVozMaysa = null;
+            }
+            if (clipVozMaysa != null && clipVozMaysa.isRunning()) clipVozMaysa.stop();
+        }
+    }
+
+    // Voz da personagem Victor (tocada quando ela fala, estilo Undertale)
+    private static volatile Clip clipVozVictor;
+    private static volatile boolean tocandoVozVictor = false;
+    private static volatile Thread threadVozVictor = null;
+    private static final Object LOCK_VOZ_VICTOR = new Object();
+
+    private static void carregarClipVozVictor() {
+        if (clipVozVictor != null && clipVozVictor.isOpen()) return;
+        try {
+            java.io.File f = new java.io.File(JogoAudrey.resolvePath("voz-victor.wav"));
+            if (!f.exists()) return;
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(f);
+            clipVozVictor = AudioSystem.getClip();
+            clipVozVictor.open(audioStream);
+        } catch (Exception e) {
+            logVoz("Erro ao carregar voz do Victor: " + e.getMessage());
+        }
+    }
+
+    public static void tocarVozVictor() {
+        synchronized (LOCK_VOZ_VICTOR) {
+            if (tocandoVozVictor && threadVozVictor != null && threadVozVictor.isAlive()) return;
+            tocandoVozVictor = true;
+            if (threadVozVictor != null && threadVozVictor.isAlive()) threadVozVictor.interrupt();
+            threadVozVictor = new Thread(() -> {
+                carregarClipVozVictor();
+                if (clipVozVictor == null || !clipVozVictor.isOpen()) {
+                    synchronized (LOCK_VOZ_VICTOR) { tocandoVozVictor = false; }
+                    return;
+                }
+                while (tocandoVozVictor && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        clipVozVictor.stop();
+                        clipVozVictor.setFramePosition(0);
+                        try {
+                            FloatControl gain = (FloatControl) clipVozVictor.getControl(FloatControl.Type.MASTER_GAIN);
+                            int vol = Configuracoes.getInstance().getVolumeEfeitos();
+                            if (vol <= 0) gain.setValue(gain.getMinimum());
+                            else {
+                                float maxDb = -10.0f;
+                                float minDb = -35.0f;
+                                gain.setValue(minDb + (maxDb - minDb) * (vol / 100.0f));
+                            }
+                        } catch (Exception ignorado) {}
+                        clipVozVictor.start();
+                        Thread.sleep(75);
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        logVoz("Erro ao tocar blip Victor: " + e.getMessage());
+                    }
+                }
+            });
+            threadVozVictor.start();
+        }
+    }
+
+    public static void pararVozVictor() {
+        synchronized (LOCK_VOZ_VICTOR) {
+            tocandoVozVictor = false;
+            if (threadVozVictor != null) {
+                threadVozVictor.interrupt();
+                threadVozVictor = null;
+            }
+            if (clipVozVictor != null && clipVozVictor.isRunning()) clipVozVictor.stop();
+        }
+    }
+
+    public static void pararTodasAsVozes() {
+        pararVozNicolas();
+        pararVozRaquel();
+        pararVozAudrey();
+        pararVozCamila();
+        pararVozGabi();
+        pararVozIvi();
+        pararVozMaysa();
+        pararVozVictor();
+    }
+
+    public static void tocarVoz(String personagem) {
+        pararTodasAsVozes();
+        if ("Nicollas".equalsIgnoreCase(personagem)) {
+            tocarVozNicolas();
+        } else if ("Raquel".equalsIgnoreCase(personagem)) {
+            tocarVozRaquel();
+        } else if ("Audrey".equalsIgnoreCase(personagem)) {
+            tocarVozAudrey();
+        } else if ("Camila".equalsIgnoreCase(personagem)) {
+            tocarVozCamila();
+        } else if ("Gabi".equalsIgnoreCase(personagem)) {
+            tocarVozGabi();
+        } else if ("Ivi".equalsIgnoreCase(personagem)) {
+            tocarVozIvi();
+        } else if ("Maysa".equalsIgnoreCase(personagem)) {
+            tocarVozMaysa();
+        } else if ("Victor".equalsIgnoreCase(personagem)) {
+            tocarVozVictor();
         }
     }
 

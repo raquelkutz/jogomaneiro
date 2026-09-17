@@ -37,7 +37,7 @@ public class ImportadorImagem extends JPanel implements ActionListener {
     private Font fonteTitulo, fonteCrayon;
 
     // Botões
-    private JButton btnEscolher, btnConfirmar, btnPular;
+    private JButton btnEscolher, btnCamera, btnConfirmar, btnPular;
 
     // Destino da imagem
     public static final String NOME_ARQUIVO_DESENHO = "desenho_jogador.png";
@@ -125,6 +125,12 @@ public class ImportadorImagem extends JPanel implements ActionListener {
         btnEscolher.addActionListener(e -> escolherImagem());
         add(btnEscolher);
 
+        btnCamera = criarBotao("\uD83D\uDCF7  Tirar Foto com a Câmera",
+                new Color(30, 120, 180), new Color(50, 160, 220), true);
+        btnCamera.setEnabled(true);
+        btnCamera.addActionListener(e -> abrirCamera());
+        add(btnCamera);
+
         btnConfirmar = criarBotao("\u2705  Usar esta Imagem",
                 new Color(45, 140, 80), new Color(65, 180, 100), true);
         btnConfirmar.setEnabled(false);
@@ -204,6 +210,109 @@ public class ImportadorImagem extends JPanel implements ActionListener {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
     }
+
+    private void abrirCamera() {
+        try {
+            // Abre o app Câmera do Windows
+            String os = System.getProperty("os.name", "").toLowerCase();
+            if (os.contains("win")) {
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "microsoft.windows.camera:"});
+            } else if (os.contains("mac")) {
+                Runtime.getRuntime().exec(new String[]{"open", "-a", "Photo Booth"});
+            } else {
+                Runtime.getRuntime().exec(new String[]{"cheese"});
+            }
+            
+            // Dialog com instruções estilizado
+            Window parentWindow = SwingUtilities.getWindowAncestor(this);
+            JDialog dialog = new JDialog(
+                    parentWindow instanceof Frame ? (Frame) parentWindow : null,
+                    "Câmera Aberta", true);
+            dialog.setUndecorated(true);
+            dialog.setSize(460, 290);
+            dialog.setLocationRelativeTo(this);
+            
+            JPanel painel = new JPanel(null) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int w = getWidth(), h = getHeight();
+                    GradientPaint bg = new GradientPaint(0, 0, new Color(15, 40, 80), w, h, new Color(25, 60, 120));
+                    g2.setPaint(bg);
+                    g2.fillRoundRect(0, 0, w, h, 24, 24);
+                    g2.setColor(new Color(80, 160, 240, 150));
+                    g2.setStroke(new BasicStroke(2f));
+                    g2.drawRoundRect(1, 1, w - 2, h - 2, 24, 24);
+                    g2.dispose();
+                }
+            };
+            painel.setOpaque(false);
+            
+            // Ícone de câmera
+            JLabel lblIcon = new JLabel("\uD83D\uDCF7", SwingConstants.CENTER);
+            lblIcon.setFont(new Font("SansSerif", Font.PLAIN, 48));
+            lblIcon.setBounds(0, 12, 460, 60);
+            painel.add(lblIcon);
+            
+            JLabel lblTitulo = new JLabel("Câmera Aberta!", SwingConstants.CENTER);
+            Font fTitle = fonteCrayon != null ? fonteCrayon.deriveFont(22f) : new Font("Arial", Font.BOLD, 22);
+            lblTitulo.setFont(fTitle);
+            lblTitulo.setForeground(new Color(180, 220, 255));
+            lblTitulo.setBounds(0, 75, 460, 30);
+            painel.add(lblTitulo);
+            
+            String msgHtml = "<html><div style='text-align:center; line-height:1.4'>"
+                    + "1. Tire a foto no app da C\u00e2mera<br>"
+                    + "2. A foto ser\u00e1 salva automaticamente<br>"
+                    + "3. Volte aqui e clique em <b>'Escolher Imagem'</b><br>"
+                    + "para selecionar a foto tirada</div></html>";
+            JLabel lblMsg = new JLabel(msgHtml, SwingConstants.CENTER);
+            Font fMsg = fonteCrayon != null ? fonteCrayon.deriveFont(15f) : new Font("Arial", Font.PLAIN, 15);
+            lblMsg.setFont(fMsg);
+            lblMsg.setForeground(new Color(160, 200, 240));
+            lblMsg.setBounds(20, 110, 420, 90);
+            painel.add(lblMsg);
+            
+            JButton btnOk = new JButton("ENTENDI") {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    boolean hover = getModel().isRollover();
+                    g2.setColor(hover ? new Color(50, 160, 220) : new Color(30, 120, 180));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+                    g2.setColor(new Color(100, 200, 255, 150));
+                    g2.setStroke(new BasicStroke(1.5f));
+                    g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 16, 16);
+                    g2.setColor(Color.WHITE);
+                    Font f = fonteCrayon != null ? fonteCrayon.deriveFont(16f) : new Font("Arial", Font.BOLD, 16);
+                    g2.setFont(f);
+                    FontMetrics fm = g2.getFontMetrics();
+                    g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2, (getHeight()+fm.getAscent()-fm.getDescent())/2);
+                    g2.dispose();
+                }
+            };
+            btnOk.setContentAreaFilled(false);
+            btnOk.setBorderPainted(false);
+            btnOk.setFocusPainted(false);
+            btnOk.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btnOk.setBounds(155, 215, 150, 42);
+            btnOk.addActionListener(ev -> dialog.dispose());
+            painel.add(btnOk);
+            
+            dialog.setContentPane(painel);
+            dialog.setBackground(new Color(0, 0, 0, 0));
+            dialog.getRootPane().setOpaque(false);
+            dialog.setVisible(true);
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Não foi possível abrir a câmera.\n" + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 
     // Lógica de seleção e carregamento de imagem
     private void escolherImagem() {
@@ -520,8 +629,9 @@ public class ImportadorImagem extends JPanel implements ActionListener {
         int btnStartY = prevY + prevH + 36;
 
         btnEscolher.setBounds(cx, btnStartY, btnW, btnH);
-        btnConfirmar.setBounds(cx, btnStartY + 56, btnW, btnH);
-        btnPular.setBounds(cx + 30, btnStartY + 114, btnW - 60, 36);
+        btnCamera.setBounds(cx, btnStartY + 56, btnW, btnH);
+        btnConfirmar.setBounds(cx, btnStartY + 112, btnW, btnH);
+        btnPular.setBounds(cx + 30, btnStartY + 170, btnW - 60, 36);
 
         // Rodapé
         g2.setFont(subFont.deriveFont(12f));

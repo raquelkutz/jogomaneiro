@@ -17,6 +17,14 @@ import java.util.List;
 import javax.swing.JFrame;
 import java.awt.Canvas;
 import java.awt.Font;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.GradientPaint;
+import java.awt.Rectangle;
+import java.awt.geom.RoundRectangle2D;
 
 public class Game extends Canvas implements Runnable {
     
@@ -62,6 +70,14 @@ public class Game extends Canvas implements Runnable {
     private List<Entity> toAddEntities = new ArrayList<>();
     private boolean portalSpawned = false;
 
+    // === CONTROLES TOUCH ===
+    private boolean touchForward = false, touchBack = false, touchLeft = false, touchRight = false;
+    private boolean touchRun = false;
+    private int touchDragLastX = -1;
+    private boolean isDraggingCamera = false;
+    // Retângulos dos botões virtuais (calculados no render)
+    private Rectangle btnTouchUp, btnTouchDown, btnTouchLeft2, btnTouchRight2, btnTouchSprint;
+
     public Game() {
         thread = new Thread(this);
         image = new BufferedImage(960, 720, BufferedImage.TYPE_INT_RGB);
@@ -106,7 +122,107 @@ public class Game extends Canvas implements Runnable {
         centerX = 0;
         centerY = 0;
         
+        // Controles touch - MouseListener para botões virtuais
+        addMouseListener(new MouseListener() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                handleTouchPress(e.getX(), e.getY(), true);
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                // Soltar todos os botões touch
+                touchForward = false;
+                touchBack = false;
+                touchLeft = false;
+                touchRight = false;
+                touchRun = false;
+                isDraggingCamera = false;
+                touchDragLastX = -1;
+                syncTouchToCamera();
+            }
+            @Override public void mouseClicked(MouseEvent e) {}
+            @Override public void mouseEntered(MouseEvent e) {}
+            @Override public void mouseExited(MouseEvent e) {
+                touchForward = false; touchBack = false; touchLeft = false; touchRight = false;
+                touchRun = false; isDraggingCamera = false; touchDragLastX = -1;
+                syncTouchToCamera();
+            }
+        });
+        
+        // Controles touch - drag para girar câmera
+        addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                handleTouchDrag(e.getX(), e.getY());
+            }
+            @Override
+            public void mouseMoved(MouseEvent e) {}
+        });
+        
         start();
+    }
+    
+    private void handleTouchPress(int mx, int my, boolean pressed) {
+        if (paused || health <= 0 || won || inCutscene) return;
+        
+        // Verificar se está em algum botão virtual
+        if (btnTouchUp != null && btnTouchUp.contains(mx, my)) {
+            touchForward = pressed;
+        } else if (btnTouchDown != null && btnTouchDown.contains(mx, my)) {
+            touchBack = pressed;
+        } else if (btnTouchLeft2 != null && btnTouchLeft2.contains(mx, my)) {
+            touchLeft = pressed;
+        } else if (btnTouchRight2 != null && btnTouchRight2.contains(mx, my)) {
+            touchRight = pressed;
+        } else if (btnTouchSprint != null && btnTouchSprint.contains(mx, my)) {
+            touchRun = pressed;
+        } else {
+            // Toque fora dos botões = início do drag para girar
+            isDraggingCamera = pressed;
+            touchDragLastX = mx;
+        }
+        syncTouchToCamera();
+    }
+    
+    private void handleTouchDrag(int mx, int my) {
+        if (paused || health <= 0 || won || inCutscene) return;
+        
+        // Se está arrastando na área de um botão, verificar e atualizar
+        if (btnTouchUp != null && btnTouchUp.contains(mx, my)) {
+            touchForward = true; touchBack = false; touchLeft = false; touchRight = false;
+            syncTouchToCamera(); return;
+        } else if (btnTouchDown != null && btnTouchDown.contains(mx, my)) {
+            touchBack = true; touchForward = false; touchLeft = false; touchRight = false;
+            syncTouchToCamera(); return;
+        } else if (btnTouchLeft2 != null && btnTouchLeft2.contains(mx, my)) {
+            touchLeft = true; touchRight = false; touchForward = false; touchBack = false;
+            syncTouchToCamera(); return;
+        } else if (btnTouchRight2 != null && btnTouchRight2.contains(mx, my)) {
+            touchRight = true; touchLeft = false; touchForward = false; touchBack = false;
+            syncTouchToCamera(); return;
+        } else if (btnTouchSprint != null && btnTouchSprint.contains(mx, my)) {
+            touchRun = true; syncTouchToCamera(); return;
+        }
+        
+        // Drag livre para girar câmera
+        if (isDraggingCamera && touchDragLastX >= 0) {
+            int dx = mx - touchDragLastX;
+            if (dx != 0) {
+                camera.rotate(-dx * 0.004);
+            }
+        }
+        touchDragLastX = mx;
+    }
+    
+    private void syncTouchToCamera() {
+        // Combinar controles touch com teclado (OR lógico)
+        // Os controles de teclado já são gerenciados pelo KeyListener da Camera
+        // Aqui fazemos override apenas se touch está ativo
+        if (touchForward) camera.forward = true;
+        if (touchBack) camera.back = true;
+        if (touchLeft) camera.left = true;
+        if (touchRight) camera.right = true;
+        if (touchRun) camera.run = true;
     }
     
     private void setupEntities() {
@@ -464,8 +580,143 @@ public class Game extends Canvas implements Runnable {
             holeEffectAlpha *= 0.88f;
         }
 
+        // === CONTROLES TOUCH VIRTUAIS ===
+        if (health > 0 && !won && !paused && !inCutscene) {
+            renderTouchControls(g2d);
+        }
+
         bs.show();
 
+    }
+    
+    private void renderTouchControls(Graphics2D g2d) {
+        int W = getWidth(), H = getHeight();
+        
+        // === D-PAD (canto inferior esquerdo) ===
+        int dpadCenterX = 120;
+        int dpadCenterY = H - 140;
+        int btnSize = 55;
+        int gap = 4;
+        
+        // Calcular retângulos dos botões
+        btnTouchUp = new Rectangle(dpadCenterX - btnSize/2, dpadCenterY - btnSize - gap, btnSize, btnSize);
+        btnTouchDown = new Rectangle(dpadCenterX - btnSize/2, dpadCenterY + gap, btnSize, btnSize);
+        btnTouchLeft2 = new Rectangle(dpadCenterX - btnSize - gap, dpadCenterY - btnSize/2, btnSize, btnSize);
+        btnTouchRight2 = new Rectangle(dpadCenterX + gap, dpadCenterY - btnSize/2, btnSize, btnSize);
+        
+        // Centro do D-pad (decorativo)
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
+        g2d.setColor(Color.WHITE);
+        g2d.fillOval(dpadCenterX - 18, dpadCenterY - 18, 36, 36);
+        
+        // Desenhar cada botão do D-pad
+        drawTouchButton(g2d, btnTouchUp, "▲", touchForward, new Color(80, 180, 255));
+        drawTouchButton(g2d, btnTouchDown, "▼", touchBack, new Color(80, 180, 255));
+        drawTouchButton(g2d, btnTouchLeft2, "◄", touchLeft, new Color(80, 180, 255));
+        drawTouchButton(g2d, btnTouchRight2, "►", touchRight, new Color(80, 180, 255));
+        
+        // Label "MOVER"
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        g2d.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g2d.setColor(new Color(200, 220, 255));
+        String moveLabel = "MOVER";
+        FontMetrics fmMove = g2d.getFontMetrics();
+        g2d.drawString(moveLabel, dpadCenterX - fmMove.stringWidth(moveLabel)/2, dpadCenterY + btnSize + gap + 22);
+        
+        // === BOTÃO SPRINT (canto inferior direito) ===
+        int sprintSize = 70;
+        int sprintX = W - 130;
+        int sprintY = H - 160;
+        btnTouchSprint = new Rectangle(sprintX - sprintSize/2, sprintY - sprintSize/2, sprintSize, sprintSize);
+        
+        drawTouchButtonCircle(g2d, sprintX, sprintY, sprintSize, "⚡", touchRun, new Color(255, 200, 50));
+        
+        // Label "CORRER"
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        g2d.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g2d.setColor(new Color(255, 230, 150));
+        String sprintLabel = "CORRER";
+        FontMetrics fmSprint = g2d.getFontMetrics();
+        g2d.drawString(sprintLabel, sprintX - fmSprint.stringWidth(sprintLabel)/2, sprintY + sprintSize/2 + 20);
+        
+        // Indicador "Arraste para girar"
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        g2d.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        g2d.setColor(Color.WHITE);
+        String dragHint = "↔ Arraste na tela para girar a câmera";
+        FontMetrics fmDrag = g2d.getFontMetrics();
+        g2d.drawString(dragHint, (W - fmDrag.stringWidth(dragHint))/2, H - 15);
+        
+        // Restaurar composite
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+    }
+    
+    private void drawTouchButton(Graphics2D g2d, Rectangle r, String symbol, boolean pressed, Color accentColor) {
+        float alpha = pressed ? 0.55f : 0.25f;
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        
+        // Fundo do botão
+        if (pressed) {
+            g2d.setColor(accentColor.darker());
+        } else {
+            g2d.setColor(new Color(20, 20, 40));
+        }
+        g2d.fillRoundRect(r.x, r.y, r.width, r.height, 14, 14);
+        
+        // Borda
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pressed ? 0.8f : 0.4f));
+        g2d.setColor(pressed ? accentColor : new Color(150, 180, 220));
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawRoundRect(r.x, r.y, r.width, r.height, 14, 14);
+        
+        // Brilho superior
+        if (pressed) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
+            g2d.setColor(Color.WHITE);
+            g2d.fillRoundRect(r.x, r.y, r.width, r.height/2, 14, 14);
+        }
+        
+        // Símbolo
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pressed ? 1.0f : 0.6f));
+        g2d.setColor(pressed ? Color.WHITE : new Color(200, 220, 255));
+        g2d.setFont(new Font("SansSerif", Font.BOLD, 22));
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.drawString(symbol, r.x + (r.width - fm.stringWidth(symbol))/2, r.y + (r.height + fm.getAscent() - fm.getDescent())/2);
+    }
+    
+    private void drawTouchButtonCircle(Graphics2D g2d, int cx, int cy, int size, String symbol, boolean pressed, Color accentColor) {
+        float alpha = pressed ? 0.55f : 0.25f;
+        int r = size / 2;
+        
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        
+        // Fundo circular
+        if (pressed) {
+            g2d.setColor(accentColor.darker());
+        } else {
+            g2d.setColor(new Color(30, 25, 15));
+        }
+        g2d.fillOval(cx - r, cy - r, size, size);
+        
+        // Borda
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pressed ? 0.8f : 0.4f));
+        g2d.setColor(pressed ? accentColor : new Color(200, 180, 100));
+        g2d.setStroke(new BasicStroke(2.5f));
+        g2d.drawOval(cx - r, cy - r, size, size);
+        
+        // Glow quando pressionado
+        if (pressed) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f));
+            g2d.setColor(accentColor);
+            g2d.fillOval(cx - r - 4, cy - r - 4, size + 8, size + 8);
+        }
+        
+        // Símbolo
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pressed ? 1.0f : 0.6f));
+        g2d.setColor(pressed ? Color.WHITE : new Color(255, 230, 150));
+        g2d.setFont(new Font("SansSerif", Font.BOLD, 28));
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.drawString(symbol, cx - fm.stringWidth(symbol)/2, cy + (fm.getAscent() - fm.getDescent())/2);
     }
     
     private long lastHoleTeleportTime = 0;
@@ -653,8 +904,11 @@ public class Game extends Canvas implements Runnable {
             
             while (delta >= 1) {
                 if (health > 0 && !paused && !won) {
-                    // Lógica de corrida
-                    if (camera.run && stamina > 0) {
+                    // Sincronizar controles touch
+                    syncTouchToCamera();
+                    
+                    // Lógica de corrida (teclado OU touch)
+                    if ((camera.run || touchRun) && stamina > 0) {
                         camera.MOVE_SPEED = 0.08;
                         stamina -= 0.5;
                     } else {

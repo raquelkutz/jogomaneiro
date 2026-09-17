@@ -254,7 +254,21 @@ public class JogoAudrey extends JFrame {
         requestFocusInWindow();
     }
 
+    public static JogoAudrey instancia;
+
+    public static void trazerParaFrente() {
+        if (instancia != null) {
+            SwingUtilities.invokeLater(() -> {
+                instancia.setState(Frame.NORMAL);
+                instancia.setVisible(true);
+                instancia.toFront();
+                instancia.requestFocus();
+            });
+        }
+    }
+
     public JogoAudrey() {
+        instancia = this;
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -810,6 +824,13 @@ public class JogoAudrey extends JFrame {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {}
+
+        // Inicia o servidor local integrado para comunicação com o App TCC e Microsoft Edge
+        try {
+            ServidorIntegradoJava.iniciar();
+        } catch (Exception e) {
+            System.out.println("[ServidorIntegradoJava] " + e.getMessage());
+        }
 
         garantirImagemExiste("ginasio.jpg");
         garantirImagemExiste("chave.png");
@@ -2375,6 +2396,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean temLivro = false;
     private boolean livroJoiFoiPego = false;
     private boolean mostrarObjetivos = false;
+    private boolean diarioAberto = false;
+    private boolean temDiario = false; // Novo: o diário precisa ser pego no armário
     private int contadorEfeitoChave = 0;
 
     // --- NOVAS VARIAVEIS DE HOBBIES E DIÁRIO ---
@@ -2402,7 +2425,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private boolean visitouCorredor3 = false; // mapa 4
     private boolean visitouCorredor4 = false; // mapa 5
     private boolean visitouBiblioteca = false; // mapa 6
-    private boolean diarioAberto = false;
 
     // --- EPISODIO 1 ---
     private boolean ep1FalouNpc1 = false;
@@ -2423,6 +2445,9 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private Image imgIvi;
     private Image imgIviCorredor;
     private boolean ep1FalouIviCorredor = false;
+    private Image imgMaysa;
+    private Image imgPortraitMaysa;
+    private boolean ep1FalouMaysa = false;
 
     // -------------------------------------------
     private int indiceMapa = 0, faseDialogoNicolas = 0, selectedDialogueOption = 0;
@@ -2508,6 +2533,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private final Rectangle touchBtnMenu = new Rectangle(915, 16, 62, 40);
     private final Rectangle touchBtnFechar = new Rectangle(20, 16, 62, 40);
 
+    // Rects das opções de diálogo (calculados no desenho, usados no clique)
+    private Rectangle optBtnRect1 = null;
+    private Rectangle optBtnRect2 = null;
+    private int hoverOption = -1; // -1=nenhum, 0=op1, 1=op2
+
     private Font fontCrayonHand;
     private BufferedImage shaderBuffer = new BufferedImage(1000, 750, BufferedImage.TYPE_INT_RGB);
 
@@ -2524,6 +2554,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         props.setProperty("livroJoiFoiPego", String.valueOf(livroJoiFoiPego));
         props.setProperty("temLivro", String.valueOf(temLivro));
         props.setProperty("faseDialogoNicolas", String.valueOf(faseDialogoNicolas));
+        props.setProperty("temDiario", String.valueOf(temDiario));
 
         props.setProperty("nivelLeitura", String.valueOf(nivelLeitura));
         props.setProperty("nivelArte", String.valueOf(nivelArte));
@@ -2580,6 +2611,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         livroJoiFoiPego = Boolean.parseBoolean(props.getProperty("livroJoiFoiPego", "false"));
         temLivro = Boolean.parseBoolean(props.getProperty("temLivro", "false"));
         faseDialogoNicolas = Integer.parseInt(props.getProperty("faseDialogoNicolas", "0"));
+        temDiario = Boolean.parseBoolean(props.getProperty("temDiario", "false"));
 
         nivelLeitura = Integer.parseInt(props.getProperty("nivelLeitura", "1"));
         nivelArte = Integer.parseInt(props.getProperty("nivelArte", "1"));
@@ -2675,16 +2707,16 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 NPC_ALTURA);
         imgAlunoCorredor2 = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("aluno_corredor2_backup.png")).getImage(), NPC_LARGURA,
                 NPC_ALTURA);
-        imgAlunoGinasio = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("aluno_ginasio.png")).getImage(), AUDREY_LARGURA,
-                AUDREY_ALTURA);
+        imgAlunoGinasio = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("victor_personagem.png")).getImage(), NPC_LARGURA,
+                NPC_ALTURA);
         imgPortraitAudrey = carregarImagem("pixil-frame-0 (5)-Photoroom.png");
         imgPortraitNicollas = carregarImagem("nicollas_caixa_dialogo.png");
         imgPortraitGabi = carregarImagem("gabi caixa de dialogo-Photoroom.png");
-        imgPortraitIvi = carregarImagem("1000115243-removebg-preview.png");
+        imgPortraitIvi = carregarImagem("ivi_portrait.png");
         imgPortraitRaquel = carregarImagem("quel_pixel_art_modified (1)-Photoroom (1).png");
         imgPortraitNicolas = carregarImagem("portrait_nicollas-removebg-preview.png");
         imgPortraitCamila = carregarImagem("camiz_pixel_art (1)-Photoroom (1).png");
-        imgPortraitAlunoGinasio = carregarImagem("aluno_ginasio.png");
+        imgPortraitAlunoGinasio = carregarImagem("victor_portrait.png");
         imgCamila = redimensionarImagem(new ImageIcon(
                 JogoAudrey.resolvePath("a_full_body_drawing_of_the_female_character_from_data_image_image_12_showing-removebg-preview-removebg-preview-Photoroom (1).png"))
                 .getImage(), SALA_NPC_LARGURA, SALA_CAMILA_ALTURA);
@@ -2704,6 +2736,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 new ImageIcon(JogoAudrey.resolvePath("1000115243-removebg-preview.png")).getImage(),
                 NPC_LARGURA, NPC_ALTURA);
 
+        imgMaysa = redimensionarImagem(
+                new ImageIcon(JogoAudrey.resolvePath("maysa.png")).getImage(),
+                SALA_NPC_LARGURA, SALA_RAQUEL_ALTURA);
+        imgPortraitMaysa = carregarImagem("maysa_portrait.png");
+
         framesAndar[0] = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("andarum.png")).getImage(), ANDAR1_LARGURA,
                 AUDREY_ALTURA);
         framesAndar[1] = redimensionarImagem(new ImageIcon(JogoAudrey.resolvePath("andar02-removebg-preview.png")).getImage(), ANDAR2_LARGURA,
@@ -2716,11 +2753,28 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
     private Image carregarImagem(String caminho) {
         try {
-            return ImageIO.read(new File(JogoAudrey.resolvePath(caminho)));
-        } catch (Exception e) {
-            System.err.println("[ERRO] Não foi possivel carregar: " + caminho);
-            return null;
-        }
+            String resolved = JogoAudrey.resolvePath(caminho);
+            if (resolved != null && new File(resolved).exists()) {
+                return ImageIO.read(new File(resolved));
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            if (caminho.contains("raquel") || caminho.contains("quel")) {
+                return ImageIO.read(new File(JogoAudrey.resolvePath("1000115243-removebg-preview.png")));
+            }
+            if (caminho.contains("nicollas") || caminho.contains("nico")) {
+                return ImageIO.read(new File(JogoAudrey.resolvePath("nico__1_-removebg-preview-Photoroom.png")));
+            }
+            if (caminho.contains("camila") || caminho.contains("camiz")) {
+                return ImageIO.read(new File(JogoAudrey.resolvePath("pixil-frame-0-Photoroom (1).png")));
+            }
+            if (caminho.contains("audrey")) {
+                return ImageIO.read(new File(JogoAudrey.resolvePath("parada-removebg-preview (1).png")));
+            }
+        } catch (Exception ignored) {}
+
+        return null;
     }
 
     private Image redimensionarImagem(Image img, int width, int height) {
@@ -2918,7 +2972,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
                     g2d.setColor(new Color(120, 80, 100));
                     FontMetrics fm = g2d.getFontMetrics();
-                    g2d.drawString("Nicolas", labelX + (labelW - fm.stringWidth("Nicolas")) / 2, labelY + labelH - 8);
+                    g2d.drawString("Nicollas", labelX + (labelW - fm.stringWidth("Nicollas")) / 2, labelY + labelH - 8);
                 }
                 if (imgCamila != null) {
                     desenharSombraChao(g2d, 480 + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
@@ -2942,18 +2996,61 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
 
             // Desenhar NPCs da biblioteca
-            if (indiceMapa == 6 && personagensNaBiblioteca) {
+            if (indiceMapa == 6) {
                 int npcBaseY = audreyY + 150;
-                // Gabi na posição X=550
-                if (imgGabi != null) {
-                    int gX = 500;
-                    desenharSombraChao(g2d, gX + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
-                    g2d.drawImage(imgGabi, gX + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
-                            SALA_RAQUEL_ALTURA, this);
+                if (personagensNaBiblioteca) {
+                    // Gabi na posição X=550
+                    if (imgGabi != null) {
+                        int gX = 500;
+                        desenharSombraChao(g2d, gX + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
+                        g2d.drawImage(imgGabi, gX + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
+                                SALA_RAQUEL_ALTURA, this);
+                        int labelW = 100;
+                        int labelH = 30;
+                        int labelX = gX + (SALA_NPC_LARGURA - labelW) / 2;
+                        int labelY = npcBaseY - SALA_RAQUEL_ALTURA - labelH - 5;
+                        g2d.setColor(new Color(253, 246, 227, 220));
+                        g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setColor(new Color(210, 180, 140));
+                        g2d.setStroke(new BasicStroke(2));
+                        g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
+                        g2d.setColor(new Color(120, 80, 100));
+                        FontMetrics fmG = g2d.getFontMetrics();
+                        g2d.drawString("Gabi", labelX + (labelW - fmG.stringWidth("Gabi")) / 2, labelY + labelH - 8);
+                    }
+                    // Ivi na posição X=300
+                    if (imgIvi != null || imgPortraitIvi != null) {
+                        Image imgIviToDraw = (imgIvi != null) ? imgIvi : imgPortraitIvi;
+                        int iX = 250;
+                        desenharSombraChao(g2d, iX + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
+                        g2d.drawImage(imgIviToDraw, iX + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
+                                SALA_RAQUEL_ALTURA, this);
+                        int labelW = 80;
+                        int labelH = 30;
+                        int labelX = iX + (SALA_NPC_LARGURA - labelW) / 2;
+                        int labelY = npcBaseY - SALA_RAQUEL_ALTURA - labelH - 5;
+                        g2d.setColor(new Color(253, 246, 227, 220));
+                        g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setColor(new Color(210, 180, 140));
+                        g2d.setStroke(new BasicStroke(2));
+                        g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
+                        g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
+                        g2d.setColor(new Color(120, 80, 100));
+                        FontMetrics fmI = g2d.getFontMetrics();
+                        g2d.drawString("Ivi", labelX + (labelW - fmI.stringWidth("Ivi")) / 2, labelY + labelH - 8);
+                    }
+                }
+                // Maysa na posição X=480
+                if (imgMaysa != null) {
+                    int mX = 480;
+                    int mW = (int)(SALA_NPC_LARGURA * 0.85), mH = (int)(SALA_RAQUEL_ALTURA * 0.9);
+                    desenharSombraChao(g2d, mX + mW / 2, npcBaseY - 30, (int) (mW * 0.6));
+                    g2d.drawImage(imgMaysa, mX, npcBaseY - mH, mW, mH, this);
                     int labelW = 100;
                     int labelH = 30;
-                    int labelX = gX + (SALA_NPC_LARGURA - labelW) / 2;
-                    int labelY = npcBaseY - SALA_RAQUEL_ALTURA - labelH - 5;
+                    int labelX = mX + (mW - labelW) / 2;
+                    int labelY = npcBaseY - mH - labelH - 5;
                     g2d.setColor(new Color(253, 246, 227, 220));
                     g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
                     g2d.setColor(new Color(210, 180, 140));
@@ -2961,29 +3058,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
                     g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
                     g2d.setColor(new Color(120, 80, 100));
-                    FontMetrics fmG = g2d.getFontMetrics();
-                    g2d.drawString("Gabi", labelX + (labelW - fmG.stringWidth("Gabi")) / 2, labelY + labelH - 8);
-                }
-                // Ivi na posição X=300
-                if (imgIvi != null || imgPortraitIvi != null) {
-                    Image imgIviToDraw = (imgIvi != null) ? imgIvi : imgPortraitIvi;
-                    int iX = 250;
-                    desenharSombraChao(g2d, iX + SALA_NPC_LARGURA / 2, npcBaseY - 55, (int) (SALA_NPC_LARGURA * 0.6));
-                    g2d.drawImage(imgIviToDraw, iX + SALA_NPC_LARGURA, npcBaseY - SALA_RAQUEL_ALTURA, -SALA_NPC_LARGURA,
-                            SALA_RAQUEL_ALTURA, this);
-                    int labelW = 80;
-                    int labelH = 30;
-                    int labelX = iX + (SALA_NPC_LARGURA - labelW) / 2;
-                    int labelY = npcBaseY - SALA_RAQUEL_ALTURA - labelH - 5;
-                    g2d.setColor(new Color(253, 246, 227, 220));
-                    g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
-                    g2d.setColor(new Color(210, 180, 140));
-                    g2d.setStroke(new BasicStroke(2));
-                    g2d.drawRoundRect(labelX, labelY, labelW, labelH, 12, 12);
-                    g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 14f));
-                    g2d.setColor(new Color(120, 80, 100));
-                    FontMetrics fmI = g2d.getFontMetrics();
-                    g2d.drawString("Ivi", labelX + (labelW - fmI.stringWidth("Ivi")) / 2, labelY + labelH - 8);
+                    FontMetrics fmM = g2d.getFontMetrics();
+                    g2d.drawString("Maysa", labelX + (labelW - fmM.stringWidth("Maysa")) / 2, labelY + labelH - 8);
                 }
             }
 
@@ -2992,12 +3068,12 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 int npcBaseY = audreyY + 150;
                 int gX = 600;
                 if (imgAlunoGinasio != null) {
-                    desenharSombraChao(g2d, gX + AUDREY_LARGURA / 2, npcBaseY - 55, (int) (AUDREY_LARGURA * 0.6));
-                    g2d.drawImage(imgAlunoGinasio, gX, npcBaseY - AUDREY_ALTURA, AUDREY_LARGURA, AUDREY_ALTURA, this);
+                    desenharSombraChao(g2d, gX + NPC_LARGURA / 2, npcBaseY - 55, (int) (NPC_LARGURA * 0.6));
+                    g2d.drawImage(imgAlunoGinasio, gX + NPC_LARGURA, npcBaseY - NPC_ALTURA, -NPC_LARGURA, NPC_ALTURA, this);
                     int labelW = 100;
                     int labelH = 30;
-                    int labelX = gX + (AUDREY_LARGURA - labelW) / 2;
-                    int labelY = npcBaseY - AUDREY_ALTURA - labelH - 5;
+                    int labelX = gX + (NPC_LARGURA - labelW) / 2;
+                    int labelY = npcBaseY - NPC_ALTURA - labelH - 5;
                     g2d.setColor(new Color(253, 246, 227, 220));
                     g2d.fillRoundRect(labelX, labelY, labelW, labelH, 12, 12);
                     g2d.setColor(new Color(210, 180, 140));
@@ -3065,41 +3141,6 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 int lx = (LARGURA - lw) / 2;
                 int ly = (ALTURA - 150 - lh) / 2;
                 g2d.drawImage(imgArmarioAberto, lx, ly, lw, lh, this);
-
-                // Destaque em VERMELHO VIVO nos dois armários de cima (Jogo Secreto)
-                int topX = lx + (int)(lw * 0.05);
-                int topY = ly + 15;
-                int topW = (int)(lw * 0.9);
-                int topH = (int)(lh * 0.38);
-
-                int alphaFill = (cliquesArmarioEasterEgg > 0) ? 160 : 110;
-                g2d.setColor(new Color(255, 0, 0, alphaFill)); // VERMELHO VIVO
-                g2d.fillRect(topX, topY, topW, topH);
-
-                g2d.setColor(new Color(255, 255, 255));
-                g2d.setStroke(new BasicStroke(3f));
-                g2d.drawRect(topX + 1, topY + 1, topW - 2, topH - 2);
-                g2d.setColor(new Color(255, 0, 0));
-                g2d.setStroke(new BasicStroke(2f));
-                g2d.drawRect(topX + 3, topY + 3, topW - 6, topH - 6);
-                g2d.setStroke(new BasicStroke(1f));
-
-                g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 16f));
-                String labelEntrada = (cliquesArmarioEasterEgg > 0) 
-                    ? "★ ENTRADA SECRETA: " + cliquesArmarioEasterEgg + "/3 CLIQUES!" 
-                    : "★ ARMÁRIO SECRETO (CLIQUE 3X PARA ENTRAR) ★";
-                FontMetrics fmEntrada = g2d.getFontMetrics();
-                int labelX = topX + (topW - fmEntrada.stringWidth(labelEntrada)) / 2;
-                int labelY = topY + topH / 2 + 5;
-
-                g2d.setColor(Color.BLACK);
-                g2d.drawString(labelEntrada, labelX + 2, labelY + 2);
-                g2d.setColor(Color.YELLOW);
-                g2d.drawString(labelEntrada, labelX, labelY);
-            }
-
-            if (!livroJoiFoiPego) {
-                desenharLivroNoArmario(g2d);
             }
 
             desenharInterface(g2d);
@@ -3548,12 +3589,18 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         audreyY - 430, new Color(160, 120, 200));
             }
 
-            if (indiceMapa == 6 && personagensNaBiblioteca) {
-                if (Math.abs(audreyX - 550) < 150) {
-                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Gabi",
-                            audreyX - 10, audreyY - 430, new Color(160, 120, 200));
-                } else if (Math.abs(audreyX - 300) < 150) {
-                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Ivi",
+            if (indiceMapa == 6) {
+                if (personagensNaBiblioteca) {
+                    if (Math.abs(audreyX - 550) < 150) {
+                        desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Gabi",
+                                audreyX - 10, audreyY - 430, new Color(160, 120, 200));
+                    } else if (Math.abs(audreyX - 300) < 150) {
+                        desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Ivi",
+                                audreyX - 10, audreyY - 430, new Color(160, 120, 200));
+                    }
+                }
+                if (Math.abs(audreyX - 480) < 150) {
+                    desenharTextoComSombra(g2d, "Pressione [" + teclaE + "] para falar com Maysa",
                             audreyX - 10, audreyY - 430, new Color(160, 120, 200));
                 }
             }
@@ -3574,7 +3621,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             Image portraitImg = null;
             if ("Audrey".equals(nomePersonagem)) {
                 portraitImg = imgPortraitAudrey; 
-            }else if ("Nicolas".equals(nomePersonagem)) {
+            }else if ("Nicollas".equals(nomePersonagem) || "Nicolas".equals(nomePersonagem)) {
                 portraitImg = (imgPortraitNicollas != null) ? imgPortraitNicollas : imgPortraitNicolas; 
             }else if ("Raquel".equals(nomePersonagem)) {
                 portraitImg = imgPortraitRaquel; 
@@ -3586,6 +3633,8 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 portraitImg = imgPortraitIvi;
             }else if ("Victor".equals(nomePersonagem)) {
                 portraitImg = (imgPortraitAlunoGinasio != null) ? imgPortraitAlunoGinasio : imgAlunoGinasio;
+            }else if ("Maysa".equals(nomePersonagem)) {
+                portraitImg = imgPortraitMaysa;
             }
 
             int textXOffset = caixaX + 30;
@@ -3717,32 +3766,45 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             if (!armarioEstaAberto && !textoDialogo.isEmpty()) {
                 if (faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
                     g2d.setFont(JogoAudrey.getCachedFont(fontCrayonHand, Font.BOLD, 17f));
-                    
-                    String opt1 = "Já terminei meu desenho! (Enviar imagem)";
-                    String opt2 = "Ainda vou fazer o desenho.";
-                    
-                    int optX = textXOffset + 20;
-                    int optY1 = caixaY + 55;
-                    int optY2 = caixaY + 85;
-                    
-                    // Opção 1
-                    if (selectedDialogueOption == 0) {
-                        g2d.setColor(new Color(180, 255, 210));
-                        g2d.drawString("▶ " + opt1, optX - 15, optY1);
-                    } else {
-                        g2d.setColor(new Color(160, 150, 180, 160));
-                        g2d.drawString("  " + opt1, optX - 15, optY1);
-                    }
-                    
-                    // Opção 2
-                    if (selectedDialogueOption == 1) {
-                        g2d.setColor(new Color(255, 220, 130));
-                        g2d.drawString("▶ " + opt2, optX - 15, optY2);
-                    } else {
-                        g2d.setColor(new Color(160, 150, 180, 160));
-                        g2d.drawString("  " + opt2, optX - 15, optY2);
-                    }
+
+                    String opt1 = "\uD83D\uDDBC\uFE0F  Já terminei! (Enviar imagem)";
+                    String opt2 = "\u23F3  Ainda vou fazer o desenho.";
+
+                    int optX = textXOffset;
+                    int btnW = caixaX + caixaW - optX - 25;
+                    int btnH = 28;
+
+                    // Calcular e armazenar os rects para uso no clique/hover
+                    optBtnRect1 = new Rectangle(optX, caixaY + 35, btnW, btnH);
+                    optBtnRect2 = new Rectangle(optX, caixaY + 70, btnW, btnH);
+
+                    Stroke oldStroke = g2d.getStroke();
+
+                    // --- Botão 1: Enviar imagem ---
+                    boolean active1 = hoverOption == 0 || selectedDialogueOption == 0;
+                    g2d.setColor(active1 ? new Color(40, 160, 90, 220) : new Color(25, 20, 45, 180));
+                    g2d.fillRoundRect(optBtnRect1.x, optBtnRect1.y, optBtnRect1.width, optBtnRect1.height, 12, 12);
+                    g2d.setColor(active1 ? new Color(140, 255, 180) : new Color(100, 90, 130));
+                    g2d.setStroke(new BasicStroke(active1 ? 2f : 1.2f));
+                    g2d.drawRoundRect(optBtnRect1.x, optBtnRect1.y, optBtnRect1.width, optBtnRect1.height, 12, 12);
+                    g2d.setColor(active1 ? new Color(220, 255, 230) : new Color(170, 160, 190));
+                    g2d.drawString((active1 ? "\u25B6 " : "  ") + opt1, optBtnRect1.x + 12, optBtnRect1.y + 19);
+
+                    // --- Botão 2: Não enviar ---
+                    boolean active2 = hoverOption == 1 || selectedDialogueOption == 1;
+                    g2d.setColor(active2 ? new Color(160, 110, 20, 220) : new Color(25, 20, 45, 180));
+                    g2d.fillRoundRect(optBtnRect2.x, optBtnRect2.y, optBtnRect2.width, optBtnRect2.height, 12, 12);
+                    g2d.setColor(active2 ? new Color(255, 215, 100) : new Color(100, 90, 130));
+                    g2d.setStroke(new BasicStroke(active2 ? 2f : 1.2f));
+                    g2d.drawRoundRect(optBtnRect2.x, optBtnRect2.y, optBtnRect2.width, optBtnRect2.height, 12, 12);
+                    g2d.setColor(active2 ? new Color(255, 240, 180) : new Color(170, 160, 190));
+                    g2d.drawString((active2 ? "\u25B6 " : "  ") + opt2, optBtnRect2.x + 12, optBtnRect2.y + 19);
+
+                    g2d.setStroke(oldStroke);
                 } else {
+                    // Fora do modo de opções: limpar rects para evitar cliques falsos
+                    optBtnRect1 = null;
+                    optBtnRect2 = null;
                     int arrowX = caixaX + caixaW / 2;
                     int arrowY = caixaY + caixaH - 8;
                     int[] px = {arrowX - 8, arrowX + 8, arrowX};
@@ -3934,32 +3996,20 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     // Espaços e pontuação = silêncio entre palavras (sincroniza áudio com a fala)
                     if (charAtual == ' ' || charAtual == '.' || charAtual == ',' || charAtual == '!' 
                         || charAtual == '?' || charAtual == ':' || charAtual == ';' || charAtual == '—' || charAtual == '-') {
-                        GerenciadorAudio.pararVozNicolas();
-                        GerenciadorAudio.pararVozRaquel();
+                        GerenciadorAudio.pararTodasAsVozes();
                     } else {
-                        if ("Nicolas".equals(nomePersonagem)) {
-                            GerenciadorAudio.tocarVozNicolas();
-                            GerenciadorAudio.pararVozRaquel();
-                        } else if ("Raquel".equals(nomePersonagem)) {
-                            GerenciadorAudio.tocarVozRaquel();
-                            GerenciadorAudio.pararVozNicolas();
-                        } else {
-                            GerenciadorAudio.pararVozNicolas();
-                            GerenciadorAudio.pararVozRaquel();
-                        }
+                        GerenciadorAudio.tocarVoz(nomePersonagem);
                     }
                 }
             } else {
                 // A frase terminou de aparecer por completo: interrompe o áudio da fala imediatamente
-                GerenciadorAudio.pararVozNicolas();
-                GerenciadorAudio.pararVozRaquel();
+                GerenciadorAudio.pararTodasAsVozes();
             }
         } else {
             if (!textoDialogoAnterior.isEmpty()) {
                 textoDialogoAnterior = "";
                 tamanhoTextoVisivel = 0;
-                GerenciadorAudio.pararVozNicolas();
-                GerenciadorAudio.pararVozRaquel();
+                GerenciadorAudio.pararTodasAsVozes();
             }
         }
 
@@ -4025,7 +4075,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     textoDialogo = "";
                     nomePersonagem = "";
                     estaEmDialogoNicolas = false;
-                    GerenciadorAudio.pararVozNicolas();
+                    GerenciadorAudio.pararTodasAsVozes();
                     faseDialogoNicolas = 0;
                     if (!sala1Aberta) {
                         sala1Aberta = true;
@@ -4042,7 +4092,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         textoDialogo = "";
                         nomePersonagem = "";
                         estaEmDialogoNicolas = false;
-                        GerenciadorAudio.pararVozNicolas();
+                        GerenciadorAudio.pararTodasAsVozes();
                         faseDialogoNicolas = 0;
                     }
                 }
@@ -4052,7 +4102,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     textoDialogo = "";
                     nomePersonagem = "";
                     estaEmDialogoNicolas = false;
-                    GerenciadorAudio.pararVozNicolas();
+                    GerenciadorAudio.pararTodasAsVozes();
                 }
             } else if (indiceMapa == 3) {
                 visitouCorredor2 = true;
@@ -4182,8 +4232,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (!textoDialogo.isEmpty() && tamanhoTextoVisivel < textoDialogo.length()) {
             tamanhoTextoVisivel = textoDialogo.length();
             tamanhoTextoVisivelAcumulado = textoDialogo.length();
-            GerenciadorAudio.pararVozNicolas();
-            GerenciadorAudio.pararVozRaquel();
+            GerenciadorAudio.pararTodasAsVozes();
             repaint();
             return;
         }
@@ -4219,11 +4268,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         textoDialogo = "— Ah, oi! Seja bem-vinda! Eu sou a Raquel. Estávamos, justamente, discutindo sobre o projeto do festival cultural.";
                         break;
                     case 3:
-                        nomePersonagem = "Nicolas";
+                        nomePersonagem = "Nicollas";
                         textoDialogo = "— Salve, Audrey! Sou o Nicollas. Cara, a Raquel quer ir pelo caminho mais clássico, mas, eu acho, que a gente devia meter uma parada mais urbana... tipo, um grafite expressionista.";
                         break;
                     case 4:
-                        nomePersonagem = "Nicolas";
+                        nomePersonagem = "Nicollas";
                         textoDialogo = "— Arte tem que ter impacto, sabe? Sentimento, puro sentimento bruto!";
                         break;
                     case 5:
@@ -4243,11 +4292,11 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         textoDialogo = "— Sério? Que incrível! Olha, a gente está precisando de ajuda, e de ideias novas para o grupo. Que tal um teste rápido, bem rápido, para ver o seu estilo?";
                         break;
                     case 9:
-                        nomePersonagem = "Nicolas";
+                        nomePersonagem = "Nicollas";
                         textoDialogo = "— Boa! Vamos ver, então, o seu nível artístico. Quero ver como você interpreta o tema: 'O Sentimento da Solidão Urbana'.";
                         break;
                     case 10:
-                        nomePersonagem = "Nicolas";
+                        nomePersonagem = "Nicollas";
                         textoDialogo = "— Pode ser algo tecnológico, um cenário bem vazio, ou, quem sabe, só alguém na multidão.";
                         break;
                     case 11:
@@ -4269,14 +4318,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         contadorNotificacaoMissao = 0;
                         break;
                 }
-                if ("Nicolas".equals(nomePersonagem)) {
-                    GerenciadorAudio.tocarVozNicolas();
-                } else if ("Raquel".equals(nomePersonagem)) {
-                    GerenciadorAudio.tocarVozRaquel();
-                } else {
-                    GerenciadorAudio.pararVozNicolas();
-                    GerenciadorAudio.pararVozRaquel();
-                }
+                GerenciadorAudio.tocarVoz(nomePersonagem);
                 repaint();
                 return;
             }
@@ -4312,7 +4354,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                         nomePersonagem = "Raquel";
                         textoDialogo = ep1_entregouDesenho ? "— Pronta para os próximos desafios?" : "— Como está ficando o esboço?";
                     } else if (Math.abs(audreyX - 390) < 150) {
-                        nomePersonagem = "Nicolas";
+                        nomePersonagem = "Nicollas";
                         textoDialogo = ep1_entregouDesenho ? "— Você desenha muito bem!" : "— Mal posso esperar para ver seu desenho!";
                     } else if (Math.abs(audreyX - 530) < 150) {
                         nomePersonagem = "Camila";
@@ -4320,14 +4362,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                     }
                 }
 
-                if ("Nicolas".equals(nomePersonagem)) {
-                    GerenciadorAudio.tocarVozNicolas();
-                } else if ("Raquel".equals(nomePersonagem)) {
-                    GerenciadorAudio.tocarVozRaquel();
-                } else {
-                    GerenciadorAudio.pararVozNicolas();
-                    GerenciadorAudio.pararVozRaquel();
-                }
+                GerenciadorAudio.tocarVoz(nomePersonagem);
                 repaint();
             }
         } else {
@@ -4335,8 +4370,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             estaEmDialogoNicolas = false;
             textoDialogo = "";
             nomePersonagem = "";
-            GerenciadorAudio.pararVozNicolas();
-            GerenciadorAudio.pararVozRaquel();
+            GerenciadorAudio.pararTodasAsVozes();
             repaint();
         }
     }
@@ -4379,7 +4413,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
 
         if (code == Configuracoes.getInstance().getTecla("DIÁRIO")) {
-            diarioAberto = !diarioAberto;
+            if (!temDiario) {
+                textoNotificacao = "Pegue o diário em seu armário antes!";
+                mostrarNotificacaoMissao = true;
+                contadorNotificacaoMissao = 0;
+            } else {
+                diarioAberto = !diarioAberto;
+            }
             return;
         }
 
@@ -4419,11 +4459,39 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     public void keyTyped(KeyEvent e) {
     }
 
+    private void enviarEventoParaApp(String tipo, String hobby, int xp, String label) {
+        new Thread(() -> {
+            try {
+                java.net.URI uri = java.net.URI.create("http://127.0.0.1:3000/api/evento-jogo");
+                java.net.HttpURLConnection con = (java.net.HttpURLConnection) uri.toURL().openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json; utf-8");
+                con.setDoOutput(true);
+                con.setConnectTimeout(800);
+                con.setReadTimeout(800);
+                String safeLabel = label != null ? label.replace("\"", "'") : "Jogo Audrey";
+                String eventId = System.currentTimeMillis() + "_" + ((int)(Math.random() * 100000));
+                String jsonInput = String.format(
+                    "{\"type\":\"%s\",\"data\":{\"hobby\":\"%s\",\"xpReward\":%d,\"amount\":%d,\"label\":\"%s\",\"source\":\"java-game\",\"eventId\":\"%s\"}}",
+                    tipo, hobby, xp, xp, safeLabel, eventId
+                );
+                try (java.io.OutputStream os = con.getOutputStream()) {
+                    byte[] input = jsonInput.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+                con.getResponseCode();
+            } catch (Exception ignored) {
+                // Servidor TCC não ativo
+            }
+        }).start();
+    }
+
     private void ganharXP(int quantidade) {
         xp += quantidade;
         xpGanho = quantidade;
         mostrarNotificacaoXP = true;
         contadorNotificacaoXP = 0;
+        enviarEventoParaApp("XP_EARNED", "arte", quantidade, "Ganhou " + quantidade + " XP em Audrey");
     }
 
     private void adicionarXpPendente(int quantidade) {
@@ -4443,7 +4511,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         if (faseDialogoNicolas == 100) {
             faseDialogoNicolas = 101;
             estaEmDialogoNicolas = true;
-            nomePersonagem = "Nicolas";
+            nomePersonagem = "Nicollas";
             textoDialogo = "\u2014 Ficou irado! Essa perspectiva, cara, deu um peso enorme para o desenho. Voc\u00ea tem, de fato, muita t\u00e9cnica.";
             tamanhoTextoVisivel = 0;
             tamanhoTextoVisivelAcumulado = 0.0;
@@ -4455,6 +4523,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             contadorAnimacaoRiscado = 0;
             textoMissaoRiscada = "Desenhar 'A Solidão Urbana'";
             GerenciadorAudio.tocarSomColeta();
+            enviarEventoParaApp("MISSION_COMPLETE", "arte", 25, "Desenhar 'A Solidão Urbana'");
             
             repaint();
         }
@@ -4967,7 +5036,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             textoDialogo = "";
             nomePersonagem = "";
             estaEmDialogoNicolas = false;
-            GerenciadorAudio.pararVozNicolas();
+            GerenciadorAudio.pararTodasAsVozes();
             faseDialogoNicolas = 0;
             return;
         }
@@ -4993,7 +5062,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 textoDialogo = "";
                 nomePersonagem = "";
                 estaEmDialogoNicolas = false;
-                GerenciadorAudio.pararVozNicolas();
+                GerenciadorAudio.pararTodasAsVozes();
                 faseDialogoNicolas = 0;
             }
             return;
@@ -5117,6 +5186,22 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             }
         }
 
+        // Maysa na biblioteca
+        if (indiceMapa == 6 && Math.abs(audreyX - 480) < 150 && textoDialogo.isEmpty()) {
+            GerenciadorAudio.tocarSomDialogo();
+            estaEmDialogoNicolas = true;
+            nomePersonagem = "Maysa";
+            if (!ep1FalouMaysa) {
+                textoDialogo = "Oi! Você é a Audrey, né? Eu sou a Maysa. Adoro passar o tempo aqui na biblioteca lendo e estudando.";
+                ep1FalouMaysa = true;
+                adicionarXpPendente(1);
+                checarObjetivosEp1();
+            } else {
+                textoDialogo = "Se precisar de ajuda para encontrar algum livro ou dica de leitura, é só me chamar!";
+            }
+            return;
+        }
+
         // Victor no Ginásio (Esportes & Fitness)
         if (indiceMapa == 4 && Math.abs(audreyX - 600) < 150 && textoDialogo.isEmpty()) {
             GerenciadorAudio.tocarSomDialogo();
@@ -5160,12 +5245,21 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         // Abrir armário
         if (indiceMapa == 0 && Math.abs(audreyX - posArmarioX) < 150 && textoDialogo.isEmpty()) {
             nomePersonagem = "Audrey";
-            if (temChave) {
+            if (!temDiario) {
+                if (!armarioEstaAberto) armarioEstaAberto = true;
+                GerenciadorAudio.tocarSomColeta();
+                temDiario = true;
+                textoDialogo = "Achei meu diário! Agora posso riscar as missões nele e organizar meu dia.";
+                textoNotificacao = "Você pegou o Diário!";
+                mostrarNotificacaoMissao = true;
+                contadorNotificacaoMissao = 0;
+                return;
+            } else if (temChave) {
                 GerenciadorAudio.tocarSomArmario();
                 textoDialogo = "Destrancado! Vamos ver o que tem aqui...";
                 armarioEstaAberto = true;
                 temChave = false;
-            } else if (!livroJoiFoiPego) {
+            } else if (!armarioEstaAberto && !livroJoiFoiPego) {
                 GerenciadorAudio.tocarSomErro();
                 if (missaoLeituraAtiva) {
                     textoDialogo = "Está trancado... o garoto com o livro me deu a chave, mas ainda não encontrei!";
@@ -5180,7 +5274,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
                 armarioEstaAberto = true;
             }
             estaEmDialogoNicolas = false;
-            GerenciadorAudio.pararVozNicolas();
+            GerenciadorAudio.pararTodasAsVozes();
         }
     }
 
@@ -5816,7 +5910,13 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         }
         if (touchBtnDiario.contains(realX, realY)) {
             touchDiarioPressionado = true;
-            diarioAberto = !diarioAberto;
+            if (!temDiario) {
+                textoNotificacao = "Pegue o diário em seu armário antes!";
+                mostrarNotificacaoMissao = true;
+                contadorNotificacaoMissao = 0;
+            } else {
+                diarioAberto = !diarioAberto;
+            }
             repaint();
             return;
         }
@@ -5858,35 +5958,26 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
         // 4. Se estiver em diálogo com opções de escolha (faseDialogoNicolas == 100)
         if (!armarioEstaAberto && estaEmDialogoNicolas && faseDialogoNicolas == 100 && tamanhoTextoVisivel >= textoDialogo.length()) {
-            int caixaW = 860;
-            int caixaH = 130;
-            int caixaX = (LARGURA - caixaW) / 2;
-            int caixaY = ALTURA - caixaH - 30;
-
-            Image portraitImg = imgPortraitAudrey;
-            int textXOffset = caixaX + 30;
-            if (portraitImg != null) {
-                int polaroidW = 160;
-                textXOffset = caixaX + 15 + polaroidW + 25;
+            // Usar os rects calculados no desenho para garantir coordenadas idênticas
+            if (optBtnRect1 != null && optBtnRect1.contains(realX, realY)) {
+                selectedDialogueOption = 0;
+                hoverOption = -1;
+                repaint();
+                frame.mostrarImportadorReal();
+                return;
+            } else if (optBtnRect2 != null && optBtnRect2.contains(realX, realY)) {
+                selectedDialogueOption = 1;
+                hoverOption = -1;
+                repaint();
+                estaEmDialogoNicolas = false;
+                textoDialogo = "";
+                nomePersonagem = "";
+                faseDialogoNicolas = 0;
+                ep1_entregouDesenho = false;
+                return;
             }
-
-            if (realX >= textXOffset - 20 && realX <= caixaX + caixaW - 20) {
-                if (realY >= caixaY + 50 && realY <= caixaY + 80) {
-                    selectedDialogueOption = 0;
-                    repaint();
-                    frame.mostrarImportadorReal();
-                    return;
-                } else if (realY >= caixaY + 81 && realY <= caixaY + 115) {
-                    selectedDialogueOption = 1;
-                    repaint();
-                    estaEmDialogoNicolas = false;
-                    textoDialogo = "";
-                    nomePersonagem = "";
-                    faseDialogoNicolas = 0;
-                    ep1_entregouDesenho = false;
-                    return;
-                }
-            }
+            // Clicou fora das opções, mas ainda está no modo de seleção: ignora outros handlers
+            return;
         }
 
         // 5. Se estiver em diálogo normal e clicar no botão de avançar / interagir
@@ -5972,6 +6063,20 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
 
     @Override
     public void mouseMoved(MouseEvent e) {
+        // Hover nas opções de diálogo
+        if (faseDialogoNicolas == 100 && estaEmDialogoNicolas && tamanhoTextoVisivel >= textoDialogo.length()) {
+            Point p = getGameCoordinates(e);
+            int rx = p.x, ry = p.y;
+            int prev = hoverOption;
+            if (optBtnRect1 != null && optBtnRect1.contains(rx, ry)) {
+                hoverOption = 0;
+            } else if (optBtnRect2 != null && optBtnRect2.contains(rx, ry)) {
+                hoverOption = 1;
+            } else {
+                hoverOption = -1;
+            }
+            if (hoverOption != prev) repaint();
+        }
     }
 
     @Override
