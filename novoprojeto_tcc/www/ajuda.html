@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>if (!sessionStorage.getItem('loggedIn')) { window.location.href = 'index.html'; }</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hobby Quest - Ajuda</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="sound-effects.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Caveat:wght@400;700&family=Walter+Turncoat&display=swap" rel="stylesheet">
+  <style>
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-15deg); }
+      50%      { transform: translateY(-6px) rotate(-15deg); }
+    }
+    @keyframes pulseBtn {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(-15deg); }
+      25%      { transform: rotate(-5deg); }
+      75%      { transform: rotate(-25deg); }
+    }
+
+    body {
+      background-color: #faeebb !important;
+    }
+    .ajuda-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      position: relative;
+      padding: 24px 20px;
+      padding-top: calc(24px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: clip;
+      animation: fadeSlideUp 0.6s ease-out;
+    }
+
+    /* Header */
+    .ajuda-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      z-index: 2;
+      animation: fadeSlideUp 0.5s ease-out;
+    }
+
+    .ajuda-header h1 {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 42px;
+      color: #222;
+      letter-spacing: 2px;
+      margin: 0;
+    }
+
+    .ajuda-header svg {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* FAQ STYLES */
+    .faq-container {
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 30px;
+      z-index: 5;
+    }
+    .faq-item {
+      background: #fff;
+      border: 2px dashed #b8c8d8;
+      border-radius: 8px;
+      padding: 16px 20px 16px 30px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.05);
+      position: relative;
+      transition: transform 0.2s;
+      opacity: 0;
+      animation: fadeSlideUp 0.5s ease-out forwards;
+    }
+    .faq-item:nth-child(1) { animation-delay: 0.1s; }
+    .faq-item:nth-child(2) { animation-delay: 0.25s; }
+    .faq-item:nth-child(3) { animation-delay: 0.4s; }
+    .faq-item:hover {
+      transform: translateX(4px);
+    }
+    .faq-item::before {
+      content: '📌';
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      font-size: 24px;
+      transform: rotate(-15deg);
+      animation: wiggle 2s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+    .faq-question {
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 18px;
+      color: #3b5998;
+      margin: 0 0 8px 0;
+      line-height: 1.2;
+    }
+    .faq-answer {
+      font-family: 'Caveat', cursive;
+      font-size: 18px;
+      color: #555;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    /* Contact Card Styles */
+    .contact-card {
+      width: 90%;
+      background-color: #ffffff;
+      border-radius: 4px;
+      padding: 30px 24px;
+      text-align: center;
+      z-index: 5;
+      margin-bottom: 40px;
+      box-shadow: 2px 3px 6px rgba(0,0,0,0.08);
+      border-left: 5px solid #e07a5f;
+      transform: rotate(1deg);
+      opacity: 0;
+      animation: fadeSlideUp 0.5s ease-out 0.55s forwards;
+    }
+    .contact-card h2 {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 28px;
+      color: #333;
+      margin: 0 0 10px 0;
+      background: transparent;
+      display: inline-block;
+      padding: 0 10px;
+    }
+    .contact-card p {
+      font-family: 'Caveat', cursive;
+      font-size: 20px;
+      color: #555;
+      line-height: 1.5;
+      margin: 0 0 20px 0;
+      padding: 0;
+    }
+    .contact-btn {
+      background: #e07a5f;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 24px;
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px #b85f47;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+      animation: pulseBtn 2s ease-in-out infinite;
+    }
+    .contact-btn:hover {
+      transform: translateY(2px);
+      box-shadow: 0px 0px 0px #b85f47;
+      animation: none;
+    }
+
+    /* Contact modal */
+    .contact-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 300; }
+    .contact-modal-overlay.active { display: flex; }
+    .contact-modal { background: #fff8e6; border-radius: 12px; padding: 20px; width: 90%; max-width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; font-family: 'Caveat', cursive; }
+    .contact-modal h3 { margin: 0 0 8px 0; font-family: 'Cabin Sketch', cursive; color: #e07a5f; }
+    .contact-modal p { margin: 6px 0; color: #444; font-size: 18px; }
+    .contact-modal .close-btn { margin-top: 12px; background: #e07a5f; color: #fff; border: none; padding: 8px 14px; border-radius: 14px; cursor: pointer; font-family: 'Walter Turncoat', cursive; }
+
+
+
+    /* ===== PROFILE OVERLAY ===== */
+    .profile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 100; display: flex; justify-content: center; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .profile-overlay.active { opacity: 1; pointer-events: all; }
+    .profile-panel { width: 100%; max-width: 480px; max-height: 88vh; background-color: var(--bg-color); background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 39px, var(--line-color) 40px); border-radius: 28px 28px 0 0; padding: 16px 24px 36px; overflow-y: auto; transform: translateY(100%) rotate(0deg); transform-origin: top center; transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 -8px 40px rgba(0,0,0,0.2); }
+    .profile-overlay.active .profile-panel { transform: translateY(0) rotate(0deg); }
+    .profile-handle { width: 45px; height: 5px; background: #c4c4c4; border-radius: 100px; margin: 0 auto 20px; }
+    .profile-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .profile-avatar { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #a88bc5 0%, #c06dd8 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(168,139,197,0.5); position: relative; }
+    .profile-avatar svg { fill: white; stroke: none; }
+    .profile-hero-title { font-family: 'Cabin Sketch', cursive; font-size: 32px; color: #333; letter-spacing: 2px; margin: 0; }
+    .profile-hero-sub { font-family: 'Caveat', cursive; font-size: 18px; color: #888; margin: 0; }
+    .profile-info-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; width: 100%; }
+    .profile-info-card { background-color: #f1c97a; border-radius: 255px 15px 225px 15px/15px 225px 15px 255px; padding: 14px 22px; display: flex; align-items: center; gap: 14px; box-shadow: inset 0 0 5px rgba(0,0,0,0.08), 2px 3px 0 rgba(0,0,0,0.05); }
+    .profile-info-card svg { flex-shrink: 0; opacity: 0.7; }
+    .profile-info-card .info-content { display: flex; flex-direction: column; }
+    .profile-info-card .info-label { font-family: 'Walter Turncoat', cursive; font-size: 12px; color: #997a3e; letter-spacing: 1px; text-transform: uppercase; }
+    .profile-info-card .info-value { font-family: 'Cabin Sketch', cursive; font-size: 20px; color: var(--primary-green); letter-spacing: 1px; }
+    .profile-stats { display: flex; justify-content: center; gap: 10px; margin-bottom: 28px; width: 100%; }
+    .stat-badge { background: #e5d9c5; border-radius: 14px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; box-shadow: 1px 2px 4px rgba(0,0,0,0.08); }
+    .stat-badge .stat-number { font-family: 'Cabin Sketch', cursive; font-size: 26px; color: var(--primary-green); }
+    .stat-badge .stat-label { font-family: 'Walter Turncoat', cursive; font-size: 11px; color: #777; text-align: center; }
+    .profile-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; width: 100%; }
+    .profile-action-card { background-color: #9dd4a0; border-radius: 16px; padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 2px 3px 8px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; text-decoration: none; }
+    .profile-action-card:hover { transform: translateY(-3px) rotate(-1deg); box-shadow: 3px 5px 14px rgba(0,0,0,0.16); }
+    .profile-action-card:active { transform: scale(0.96); }
+    .profile-action-card.achievements { background-color: #fce28b; }
+    .profile-action-card.story { background-color: #a8d8ea; }
+    .profile-action-card .action-icon { font-size: 32px; }
+    .profile-action-card .action-title { font-family: 'Cabin Sketch', cursive; font-size: 16px; color: #333; text-align: center; letter-spacing: 1px; }
+    .profile-action-card .action-desc { font-family: 'Walter Turncoat', cursive; font-size: 12px; color: #555; text-align: center; }
+    .profile-logout-btn { width: 100%; background: transparent; border: 2px dashed #e07a5f; border-radius: 16px; padding: 14px 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
+    .profile-logout-btn:hover { background-color: rgba(224,122,95,0.08); border-color: #d95940; transform: scale(1.02); }
+    .profile-logout-btn:active { transform: scale(0.97); }
+    .profile-logout-btn span { font-family: 'Cabin Sketch', cursive; font-size: 20px; color: #e07a5f; letter-spacing: 2px; }
+    .profile-logout-btn svg { stroke: #e07a5f; }
+    
+    /* Story progress modal */
+    .story-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 400; }
+    .story-modal-overlay.active { display: flex; }
+    .story-modal { width: 92%; max-width: 760px; max-height: 90vh; overflow-y: auto; background: linear-gradient(180deg,#ffffff,#f7fbf8); border-radius: 14px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); font-family: 'Caveat', cursive; }
+    .story-modal-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .story-modal h2 { margin: 0; font-family: 'Cabin Sketch', cursive; color: #155c3b; font-size: 28px; }
+    .story-modal .close-story { background:#e07a5f; color:#fff; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-family: 'Walter Turncoat', cursive; }
+    .chapters-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:14px; margin-top:16px; }
+    .chapter-card { background: linear-gradient(135deg,#f0fff6,#e6f7ec); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:8px; box-shadow: 0 6px 18px rgba(21,92,59,0.06); }
+    .chapter-thumb { width:100%; height:100px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:34px; color:#155c3b; background: linear-gradient(135deg,#dff5e8,#c9efd6); }
+    .chapter-title { font-family: 'Cabin Sketch', cursive; font-size:18px; color:#0f5132; margin-top:6px; }
+    .chapter-progress { width:100%; height:12px; background:#e9f3ee; border-radius:8px; overflow:hidden; }
+    .chapter-progress > span { display:block; height:100%; background: linear-gradient(90deg,#9dd4a0,#57b06a); }
+    .chapter-meta { font-size:13px; color:#2d6a43; }
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+      padding: 5px;
+    }
+    .back-btn svg { stroke: #333; }
+  </style>
+</head>
+<body>
+  <div class="ajuda-container">
+
+    <!-- Header -->
+    <div class="ajuda-header">
+      <svg width="50" height="50" viewBox="0 0 50 50" fill="none">
+        <circle cx="25" cy="25" r="20" stroke="#e2b740" stroke-width="3.5" fill="none"/>
+        <text x="25" y="33" text-anchor="middle" font-family="Cabin Sketch, cursive" font-size="28" font-weight="700" fill="#e2b740">?</text>
+      </svg>
+      <h1>AJUDA</h1>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-container">
+      <div class="faq-item">
+        <h3 class="faq-question">Como adiciono uma nova meta?</h3>
+        <p class="faq-answer">Vá até a aba "Objetivos", digite sua nova meta na caixinha tracejada de qualquer categoria e clique no botão "+" ou aperte Enter.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3 class="faq-question">Onde vejo minhas conquistas?</h3>
+        <p class="faq-answer">Basta clicar no botão "Perfil" (o bonequinho no menu inferior). Suas medalhas estarão listadas lá!</p>
+      </div>
+
+      <div class="faq-item">
+        <h3 class="faq-question">Como ganho mais níveis?</h3>
+        <p class="faq-answer">Complete as metas na aba "Objetivos" e faça o check-in diário. O seu progresso vai encher as barras de cada hobby!</p>
+      </div>
+    </div>
+
+    <!-- Assistência técnica (Postcard style) -->
+    <div class="contact-card">
+      <h2>Ainda com dúvidas?</h2>
+      <p>Nossa equipe de corujas correio está pronta para ajudar você com qualquer problema na sua jornada!</p>
+      <button id="contactBtn" class="contact-btn" type="button" aria-expanded="false">Contate-nos!</button>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModalOverlay" class="contact-modal-overlay" aria-hidden="true">
+      <div class="contact-modal" role="dialog" aria-labelledby="contactModalTitle" aria-modal="true">
+        <h3 id="contactModalTitle">Fale com a nossa equipe</h3>
+        <p>Telefone: <strong>(11) 98765-4321</strong></p>
+        <p>Email: <strong>suporte@hobbyquest.com</strong></p>
+        <button id="closeContactModal" class="close-btn" type="button">Fechar</button>
+      </div>
+    </div>
+
+    <!-- Story Progress Modal -->
+    <div id="storyModalOverlay" class="story-modal-overlay" aria-hidden="true">
+      <div class="story-modal" role="dialog" aria-labelledby="storyModalTitle" aria-modal="true">
+        <div class="story-modal-header">
+          <h2 id="storyModalTitle">Progresso da História</h2>
+          <button id="closeStoryModal" class="close-story" type="button">Fechar</button>
+        </div>
+        <p style="margin-top:8px; color:#2d6a43;">Acompanhe seus capítulos, conclusão e avance quando estiver pronto.</p>
+        <div class="chapters-grid">
+          <div class="chapter-card" data-chapter="1">
+            <div class="chapter-thumb">I</div>
+            <div class="chapter-title">Capítulo 1 — Introdução</div>
+            <div class="chapter-progress" aria-valuenow="100"><span style="width:100%"></span></div>
+            <div class="chapter-meta">Concluído</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <!-- Casa -->
+      <a class="nav-item" href="home.html">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10L12 3l9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1V10z"/>
+          <path d="M9 21V13h6v8"/>
+        </svg>
+        <span>HOME</span>
+      </a>
+      <!-- Meta -->
+      <a class="nav-item" href="meta.html">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2"/>
+          <path d="M12 2v2M12 20v2"/>
+        </svg>
+        <span>OBJETIVOS</span>
+      </a>
+      <!-- Progresso -->
+      <a class="nav-item" href="progresso.html">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="14" width="4" height="7"/>
+          <rect x="10" y="9" width="4" height="12"/>
+          <rect x="17" y="4" width="4" height="17"/>
+          <path d="M5 14l7-5 7-5"/>
+        </svg>
+        <span>DESEMPENHO</span>
+      </a>
+      <!-- Ajuda (active) -->
+      <a class="nav-item active" href="ajuda.html">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+          <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+        </svg>
+        <span>AJUDA</span>
+      </a>
+      <!-- Perfil -->
+      <a class="nav-item" href="perfil.html" id="profileNavBtn">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="5"/>
+          <path d="M3 21c0-4.97 4.03-9 9-9s9 4.03 9 9"/>
+        </svg>
+        <span>PERFIL</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var contactBtn = document.getElementById('contactBtn');
+      var modalOverlay = document.getElementById('contactModalOverlay');
+      var closeBtn = document.getElementById('closeContactModal');
+
+      function openModal() {
+        if (!modalOverlay) return;
+        modalOverlay.classList.add('active');
+        modalOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (closeBtn) closeBtn.focus();
+      }
+
+      function closeModal() {
+        if (!modalOverlay) return;
+        modalOverlay.classList.remove('active');
+        modalOverlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (contactBtn) contactBtn.focus();
+      }
+
+      if (contactBtn) contactBtn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (modalOverlay) modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) closeModal(); });
+
+      // Story modal handlers
+      var storyCard = document.getElementById('storyCard');
+      var storyOverlay = document.getElementById('storyModalOverlay');
+      var storyClose = document.getElementById('closeStoryModal');
+
+      function openStoryModal() {
+        if (!storyOverlay) return;
+        storyOverlay.classList.add('active');
+        storyOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (storyClose) storyClose.focus();
+      }
+
+      function closeStoryModal() {
+        if (!storyOverlay) return;
+        storyOverlay.classList.remove('active');
+        storyOverlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (storyCard) storyCard.focus();
+      }
+
+      if (storyCard) {
+        storyCard.addEventListener('click', openStoryModal);
+        storyCard.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStoryModal(); } });
+      }
+      if (storyClose) storyClose.addEventListener('click', closeStoryModal);
+      if (storyOverlay) storyOverlay.addEventListener('click', function(e) { if (e.target === storyOverlay) closeStoryModal(); });
+
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeModal(); closeStoryModal(); } });
+    });
+  </script>
+</body>
+</html>

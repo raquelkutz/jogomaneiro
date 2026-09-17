@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>if (!sessionStorage.getItem('loggedIn')) { window.location.href = 'index.html'; }</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hobby Quest - Status de Níveis</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="xp-system.js"></script>
+  <script src="sound-effects.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Caveat:wght@400;700&family=Walter+Turncoat&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #eef2f5;
+      background-image:
+        linear-gradient(90deg, transparent 52px, rgba(220,80,80,0.15) 52px, rgba(220,80,80,0.15) 54px, transparent 54px),
+        repeating-linear-gradient(transparent, transparent 39px, #cdd7e0 39px, #cdd7e0 40px);
+      min-height: 100dvh;
+      margin: 0;
+      padding: 0;
+      color: #2c3e50;
+    }
+
+    .niveis-container {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100dvh;
+      position: relative;
+      padding: 20px 18px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      overflow-x: clip;
+      gap: 18px;
+    }
+
+    /* ─── Back Button ─── */
+    .back-btn {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.9);
+      border: 2px dashed #c0c8d0;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .back-btn:hover { transform: translateX(-3px); }
+    .back-btn svg { stroke: #5a8a6a; }
+
+    /* ─── Page title ─── */
+    .page-title {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 30px;
+      color: #1a3a2a;
+      margin: 0;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .page-subtitle {
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      color: #7a9a8a;
+      margin: -6px 0 0;
+      text-align: center;
+    }
+
+    /* ─── Level Card ─── */
+    .level-card {
+      width: 100%;
+      background: rgba(255,255,255,0.94);
+      border-radius: 20px;
+      padding: 0 0 16px;
+      box-shadow: 3px 6px 18px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.04);
+      overflow: hidden;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+      position: relative;
+    }
+    .level-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 4px 10px 28px rgba(0,0,0,0.13);
+    }
+
+    /* ─── Card Header Banner ─── */
+    .card-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px 10px;
+      margin-bottom: 0;
+    }
+    .card-banner.arte    { background: linear-gradient(135deg, #f9d0e2, #f4b8d0); }
+    .card-banner.leitura { background: linear-gradient(135deg, #c2dff0, #a4cfe8); }
+    .card-banner.fitness { background: linear-gradient(135deg, #ffd8be, #f5c0a0); }
+
+    .banner-label {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 22px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 1px;
+    }
+
+    /* ─── Level Badge ─── */
+    .level-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .level-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.25);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      border: 2px solid rgba(255,255,255,0.6);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .level-circle::after {
+      content: '⭐';
+      position: absolute;
+      top: -8px;
+      right: -5px;
+      font-size: 11px;
+    }
+    .level-circle.arte    { background: linear-gradient(135deg, #e075aa, #c45690); }
+    .level-circle.leitura { background: linear-gradient(135deg, #5aadcc, #3d8eaa); }
+    .level-circle.fitness { background: linear-gradient(135deg, #e08050, #c46030); }
+    .level-label-txt {
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: #555;
+    }
+
+    /* ─── Characters Row ─── */
+    .characters-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 14px 16px 6px;
+    }
+
+    /* ─── Character Card (portrait sticker) ─── */
+    .char-sticker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .char-sticker:hover { transform: translateY(-8px) scale(1.05); }
+    .char-sticker:hover .char-img-wrap { box-shadow: 0 10px 24px rgba(0,0,0,0.18); }
+
+    .char-img-wrap {
+      width: 96px;
+      height: 120px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #f8f4f0;
+      box-shadow: 0 5px 14px rgba(0,0,0,0.12);
+      transition: box-shadow 0.25s ease;
+      border: 2px solid rgba(255,255,255,0.9);
+    }
+    .char-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    .char-sticker.selected .char-img-wrap {
+      outline: 3px solid #5a9a6a;
+      outline-offset: 2px;
+    }
+
+    /* Slight rotation per slot */
+    .char-slot-1 { transform: rotate(-2.5deg); }
+    .char-slot-2 { transform: rotate(0deg); }
+    .char-slot-3 { transform: rotate(2.5deg); }
+    .char-slot-1:hover { transform: translateY(-8px) rotate(-2.5deg) scale(1.05); }
+    .char-slot-2:hover { transform: translateY(-8px) scale(1.05); }
+    .char-slot-3:hover { transform: translateY(-8px) rotate(2.5deg) scale(1.05); }
+
+    /* Solo character (1 only, like Fitness) */
+    .char-img-wrap.solo {
+      width: 110px;
+      height: 138px;
+    }
+
+    .char-name {
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 11px;
+      color: #777;
+      background: rgba(255,255,255,0.9);
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+      padding: 2px 10px;
+      white-space: nowrap;
+    }
+
+    /* ─── XP Section ─── */
+    .xp-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px 0;
+    }
+    .progress-track {
+      flex: 1;
+      height: 13px;
+      background: #e8edf2;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #dce0e5;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.7s ease;
+      position: relative;
+    }
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 5px; right: 5px;
+      height: 4px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 4px;
+    }
+    .progress-fill.arte    { background: linear-gradient(90deg, #f1a0c4, #e062a0); }
+    .progress-fill.leitura { background: linear-gradient(90deg, #7cc0d8, #4a9ec0); }
+    .progress-fill.fitness { background: linear-gradient(90deg, #f0a07c, #e07050); }
+
+    .xp-label {
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 13px;
+      color: #5a6f89;
+      font-weight: bold;
+      min-width: 56px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ─── POPUP ─── */
+    .char-popup {
+      position: fixed;
+      z-index: 500;
+      max-width: 230px;
+      background: #fff;
+      border-radius: 16px;
+      border: 2px dashed #c0c8d0;
+      box-shadow: 0 12px 32px rgba(44,62,80,0.16);
+      padding: 14px 16px 12px;
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      color: #444;
+      line-height: 1.5;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.85) translateY(6px);
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .char-popup.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: all;
+    }
+    .char-popup::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 8px solid transparent;
+    }
+    .char-popup.arrow-down::after { bottom: -16px; border-top-color: #fff; }
+    .char-popup.arrow-up::after   { top: -16px; border-bottom-color: #fff; }
+    .popup-name {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 18px;
+      font-weight: bold;
+      color: #5a9a6a;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .popup-close {
+      margin-top: 8px;
+      display: inline-block;
+      background: #5a9a6a;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 16px;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+      pointer-events: all;
+      font-family: 'Walter Turncoat', cursive;
+      transition: background 0.2s;
+    }
+    .popup-close:hover { background: #3a7a4a; }
+  </style>
+</head>
+<body>
+  <div class="niveis-container">
+
+    <!-- Back -->
+    <button class="back-btn" onclick="window.location.href='perfil.html'">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+
+    <h1 class="page-title">📊 Status de Níveis</h1>
+    <p class="page-subtitle">Toque nos personagens para saber mais</p>
+
+    <!-- ═══════════════ ARTE ═══════════════ -->
+    <div class="level-card">
+      <div class="card-banner arte">
+        <span class="banner-label">🎨 Arte</span>
+        <div class="level-badge">
+          <span class="level-label-txt">Nível</span>
+          <div class="level-circle arte" id="level-circle-arte">
+            <span id="level-text-arte">1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="characters-row">
+        <div class="char-sticker char-slot-1" data-name="Nicollas" data-desc="Nicollas é o artista criativo do grupo, adora pintar com cores vibrantes e inventar novos traços.">
+          <div class="char-img-wrap">
+            <img src="nico%20(1).png" alt="Nicollas">
+          </div>
+          <span class="char-name">Nicollas</span>
+        </div>
+        <div class="char-sticker char-slot-2" data-name="Camila" data-desc="Camila é cuidadosa e detalhista, sempre pronta para combinar traços suaves com ideias originais.">
+          <div class="char-img-wrap">
+            <img src="camiz%20(1).png" alt="Camila">
+          </div>
+          <span class="char-name">Camila</span>
+        </div>
+        <div class="char-sticker char-slot-3" data-name="Raquel" data-desc="Raquel é a aventureira expressiva, que usa a criatividade para inspirar novas ideias artísticas.">
+          <div class="char-img-wrap">
+            <img src="quel%20(1).png" alt="Raquel">
+          </div>
+          <span class="char-name">Raquel</span>
+        </div>
+      </div>
+
+      <div class="xp-section">
+        <div class="progress-track">
+          <div class="progress-fill arte" id="bar-arte" style="width:0%"></div>
+        </div>
+        <span class="xp-label" id="xp-label-arte">0 XP</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════ LEITURA ═══════════════ -->
+    <div class="level-card">
+      <div class="card-banner leitura">
+        <span class="banner-label">📖 Leitura</span>
+        <div class="level-badge">
+          <span class="level-label-txt">Nível</span>
+          <div class="level-circle leitura" id="level-circle-leitura">
+            <span id="level-text-leitura">1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="characters-row">
+        <div class="char-sticker char-slot-1" data-name="Gabi" data-desc="Gabi é a leitora sonhadora, que gosta de se perder em livros cheios de aventura e poesia.">
+          <div class="char-img-wrap">
+            <img src="gabi.png" alt="Gabi">
+          </div>
+          <span class="char-name">Gabi</span>
+        </div>
+        <div class="char-sticker char-slot-2" data-name="Ivi" data-desc="Ivi é a estudiosa do grupo, sempre com uma ideia nova e uma leitura pronta para compartilhar.">
+          <div class="char-img-wrap">
+            <img src="ivi%20(1).jpg" alt="Ivi">
+          </div>
+          <span class="char-name">Ivi</span>
+        </div>
+        <div class="char-sticker char-slot-3" data-name="Maysa" data-desc="Maysa é a aventureira das leituras, pronta para explorar histórias emocionantes e inesperadas.">
+          <div class="char-img-wrap">
+            <img src="may%20(1).png" alt="Maysa">
+          </div>
+          <span class="char-name">Maysa</span>
+        </div>
+      </div>
+
+      <div class="xp-section">
+        <div class="progress-track">
+          <div class="progress-fill leitura" id="bar-leitura" style="width:0%"></div>
+        </div>
+        <span class="xp-label" id="xp-label-leitura">0 XP</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════ FITNESS ═══════════════ -->
+    <div class="level-card">
+      <div class="card-banner fitness">
+        <span class="banner-label">🏋️ Fitness</span>
+        <div class="level-badge">
+          <span class="level-label-txt">Nível</span>
+          <div class="level-circle fitness" id="level-circle-fitness">
+            <span id="level-text-fitness">1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="characters-row">
+        <div class="char-sticker char-slot-2" data-name="Victor" data-desc="Victor é o campeão fitness do time, sempre motivado e cheio de energia para treinar.">
+          <div class="char-img-wrap solo">
+            <img src="victor%20(1).png" alt="Victor">
+          </div>
+          <span class="char-name">Victor</span>
+        </div>
+      </div>
+
+      <div class="xp-section">
+        <div class="progress-track">
+          <div class="progress-fill fitness" id="bar-fitness" style="width:0%"></div>
+        </div>
+        <span class="xp-label" id="xp-label-fitness">0 XP</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Popup -->
+  <div id="charPopup" class="char-popup arrow-down" role="tooltip">
+    <span class="popup-name" id="popupName"></span>
+    <span id="popupDesc"></span><br>
+    <button class="popup-close" onclick="closePopup()">Fechar ✕</button>
+  </div>
+
+  <script>
+    function updateHobbyDisplays() {
+      ['arte', 'leitura', 'fitness'].forEach(hobby => HQ.updateHobbyUI(hobby));
+    }
+
+    let popup, popupName, popupDesc;
+
+    function closePopup() {
+      if (popup) popup.classList.remove('visible');
+      document.querySelectorAll('.char-sticker').forEach(c => c.classList.remove('selected'));
+    }
+
+    function showPopupNear(el, name, desc) {
+      popupName.textContent = name;
+      popupDesc.textContent  = desc;
+      popup.style.opacity = '0';
+      popup.classList.add('visible');
+
+      const rect  = el.getBoundingClientRect();
+      const popW  = popup.offsetWidth;
+      const popH  = popup.offsetHeight;
+      const margin = 10;
+
+      let left = rect.left + rect.width / 2 - popW / 2;
+      left = Math.max(margin, Math.min(left, window.innerWidth - popW - margin));
+
+      let top;
+      if (rect.top >= popH + 16) {
+        top = rect.top - popH - 14;
+        popup.classList.remove('arrow-up');
+        popup.classList.add('arrow-down');
+      } else {
+        top = rect.bottom + 14;
+        popup.classList.remove('arrow-down');
+        popup.classList.add('arrow-up');
+      }
+
+      popup.style.left = left + 'px';
+      popup.style.top  = top  + 'px';
+      popup.style.opacity = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateHobbyDisplays();
+
+      popup     = document.getElementById('charPopup');
+      popupName = document.getElementById('popupName');
+      popupDesc = document.getElementById('popupDesc');
+
+      const stickers = document.querySelectorAll('.char-sticker');
+
+      stickers.forEach(sticker => {
+        sticker.setAttribute('tabindex', '0');
+        sticker.setAttribute('role', 'button');
+
+        sticker.addEventListener('click', e => {
+          e.stopPropagation();
+          const already = sticker.classList.contains('selected');
+          stickers.forEach(s => s.classList.remove('selected'));
+          if (already) { closePopup(); return; }
+          sticker.classList.add('selected');
+          showPopupNear(sticker, sticker.dataset.name, sticker.dataset.desc || '');
+        });
+
+        sticker.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sticker.click(); }
+        });
+      });
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.char-sticker') && !e.target.closest('#charPopup')) closePopup();
+      });
+    });
+
+    window.addEventListener('storage', e => { if (e.key?.startsWith('xp_')) updateHobbyDisplays(); });
+    window.addEventListener('hq:xpUpdated', updateHobbyDisplays);
+  </script>
+</body>
+</html>

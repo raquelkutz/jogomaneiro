@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- ─── Proteção de rota: redireciona se não estiver logado ──────────────── -->
+  <script>if (!sessionStorage.getItem('loggedIn')) { window.location.href = 'index.html'; }</script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Hobby Quest – Jogo</title>
+  <meta name="description" content="Área de jogo do Hobby Quest. Embarque na sua jornada interativa!">
+
+  <!-- Fontes do projeto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Caveat:wght@400;700&family=Walter+Turncoat&display=swap" rel="stylesheet">
+
+  <!-- Motor de XP, Áudio, Bridge e Engine do jogo Audrey -->
+  <script src="xp-system.js"></script>
+  <script src="sound-effects.js"></script>
+  <script src="gerenciador-audio.js"></script>
+  <script src="game-bridge.js"></script>
+  <script src="jogo-audrey-engine.js"></script>
+
+  <style>
+    /* ─── Reset e base ───────────────────────────────────────────────────── */
+    :root {
+      --primary-green : #67a760;
+      --gold          : #e2b740;
+      --bg-pastel     : #eef2f5;          /* fundo do app */
+      --bg-card       : #e5d9c5;          /* cartão/papel */
+      --line-color    : #cdd7e0;          /* linhas do caderno */
+      --accent        : #9dd4a0;
+      --error-red     : #e07a5f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;           /* Tela cheia – sem scroll */
+      /* Mesmo fundo do app: pastel + linhas de caderno */
+      background-color: var(--bg-pastel);
+      background-image: repeating-linear-gradient(
+        transparent, transparent 39px,
+        var(--line-color) 39px, var(--line-color) 40px
+      );
+      font-family: 'Walter Turncoat', cursive;
+    }
+
+    /* ─── Container principal ────────────────────────────────────────────── */
+    #game-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: transparent;    /* herda o fundo pastel do body */
+    }
+
+    /* ─── Barra superior (HUD) ───────────────────────────────────────────── */
+    #game-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(229, 217, 197, 0.92);  /* tom bege/cardboard do app */
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+      border-bottom: 2px dashed rgba(103, 167, 96, 0.3);
+      transition: opacity 0.4s ease;
+    }
+
+    /* Oculta HUD quando o jogo pede foco total */
+    #game-hud.hidden { opacity: 0; pointer-events: none; }
+
+    /* Botão Voltar */
+    #btn-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1.5px dashed rgba(103, 167, 96, 0.5);
+      border-radius: 999px;
+      padding: 7px 16px 7px 10px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+      text-decoration: none;
+    }
+    #btn-back:hover  { background: rgba(199, 240, 216, 0.7); transform: scale(1.04); }
+    #btn-back:active { transform: scale(0.96); }
+    #btn-back svg    { stroke: var(--primary-green); width: 20px; height: 20px; flex-shrink: 0; }
+    #btn-back span {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 15px;
+      color: var(--primary-green);
+      letter-spacing: 1px;
+    }
+
+    /* Indicador de XP no HUD */
+    #hud-xp {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 14px;
+      color: #a07a2e;           /* dourado escuro legível no fundo claro */
+    }
+    #hud-xp span { opacity: 0.85; }
+
+    #btn-desktop-sync {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1.5px dashed rgba(103, 167, 96, 0.5);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 13px;
+      color: var(--primary-green);
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    #btn-desktop-sync:hover {
+      background: rgba(199, 240, 216, 0.85);
+      transform: scale(1.04);
+    }
+    #btn-desktop-sync:active {
+      transform: scale(0.96);
+    }
+
+    /* ─── Área do jogo (ocupa 100% abaixo do HUD) ────────────────────────── */
+    #game-area {
+      position: absolute;
+      top: 52px;         /* altura do HUD */
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;   /* fundo do jogo */
+      overflow: hidden;
+    }
+
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+      outline: none;
+    }
+      display: block;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #game-frame.visible { opacity: 1; }
+
+    /* ─── Tela de Carregamento ───────────────────────────────────────────── */
+    #loading-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      /* Fundo pastel do app com linhas de caderno */
+      background-color: var(--bg-pastel);
+      background-image: repeating-linear-gradient(
+        transparent, transparent 39px,
+        var(--line-color) 39px, var(--line-color) 40px
+      );
+      z-index: 50;
+      transition: opacity 0.5s ease;
+    }
+    #loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Ícone giratório (lápis) */
+    .loader-icon {
+      width: 80px;
+      height: 80px;
+      animation: spinPencil 1.8s linear infinite;
+      filter: drop-shadow(0 4px 12px rgba(103, 167, 96, 0.35));
+    }
+    @keyframes spinPencil {
+      0%   { transform: rotate(0deg) scale(1);    }
+      50%  { transform: rotate(180deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(1);  }
+    }
+
+    .loader-title {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 28px;
+      color: var(--primary-green);
+      letter-spacing: 3px;
+      text-align: center;
+      text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff;
+    }
+
+    .loader-subtitle {
+      font-family: 'Caveat', cursive;
+      font-size: 18px;
+      color: #888;          /* cinza médio legível no fundo claro */
+      text-align: center;
+      max-width: 260px;
+      line-height: 1.5;
+    }
+
+    /* Barra de progresso animada */
+    .loader-bar-track {
+      width: 220px;
+      height: 8px;
+      background: rgba(103, 167, 96, 0.15);  /* trilho verde-pastel */
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .loader-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #b8e6ba, #cfefd0, #f0dc8a);
+      border-radius: 999px;
+      animation: loadProgress 2.5s ease-in-out forwards;
+    }
+    @keyframes loadProgress {
+      0%   { width: 0%;   }
+      40%  { width: 55%;  }
+      70%  { width: 75%;  }
+      90%  { width: 88%;  }
+      100% { width: 100%; }
+    }
+
+    /* Pontos de ellipsis animados */
+    .loader-dots span {
+      display: inline-block;
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 22px;
+      color: #c8973a;   /* dourado escuro legível no fundo claro */
+      animation: dotBounce 1.2s ease-in-out infinite;
+    }
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: translateY(0);    opacity: 0.4; }
+      40%            { transform: translateY(-6px); opacity: 1;   }
+    }
+
+    /* ─── Tela de Erro ───────────────────────────────────────────────────── */
+    #error-screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      /* Mesmo fundo pastel do app */
+      background-color: var(--bg-pastel);
+      background-image: repeating-linear-gradient(
+        transparent, transparent 39px,
+        var(--line-color) 39px, var(--line-color) 40px
+      );
+      z-index: 60;
+      padding: 32px;
+      text-align: center;
+    }
+    #error-screen.visible { display: flex; }
+
+    .error-icon {
+      font-size: 64px;
+      animation: shakeIcon 0.6s ease 0.3s both;
+    }
+    @keyframes shakeIcon {
+      0%, 100% { transform: rotate(0deg);   }
+      20%       { transform: rotate(-8deg);  }
+      40%       { transform: rotate(8deg);   }
+      60%       { transform: rotate(-5deg);  }
+      80%       { transform: rotate(5deg);   }
+    }
+
+    .error-title {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 26px;
+      color: var(--error-red);
+      letter-spacing: 2px;
+    }
+
+    .error-message {
+      font-family: 'Caveat', cursive;
+      font-size: 18px;
+      color: #888;
+      max-width: 300px;
+      line-height: 1.6;
+    }
+
+    #btn-retry {
+      background: rgba(224, 122, 95, 0.12);
+      border: 2px dashed var(--error-red);
+      border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+      padding: 14px 32px;
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 18px;
+      color: var(--error-red);
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: background 0.2s ease, transform 0.15s ease;
+      margin-top: 8px;
+    }
+    #btn-retry:hover  { background: rgba(224, 122, 95, 0.22); transform: scale(1.04); }
+    #btn-retry:active { transform: scale(0.96); }
+
+    #btn-back-error {
+      font-family: 'Caveat', cursive;
+      font-size: 17px;
+      color: #aaa;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.2s ease;
+    }
+    #btn-back-error:hover { color: #555; }
+
+    /* ─── Painel de status (modo simulação) ───────────────────────────────── */
+    #sim-panel {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(245, 240, 228, 0.97);  /* bege claro do app */
+      border: 1.5px dashed rgba(103, 167, 96, 0.45);
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: 3px 4px 12px rgba(0,0,0,0.1);
+      z-index: 90;
+      min-width: 220px;
+      display: none;         /* Visível apenas no modo simulação */
+    }
+    #sim-panel.visible { display: block; }
+
+    .sim-label {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 13px;
+      color: var(--primary-green);
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .sim-btn {
+      width: 100%;
+      background: rgba(157, 212, 160, 0.18);
+      border: 1.5px dashed rgba(103, 167, 96, 0.4);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: #1a5c32;
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 6px;
+      transition: background 0.2s ease;
+    }
+    .sim-btn:hover  { background: rgba(157, 212, 160, 0.35); }
+    .sim-btn:last-child { margin-bottom: 0; }
+
+    /* ─── Placeholder visual (enquanto o jogo Java não estiver integrado) ── */
+    #game-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+      padding: 32px;
+      /* Grade sutil sobre o fundo pastel — lembra papel pautado */
+      background-image:
+        linear-gradient(rgba(103, 167, 96, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(103, 167, 96, 0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .placeholder-icon {
+      font-size: 72px;
+      animation: floatIcon 3s ease-in-out infinite;
+      filter: drop-shadow(0 8px 24px rgba(157, 212, 160, 0.3));
+    }
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-12px); }
+    }
+
+    .placeholder-title {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 26px;
+      color: var(--primary-green);
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff;
+    }
+
+    .placeholder-desc {
+      font-family: 'Caveat', cursive;
+      font-size: 17px;
+      color: #777;             /* cinza legível no fundo claro */
+      max-width: 280px;
+      line-height: 1.6;
+    }
+
+    /* Badge "AGUARDANDO JOGO" */
+    .placeholder-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(226, 183, 64, 0.1);
+      border: 1.5px dashed rgba(226, 183, 64, 0.35);
+      border-radius: 999px;
+      padding: 8px 20px;
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 13px;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulseDot 1.4s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* Stats do jogador no placeholder */
+    .player-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .stat-chip {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1.5px dashed rgba(103, 167, 96, 0.35);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 1px 2px 5px rgba(0,0,0,0.06);
+    }
+
+    .stat-chip .stat-value {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 22px;
+      color: var(--primary-green);
+    }
+
+    .stat-chip .stat-key {
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 11px;
+      color: #999;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="game-screen">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         HUD superior: botão voltar + título + sincronização desktop + XP
+    ═══════════════════════════════════════════════════════════════════════════ -->
+    <header id="game-hud" role="banner">
+
+      <!-- Botão Voltar -->
+      <button id="btn-back" onclick="voltarAoMenu()" aria-label="Voltar ao menu principal">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        <span>VOLTAR</span>
+      </button>
+
+      <div style="font-family:'Cabin Sketch',cursive;font-size:17px;color:var(--primary-green);letter-spacing:1px;display:flex;align-items:center;gap:6px;">
+        <span>🎮</span>
+        <span>JOGO AUDREY & HOBBY QUEST</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="btn-desktop-sync" onclick="trazerJanelaDesktop()" title="Trazer janela do jogo desktop Java (caso esteja rodando no computador)">
+          🖥️ JANELA DESKTOP
+        </button>
+        <!-- XP total no HUD -->
+        <div id="hud-xp">
+          <span>⭐</span>
+          <span id="hud-xp-value">0</span>
+          <span>XP</span>
+        </div>
+      </div>
+
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Área principal do jogo (100% disponível abaixo do HUD)
+    ═══════════════════════════════════════════════════════════════════════════ -->
+    <main id="game-area" role="main" aria-label="Área do jogo">
+
+      <!-- ── Tela de Carregamento ─────────────────────────────────────────── -->
+      <div id="loading-screen" role="status" aria-live="polite">
+        <!-- Ícone animado (lápis SVG) -->
+        <svg class="loader-icon" viewBox="0 0 64 64" fill="none">
+          <defs>
+            <linearGradient id="pencilGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stop-color="#9dd4a0"/>
+              <stop offset="100%" stop-color="#e2b740"/>
+            </linearGradient>
+          </defs>
+          <!-- Corpo do lápis -->
+          <rect x="20" y="6" width="24" height="42" rx="3" fill="url(#pencilGrad)" opacity="0.9"/>
+          <!-- Borracha -->
+          <rect x="20" y="6" width="24" height="10" rx="3" fill="#f1a0c4"/>
+          <!-- Ponteira -->
+          <polygon points="20,48 44,48 32,62" fill="#e5d9c5"/>
+          <!-- Grafite -->
+          <polygon points="28,54 36,54 32,62" fill="#444"/>
+          <!-- Linhas decorativas -->
+          <line x1="20" y1="16" x2="44" y2="16" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>
+          <line x1="20" y1="20" x2="44" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        </svg>
+
+        <div class="loader-title">CARREGANDO JOGO AUDREY</div>
+
+        <div class="loader-dots">
+          <span>.</span><span>.</span><span>.</span>
+        </div>
+
+        <div class="loader-bar-track">
+          <div class="loader-bar-fill"></div>
+        </div>
+
+        <div class="loader-subtitle" id="loading-hint">
+          Preparando sua aventura…
+        </div>
+      </div>
+
+      <!-- ── Tela de Erro ──────────────────────────────────────────────────── -->
+      <div id="error-screen" role="alert" aria-live="assertive">
+        <div class="error-icon">⚠️</div>
+        <div class="error-title">JOGO NÃO ENCONTRADO</div>
+        <div class="error-message" id="error-message">
+          Ocorreu um problema ao carregar o motor gráfico.
+        </div>
+        <button id="btn-retry" onclick="location.reload()" aria-label="Tentar novamente">
+          🔄 RECARREGAR
+        </button>
+        <button id="btn-back-error" onclick="voltarAoMenu()">
+          ← voltar ao menu
+        </button>
+      </div>
+
+      <!-- ── Canvas Oficial do Jogo Audrey (HTML5 Canvas 100% Fiel) ────────── -->
+      <canvas id="gameCanvas" width="1000" height="750" tabindex="0" aria-label="Jogo Audrey em Execução"></canvas>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Script da tela de jogo integrada
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <script>
+    const UI = {
+      loading      : document.getElementById('loading-screen'),
+      error        : document.getElementById('error-screen'),
+      canvas       : document.getElementById('gameCanvas'),
+      hudXP        : document.getElementById('hud-xp-value'),
+    };
+
+    let _loadTimer   = null;
+
+    // ─── INICIALIZAÇÃO ─────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      // Atualiza streak do dia
+      if (typeof HQ !== 'undefined') HQ.updateStreak();
+
+      // Atualiza XP no HUD
+      atualizarHUD();
+
+      // Escuta eventos em tempo real do sistema de XP do app e do jogo
+      window.addEventListener('hqgame:missionComplete', () => atualizarHUD());
+      window.addEventListener('hqgame:xpEarned',         () => atualizarHUD());
+      window.addEventListener('hqgame:coinEarned',       () => atualizarHUD());
+      window.addEventListener('hqgame:gameLevelUp',      () => atualizarHUD());
+
+      // Inicia fluxo de carregamento
+      iniciarCarregamento();
+    });
+
+    // ─── FLUXO DE CARREGAMENTO DO MOTOR DO JOGO ───────────────────────────
+    function iniciarCarregamento() {
+      mostrarLoading();
+      atualizarTextoLoading();
+
+      try {
+        if (typeof JogoAudreyEngine !== 'undefined') {
+          window.jogoAudrey = new JogoAudreyEngine('gameCanvas');
+        }
+      } catch (err) {
+        console.error('[Engine] Erro ao iniciar:', err);
+      }
+
+      let assetsProntos = false;
+      window.addEventListener('hqgame:ready', () => {
+        assetsProntos = true;
+        setTimeout(mostrarJogo, 800);
+      }, { once: true });
+
+      // Timeout de segurança
+      setTimeout(() => {
+        if (!assetsProntos) mostrarJogo();
+      }, 2200);
+    }
+
+    // ─── ESTADOS VISUAIS ───────────────────────────────────────────────────
+    function mostrarLoading() {
+      if (UI.loading) UI.loading.classList.remove('fade-out');
+      if (UI.error) UI.error.classList.remove('visible');
+    }
+
+    function ocultarLoading() {
+      if (UI.loading) UI.loading.classList.add('fade-out');
+    }
+
+    function mostrarJogo() {
+      ocultarLoading();
+      if (UI.canvas) {
+        UI.canvas.style.display = 'block';
+        UI.canvas.focus();
+      }
+      atualizarHUD();
+    }
+
+    // ─── TEXTOS DE LOADING ANIMADOS ────────────────────────────────────────
+    const _loadingHints = [
+      'Preparando sua aventura…',
+      'Carregando cenários e personagens…',
+      'Sincronizando seus pontos e níveis…',
+      'Quase pronto para jogar!',
+    ];
+    let _hintIndex = 0;
+
+    function atualizarTextoLoading() {
+      const el = document.getElementById('loading-hint');
+      const interval = setInterval(() => {
+        _hintIndex = (_hintIndex + 1) % _loadingHints.length;
+        if (el) el.textContent = _loadingHints[_hintIndex];
+        if (UI.loading && UI.loading.classList.contains('fade-out')) clearInterval(interval);
+      }, 1600);
+    }
+
+    // ─── HUD E STATS ───────────────────────────────────────────────────────
+    function atualizarHUD() {
+      if (typeof HQ !== 'undefined' && UI.hudXP) {
+        UI.hudXP.textContent = HQ.getTotalXP().toLocaleString('pt-BR');
+      }
+    }
+
+    // Traz janela Desktop do Java se o servidor integrado estiver ativo
+    function trazerJanelaDesktop() {
+      fetch('http://127.0.0.1:3000/api/iniciar-jogo', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+          console.log('[Servidor Java Conectado]', d);
+          alert('Janela do jogo Desktop trazida para a frente!');
+        })
+        .catch(() => {
+          alert('Servidor Java não está rodando no momento. Você está jogando na versão Web Canvas integrada!');
+        });
+    }
+
+    // ─── NAVEGAÇÃO ─────────────────────────────────────────────────────────
+    function voltarAoMenu() {
+      // Salva estado antes de sair
+      if (window.jogoAudrey && typeof window.jogoAudrey.salvarEstado === 'function') {
+        window.jogoAudrey.salvarEstado(window.jogoAudrey.slotAtual);
+      }
+      if (typeof GameBridge !== 'undefined') GameBridge.destroy();
+      window.location.href = 'home.html';
+    }
+
+    window.addEventListener('popstate', voltarAoMenu);
+    history.pushState(null, '', window.location.href);
+  </script>
+</body>
+</html>     'Sincronizando seu progresso…',
+      'Quase lá, aventureiro!',
+    ];
+    let _hintIndex = 0;
+
+    function atualizarTextoLoading() {
+      const el = document.getElementById('loading-hint');
+      const interval = setInterval(() => {
+        _hintIndex = (_hintIndex + 1) % _loadingHints.length;
+        if (el) el.textContent = _loadingHints[_hintIndex];
+        if (UI.loading.classList.contains('fade-out')) clearInterval(interval);
+      }, 1800);
+    }
+
+    // ─── HUD E STATS ───────────────────────────────────────────────────────
+
+    /** Atualiza XP total exibido no HUD. */
+    function atualizarHUD() {
+      if (typeof HQ !== 'undefined') {
+        UI.hudXP.textContent = HQ.getTotalXP().toLocaleString('pt-BR');
+      }
+    }
+
+    /** Renderiza os stats do jogador nos chips do placeholder. */
+    function renderizarStats() {
+      if (typeof HQ === 'undefined' || !UI.playerStats) return;
+
+      const stats = [
+        { key: 'XP TOTAL',  value: HQ.getTotalXP()        },
+        { key: 'ARTE LV',   value: HQ.getLevel('arte')     },
+        { key: 'LEITURA LV',value: HQ.getLevel('leitura')  },
+        { key: 'FITNESS LV',value: HQ.getLevel('fitness')  },
+        { key: '🔥 DIAS',   value: HQ.getStreak()          },
+      ];
+
+      UI.playerStats.innerHTML = stats.map(s => `
+        <div class="stat-chip">
+          <div class="stat-value">${s.value}</div>
+          <div class="stat-key">${s.key}</div>
+        </div>
+      `).join('');
+    }
+
+    // ─── SIMULAÇÃO ─────────────────────────────────────────────────────────
+
+    /** Inicia a simulação de eventos do jogo para testes de integração. */
+    function iniciarSimulacao() {
+      if (_simRunning) {
+        UI.simPanel.classList.toggle('visible');
+        return;
+      }
+      _simRunning = true;
+      UI.simPanel.classList.add('visible');
+      document.getElementById('btn-simulate').innerHTML = '🧪 <span>PAINEL DE TESTES</span>';
+      GameBridge.runSimulation();
+
+      // Atualiza HUD e stats a cada evento
+      window.addEventListener('hqgame:missionComplete', () => {
+        atualizarHUD();
+        renderizarStats();
+      });
+    }
+
+    // ─── NAVEGAÇÃO ─────────────────────────────────────────────────────────
+
+    /**
+     * Volta ao menu principal (home.html).
+     * O progresso é preservado no localStorage via HobbyQuest / GameBridge.
+     */
+    function voltarAoMenu() {
+      // Destrói o bridge para remover listeners
+      if (typeof GameBridge !== 'undefined') GameBridge.destroy();
+
+      // Para o carregamento se ainda estiver rodando
+      if (_loadTimer) clearTimeout(_loadTimer);
+
+      // Navega de volta
+      window.location.href = 'home.html';
+    }
+
+    // Suporte ao botão físico/gesto de voltar (mobile)
+    window.addEventListener('popstate', voltarAoMenu);
+    history.pushState(null, '', window.location.href);
+  </script>
+</body>
+</html>

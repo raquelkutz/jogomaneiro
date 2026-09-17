@@ -1,0 +1,107 @@
+Attached Element Context from Integrated Browser
+
+Element: button.back-btn
+
+URL: file:///c%3A/Users/aluno/Desktop/May_Raq_Vic/arte.html
+
+HTML Path: div.arte-container > button.back-btn
+
+Outer HTML:
+```html
+<button class="back-btn" onclick="window.history.back()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+```
+
+Dimensions:
+- top: 18px
+- left: 34px
+- width: 46px
+- height: 42px
+
+CSS:
+```css
+* { box-sizing: border-box;
+  margin: 0;
+  padding: 0; }
+.back-btn { position: absolute;
+  top: 18px;
+  left: 18px;
+  background: rgba(255,255,255,0.6);
+  border: 2px dashed #bbb;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: transform 0.2s ease, background 0.2s ease; }
+.back-btn { position: absolute;
+      top: 18px;
+      left: 18px;
+      background: rgba(255,255,255,0.6);
+      border: 2px dashed #bbb;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      transition: transform 0.2s ease, background 0.2s ease; }
+.back-btn:hover { transform: scale(1.1) rotate(-5deg); background: rgba(255,255,255,0.9); }
+.back-btn:hover { transform: scale(1.1) rotate(-5deg);
+      background: rgba(255,255,255,0.9); }
+
+/* Inherited */
+body { font-family: 'Walter Turncoat', cursive }
+
+/* Resolved values */
+margin: 0px;
+padding: 0px;
+border-radius: 50%;
+border: 1.6px dashed rgb(187, 187, 187);
+transition: transform 0.2s, background 0.2s;
+align-items: center;
+appearance: auto /*UA*/;
+background-attachment: scroll;
+background-clip: border-box;
+background-color: rgba(255, 255, 255, 0.9);
+background-image: none;
+background-origin: padding-box;
+background-position-x: 0%;
+background-position-y: 0%;
+background-repeat: repeat;
+background-size: auto;
+box-sizing: border-box;
+color: rgb(0, 0, 0) /*UA*/;
+cursor: pointer;
+display: flex;
+font-family: Arial;
+height: 42px;
+justify-content: center;
+left: 18px;
+letter-spacing: normal /*UA*/;
+line-height: normal /*UA*/;
+padding-block-end: 0px /*UA*/;
+padding-block-start: 0px /*UA*/;
+padding-inline-end: 0px /*UA*/;
+padding-inline-start: 0px /*UA*/;
+position: absolute;
+text-align: center /*UA*/;
+text-indent: 0px /*UA*/;
+text-rendering: auto /*UA*/;
+text-shadow: none /*UA*/;
+text-transform: none /*UA*/;
+top: 18px;
+transform: matrix(1.09581, -0.0958713, 0.0958713, 1.09581, 0, 0);
+width: 42px;
+word-spacing: 0px /*UA*/;
+z-index: 20;
+```

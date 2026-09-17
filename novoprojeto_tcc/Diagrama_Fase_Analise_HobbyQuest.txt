@@ -1,0 +1,791 @@
+================================================================================
+       DIAGRAMA DA FASE DE ANÁLISE — PROJETO HOBBYQUEST
+       Aplicativo Mobile Gamificado para Incentivo à Prática de Hobbies
+================================================================================
+       Autores: Maysa R. Rodrigues, Raquel H. K. de Bastos, Victor G. S. Melo
+       Curso: Técnico em Desenvolvimento de Sistemas — 2026
+================================================================================
+
+
+
+================================================================================
+ 1. DIAGRAMA DE CONTEXTO DO SISTEMA
+================================================================================
+
+  Descrição: Representa a visão macro do sistema HobbyQuest, identificando
+  as entidades externas que interagem com o software e os fluxos de dados
+  de entrada e saída entre elas e o sistema central.
+
+                         ┌─────────────────────┐
+                         │   ENTIDADE EXTERNA   │
+                         │   Usuário Aprendiz   │
+                         │   (Ator Principal)   │
+                         └──────────┬──────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+        ┌───────────────┐ ┌─────────────┐ ┌────────────────┐
+        │  Credenciais  │ │ Ações de    │ │ Preferências   │
+        │  de Acesso    │ │ Conclusão   │ │ de Acessibil.  │
+        │  (email/senha)│ │ de Tarefas  │ │ e Perfil       │
+        └───────┬───────┘ └──────┬──────┘ └───────┬────────┘
+                │                │                 │
+                ▼                ▼                 ▼
+   ╔═══════════════════════════════════════════════════════════╗
+   ║                                                           ║
+   ║                   SISTEMA HOBBYQUEST                      ║
+   ║                                                           ║
+   ║   • Módulo de Autenticação e Sessões                      ║
+   ║   • Motor Central de Gamificação (XP/Níveis/Badges)       ║
+   ║   • Módulo de Trilhas de Hobbies (Arte/Leitura/Fitness)   ║
+   ║   • Módulo de Acessibilidade (WCAG 2.1 AA)               ║
+   ║   • Módulo de Áudio Procedural (Web Audio API)            ║
+   ║   • Módulo de Persistência Local (localStorage)           ║
+   ║                                                           ║
+   ╚═══════════════════════════════════════════════════════════╝
+                │                │                 │
+                ▼                ▼                 ▼
+   ┌────────────────┐ ┌──────────────────┐ ┌─────────────────┐
+   │ Feedback Visual│ │  Dados de        │ │ Efeitos Sonoros  │
+   │ (Telas, Modais,│ │  Progresso       │ │ Procedurais      │
+   │  Animações)    │ │  (XP, Níveis,    │ │ (Fanfarras,      │
+   │                │ │  Streaks, Badges)│ │  Cliques, Sinos) │
+   └───────┬────────┘ └────────┬─────────┘ └────────┬─────────┘
+           │                   │                     │
+           ▼                   ▼                     ▼
+                         ┌─────────────────────┐
+                         │   ENTIDADE EXTERNA   │
+                         │   Usuário Aprendiz   │
+                         │   (Recebe Resposta)  │
+                         └─────────────────────┘
+
+  ENTIDADES EXTERNAS SECUNDÁRIAS:
+
+        ┌─────────────────────┐          ┌──────────────────────┐
+        │  ARMAZENAMENTO      │          │  PLATAFORMA NATIVA   │
+        │  LOCAL DO NAVEGADOR │          │  ANDROID             │
+        │  (localStorage /    │◄────────►│  (Apache Capacitor   │
+        │   sessionStorage)   │          │   v8.4.x)            │
+        └─────────────────────┘          └──────────────────────┘
+
+
+
+================================================================================
+ 2. DIAGRAMA DE FLUXO DE DADOS (DFD) — NÍVEL 0
+================================================================================
+
+  Descrição: Decompõe o sistema central em seus processos principais,
+  mostrando como os dados fluem entre processos e depósitos de dados.
+
+
+  ┌──────────────┐
+  │   USUÁRIO    │
+  │   APRENDIZ   │
+  └──────┬───────┘
+         │
+         │  [email, senha]
+         ▼
+  ┌──────────────────────┐       ┌─────────────────────────────┐
+  │  P1: AUTENTICAÇÃO    │──────►│  D1: Banco de Usuários      │
+  │  E CADASTRO          │◄──────│      (hq_users)             │
+  │  (index.html /       │       │  Armazena: email, senha,    │
+  │   script.js)         │       │  data de cadastro           │
+  └──────────┬───────────┘       └─────────────────────────────┘
+             │
+             │  [sessão ativa, email do usuário]
+             ▼
+  ┌──────────────────────┐       ┌─────────────────────────────┐
+  │  P2: GESTÃO DE       │──────►│  D2: Perfil do Usuário      │
+  │  PERFIL E AVATAR     │◄──────│      (hq_{email}_profile)   │
+  │  (perfil.html /      │       │  Armazena: codinome,        │
+  │   profile.js)        │       │  avatar selecionado         │
+  └──────────┬───────────┘       └─────────────────────────────┘
+             │
+             │  [identidade do usuário configurada]
+             ▼
+  ┌──────────────────────┐       ┌─────────────────────────────┐
+  │  P3: TRILHAS DE      │──────►│  D3: Dados de Progresso     │
+  │  HOBBIES             │◄──────│      (hq_{email}_xp)        │
+  │  (arte.html /        │       │  Armazena: XP por categoria,│
+  │   leitura.html /     │       │  nível, tarefas concluídas, │
+  │   fitness.html)      │       │  datas de atividade         │
+  └──────────┬───────────┘       └─────────────────────────────┘
+             │
+             │  [tarefa concluída, categoria, valor XP]
+             ▼
+  ┌──────────────────────┐       ┌─────────────────────────────┐
+  │  P4: MOTOR DE        │──────►│  D4: Conquistas e Streaks   │
+  │  GAMIFICAÇÃO         │◄──────│      (hq_{email}_achieve)   │
+  │  (xp-system.js)      │       │  Armazena: badges, streak   │
+  │                      │       │  atual, melhor streak,      │
+  │  • Calcular XP       │       │  datas consecutivas         │
+  │  • Avaliar Level Up  │       └─────────────────────────────┘
+  │  • Verificar Badges  │
+  │  • Atualizar Streaks │
+  └──────────┬───────────┘
+             │
+             │  [evento de XP, level up, badge desbloqueado]
+             ▼
+  ┌──────────────────────┐
+  │  P5: FEEDBACK        │
+  │  MULTISSENSORIAL     │
+  │  (sound-effects.js / │
+  │   animações CSS)     │
+  │                      │
+  │  • Tocar fanfarra    │
+  │  • Exibir animação   │
+  │  • Narrar via ARIA   │
+  └──────────┬───────────┘
+             │
+             │  [preferências de tema e leitura]
+             ▼
+  ┌──────────────────────┐       ┌─────────────────────────────┐
+  │  P6: MÓDULO DE       │──────►│  D5: Preferências de        │
+  │  ACESSIBILIDADE      │◄──────│      Acessibilidade         │
+  │  (accessibility.js)  │       │      (hq_{email}_a11y)      │
+  │                      │       │  Armazena: tema ativo,      │
+  │  • Alternar temas    │       │  leitura limpa, sem         │
+  │  • Modo leitura limpa│       │  distrações                 │
+  │  • Alto contraste    │       └─────────────────────────────┘
+  └──────────────────────┘
+
+
+
+================================================================================
+ 3. DIAGRAMA DE FLUXO DE DADOS (DFD) — NÍVEL 1 (Explosão do P4)
+================================================================================
+
+  Descrição: Detalhamento interno do processo P4 (Motor de Gamificação),
+  que é o núcleo lógico mais complexo do sistema HobbyQuest.
+
+
+  [Entrada: tarefa concluída + categoria + valor XP]
+         │
+         ▼
+  ┌─────────────────────────┐
+  │  P4.1: CALCULAR XP      │
+  │                          │
+  │  • Recebe hobby e qtd    │
+  │  • Soma ao XP acumulado  │     ┌────────────────────────────┐
+  │    da categoria           │────►│  D3: Dados de Progresso    │
+  │  • Soma ao XP global     │     │  (atualiza XP da categoria │
+  │  • Registra motivo/log   │     │   e XP total)              │
+  └────────────┬──────────────┘     └────────────────────────────┘
+               │
+               │  [XP atualizado]
+               ▼
+  ┌─────────────────────────┐
+  │  P4.2: AVALIAR LEVEL UP │
+  │                          │
+  │  • Verifica se XP >=     │
+  │    (nível_atual × 100)   │
+  │  • Se sim: incrementa    │
+  │    nível da categoria    │
+  │  • Dispara evento de     │──────► [Evento: LEVEL_UP]
+  │    Level Up              │        → P5 (Fanfarra + Modal)
+  └────────────┬──────────────┘
+               │
+               │  [estado atualizado]
+               ▼
+  ┌─────────────────────────┐
+  │  P4.3: VERIFICAR        │
+  │  CONQUISTAS (BADGES)     │
+  │                          │
+  │  • Itera array           │
+  │    HQ.ACHIEVEMENTS[]     │
+  │  • Executa função teste  │     ┌────────────────────────────┐
+  │    booleana de cada badge│────►│  D4: Conquistas            │
+  │  • Se true e não         │     │  (adiciona badge à lista   │
+  │    desbloqueado: grava   │     │   de desbloqueados)        │
+  │  • Dispara notificação   │     └────────────────────────────┘
+  └────────────┬──────────────┘
+               │                      ──────► [Evento: BADGE_UNLOCK]
+               │  [verificação temporal]       → P5 (Som + Notificação)
+               ▼
+  ┌─────────────────────────┐
+  │  P4.4: ATUALIZAR        │
+  │  OFENSIVAS (STREAKS)     │
+  │                          │
+  │  • Compara data atual    │
+  │    (YYYY-MM-DD) com      │     ┌────────────────────────────┐
+  │    última data registrada│────►│  D4: Conquistas e Streaks  │
+  │  • Se consecutivo:       │     │  (atualiza streak_atual,   │
+  │    streak_atual++        │     │   melhor_streak, última    │
+  │  • Se gap > 1 dia:       │     │   data de atividade)       │
+  │    streak_atual = 1      │     └────────────────────────────┘
+  │  • Atualiza melhor_streak│
+  └─────────────────────────┘
+
+
+
+================================================================================
+ 4. DIAGRAMA DE CLASSES DE ANÁLISE (Modelo Conceitual)
+================================================================================
+
+  Descrição: Representa as principais entidades/classes conceituais do
+  sistema e seus relacionamentos, atributos e responsabilidades.
+
+
+  ┌────────────────────────────────────────────────────────────┐
+  │                        «entidade»                          │
+  │                       USUÁRIO (User)                       │
+  ├────────────────────────────────────────────────────────────┤
+  │  - email: String  [PK]                                     │
+  │  - senha: String (hash)                                    │
+  │  - codinome: String (max 24 chars)                         │
+  │  - avatar: String (may/quel/victor/nico/gabi/camiz/ivi)    │
+  │  - dataCadastro: Date                                      │
+  │  - xpTotal: Integer                                        │
+  │  - nivelGlobal: Integer                                    │
+  │  - streakAtual: Integer                                    │
+  │  - melhorStreak: Integer                                   │
+  │  - ultimaAtividade: Date                                   │
+  ├────────────────────────────────────────────────────────────┤
+  │  + autenticar(email, senha): Boolean                       │
+  │  + cadastrar(email, senha): Boolean                        │
+  │  + atualizarPerfil(codinome, avatar): void                 │
+  │  + calcularNivelGlobal(): Integer                          │
+  └──────────────┬──────────────────────────────┬──────────────┘
+                 │ 1                            │ 1
+                 │                              │
+                 │ possui 3                     │ possui *
+                 ▼                              ▼
+  ┌───────────────────────────────┐  ┌──────────────────────────────┐
+  │        «entidade»             │  │        «entidade»             │
+  │   PROGRESSO POR CATEGORIA    │  │        CONQUISTA              │
+  │   (CategoryProgress)          │  │        (Achievement)          │
+  ├───────────────────────────────┤  ├──────────────────────────────┤
+  │  - categoria: Enum            │  │  - id: String [PK]           │
+  │    {ARTE, LEITURA, FITNESS}   │  │  - titulo: String            │
+  │  - xpAcumulado: Integer       │  │  - descricao: String         │
+  │  - nivelAtual: Integer        │  │  - icone: String (emoji)     │
+  │  - tarefasConcluidas: Integer │  │  - categoria: String         │
+  │  - ultimaTarefa: Date         │  │  - condicaoTeste: Function   │
+  ├───────────────────────────────┤  │  - desbloqueada: Boolean     │
+  │  + adicionarXP(qtd): void     │  │  - dataDesbloqueio: Date     │
+  │  + verificarLevelUp(): Bool   │  ├──────────────────────────────┤
+  │  + getNivel(): Integer        │  │  + verificarCondicao(): Bool  │
+  │  + getXPParaProximo(): Int    │  │  + desbloquear(): void        │
+  └───────────────────────────────┘  └──────────────────────────────┘
+                 │ pertence a                    │ pertence a
+                 ▼                               ▼
+  ┌───────────────────────────────┐  ┌──────────────────────────────┐
+  │        «entidade»             │  │        «entidade»             │
+  │    TRILHA DE HOBBY            │  │    PREFERÊNCIA DE             │
+  │    (HobbyTrack)               │  │    ACESSIBILIDADE             │
+  ├───────────────────────────────┤  │    (AccessibilityPref)        │
+  │  - tipo: Enum                 │  ├──────────────────────────────┤
+  │    {ARTE, LEITURA, FITNESS}   │  │  - temaAtivo: Enum            │
+  │  - titulo: String             │  │    {PADRAO, ESCURO,           │
+  │  - descricao: String          │  │     ALTO_CONTRASTE}           │
+  │  - corTema: String (hex)      │  │  - leituraLimpa: Boolean      │
+  │  - icone: String (emoji)      │  │  - semDistracoes: Boolean     │
+  ├───────────────────────────────┤  ├──────────────────────────────┤
+  │  + listarDesafios(): List     │  │  + alternarTema(): void       │
+  │  + obterDesafioPorNivel(): Obj│  │  + toggleLeituraLimpa(): void │
+  └───────────────────────────────┘  │  + salvarPreferencias(): void │
+                 │                   └──────────────────────────────┘
+                 │ contém *
+                 ▼
+  ┌───────────────────────────────┐
+  │        «entidade»             │
+  │       DESAFIO / TAREFA        │
+  │       (Challenge)             │
+  ├───────────────────────────────┤
+  │  - id: String [PK]            │
+  │  - titulo: String             │
+  │  - descricao: String          │
+  │  - categoria: Enum            │
+  │  - dificuldade: Enum          │
+  │    {FACIL, MEDIO, DIFICIL}    │
+  │  - xpRecompensa: Integer      │
+  │  - concluido: Boolean         │
+  │  - dataConclusao: Date        │
+  ├───────────────────────────────┤
+  │  + concluir(): void            │
+  │  + getRecompensa(): Integer    │
+  └───────────────────────────────┘
+
+
+  RELACIONAMENTOS:
+  ─────────────────
+  • USUÁRIO (1) ──────── possui ──────── (3) PROGRESSO POR CATEGORIA
+  • USUÁRIO (1) ──────── desbloqueia ─── (*) CONQUISTA
+  • USUÁRIO (1) ──────── configura ───── (1) PREFERÊNCIA DE ACESSIBILIDADE
+  • TRILHA DE HOBBY (1) ── contém ────── (*) DESAFIO / TAREFA
+  • PROGRESSO (1) ─────── referencia ─── (1) TRILHA DE HOBBY
+  • DESAFIO (*) ────────── gera ────────  EVENTO DE XP → MOTOR DE GAMIFICAÇÃO
+
+
+
+================================================================================
+ 5. DIAGRAMA DE ATIVIDADES — FLUXO PRINCIPAL DO USUÁRIO
+================================================================================
+
+  Descrição: Modela o fluxo completo de atividades que o usuário percorre
+  desde a abertura do aplicativo até a conclusão de um hobby.
+
+
+                        ╔══════════════════════╗
+                        ║   INÍCIO (Abrir App) ║
+                        ╚══════════╤═══════════╝
+                                   │
+                                   ▼
+                        ┌──────────────────────┐
+                        │  Exibir Tela de      │
+                        │  Boas-Vindas         │
+                        │  (index.html)        │
+                        └──────────┬───────────┘
+                                   │
+                                   ▼
+                           ◇ Decisão ◇
+                      ┌────┤ Possui  ├────┐
+                      │    │ Conta?  │    │
+                      │    ◇─────────◇    │
+                    [NÃO]               [SIM]
+                      │                   │
+                      ▼                   ▼
+            ┌──────────────────┐  ┌──────────────────┐
+            │  Preencher       │  │  Preencher       │
+            │  Formulário de   │  │  Formulário de   │
+            │  CADASTRO        │  │  LOGIN           │
+            │  (email + senha) │  │  (email + senha) │
+            └────────┬─────────┘  └────────┬─────────┘
+                     │                     │
+                     ▼                     ▼
+            ┌──────────────────┐  ┌──────────────────┐
+            │  Validar Dados   │  │  Validar         │
+            │  e Criar Conta   │  │  Credenciais     │
+            │  em hq_users     │  │  no localStorage │
+            └────────┬─────────┘  └────────┬─────────┘
+                     │                     │
+                     ▼                     ▼
+                     │    ◇ Válido? ◇      │
+                     └───►┤         ├◄─────┘
+                          ◇─────────◇
+                        [NÃO] │ [SIM]
+                          │       │
+                          ▼       ▼
+                ┌───────────┐  ┌──────────────────────┐
+                │  Exibir   │  │  Criar Sessão Ativa  │
+                │  Alerta   │  │  (sessionStorage)    │
+                │  de Erro  │  │  e Redirecionar      │
+                │  ↻ Voltar │  └──────────┬───────────┘
+                └───────────┘             │
+                                          ▼
+                              ◇ Primeiro Acesso? ◇
+                         ┌────┤                  ├────┐
+                         │    ◇──────────────────◇    │
+                       [SIM]                        [NÃO]
+                         │                            │
+                         ▼                            │
+               ┌──────────────────┐                   │
+               │  Exibir Modal de │                   │
+               │  Boas-Vindas:    │                   │
+               │  "Qual é seu     │                   │
+               │   nome,          │                   │
+               │   aventureiro?"  │                   │
+               └────────┬─────────┘                   │
+                        │                             │
+                        ▼                             │
+               ┌──────────────────┐                   │
+               │  Salvar Codinome │                   │
+               │  no Perfil       │                   │
+               └────────┬─────────┘                   │
+                        │                             │
+                        ◄─────────────────────────────┘
+                        │
+                        ▼
+              ┌───────────────────────┐
+              │  PAINEL PRINCIPAL     │
+              │  (home.html)          │
+              │                       │
+              │  • Exibir Codinome    │
+              │  • Exibir Avatar      │
+              │  • Exibir Streak 🔥   │
+              │  • Botão "JORNADA"    │
+              └───────────┬───────────┘
+                          │
+                          ▼
+                 ◇ Escolher Ação ◇
+        ┌────────┼────────┼────────┼────────┐
+        │        │        │        │        │
+        ▼        ▼        ▼        ▼        ▼
+   ┌────────┐┌───────┐┌───────┐┌───────┐┌────────┐
+   │ TRILHA ││TRILHA ││TRILHA ││ METAS ││CONQUIS-│
+   │ ARTE   ││LEITURA││FITNESS││ DIÁRI-││TAS /   │
+   │        ││       ││       ││ AS    ││BADGES  │
+   └───┬────┘└───┬───┘└───┬───┘└───┬───┘└────────┘
+       │         │        │        │
+       └─────────┼────────┘        │
+                 │                 │
+                 ▼                 │
+       ┌──────────────────┐       │
+       │  Visualizar      │       │
+       │  Desafios da     │◄──────┘
+       │  Categoria       │
+       └────────┬─────────┘
+                │
+                ▼
+       ┌──────────────────┐
+       │  REALIZAR        │
+       │  ATIVIDADE NO    │
+       │  MUNDO REAL      │
+       │  (desenhar, ler, │
+       │   exercitar)     │
+       └────────┬─────────┘
+                │
+                ▼
+       ┌──────────────────┐
+       │  Clicar Botão    │
+       │  de Conclusão    │
+       │  no Aplicativo   │
+       └────────┬─────────┘
+                │
+                ▼
+       ┌──────────────────┐
+       │  MOTOR DE        │
+       │  GAMIFICAÇÃO     │
+       │  HQ.addXP()      │
+       └────────┬─────────┘
+                │
+         ┌──────┼──────┐
+         │      │      │
+         ▼      ▼      ▼
+      ┌─────┐┌─────┐┌──────┐
+      │ +XP ││Check││Atua- │
+      │     ││Badge││lizar │
+      │     ││     ││Streak│
+      └──┬──┘└──┬──┘└──┬───┘
+         │      │      │
+         ▼      ▼      ▼
+       ┌──────────────────┐
+       │  FEEDBACK         │
+       │  MULTISSENSORIAL  │
+       │  • Animação "+XP" │
+       │  • Som procedural │
+       │  • ARIA announce  │
+       └────────┬─────────┘
+                │
+                ▼
+          ◇ Level Up? ◇
+     ┌────┤           ├────┐
+     │    ◇───────────◇    │
+   [SIM]                 [NÃO]
+     │                     │
+     ▼                     │
+  ┌──────────────┐         │
+  │  Fanfarra    │         │
+  │  Sonora +    │         │
+  │  Modal de    │         │
+  │  Confetes    │         │
+  │  "NÍVEL X!"  │         │
+  └──────┬───────┘         │
+         │                 │
+         ◄─────────────────┘
+         │
+         ▼
+  ┌──────────────────┐
+  │  Interface       │
+  │  Atualizada      │
+  │  (volta ao       │
+  │   painel ou      │
+  │   trilha)        │
+  └──────────────────┘
+         │
+         ▼
+  ╔══════════════════╗
+  ║  FIM DO CICLO    ║
+  ║  (Aguardar nova  ║
+  ║   interação)     ║
+  ╚══════════════════╝
+
+
+
+================================================================================
+ 6. DIAGRAMA DE SEQUÊNCIA (TEXTUAL) — Conclusão de Tarefa
+================================================================================
+
+  Descrição: Mostra a ordem temporal das mensagens trocadas entre os
+  objetos do sistema quando o usuário conclui uma tarefa de hobby.
+
+
+  OBJETOS PARTICIPANTES:
+  ├── Usuário Aprendiz
+  ├── Tela de Hobby (arte/leitura/fitness.html)
+  ├── Motor de Gamificação (xp-system.js → HQ)
+  ├── Módulo de Áudio (sound-effects.js → playSound)
+  ├── Armazenamento (localStorage)
+  └── Tela de Conquistas (conquistas.html)
+
+
+  Usuário       Tela Hobby     xp-system.js    sound-effects   localStorage
+     │              │               │                │              │
+     │──(1) Clica ─►│               │                │              │
+     │   "Concluir" │               │                │              │
+     │              │               │                │              │
+     │              │──(2) Chama ──►│                │              │
+     │              │  HQ.addXP(    │                │              │
+     │              │  'arte',50,   │                │              │
+     │              │  'Desafio X') │                │              │
+     │              │               │                │              │
+     │              │               │──(3) Salva ───────────────────►│
+     │              │               │  XP atualizado │              │
+     │              │               │  no localStorage              │
+     │              │               │                │              │
+     │              │               │──(4) Chama ───►│              │
+     │              │               │  playSound(    │              │
+     │              │               │  'success')    │              │
+     │              │               │                │              │
+     │              │               │◄─(5) Som ──────│              │
+     │              │               │   reproduzido  │              │
+     │              │               │                │              │
+     │              │               │──(6) Verifica ─────────────── ►│
+     │              │               │  XP >= próximo │  Lê dados    │
+     │              │               │  nível?        │  atuais      │
+     │              │               │                │              │
+     │              │               │    ┌───────────────────────┐   │
+     │              │               │    │ ALT [Level Up = true] │   │
+     │              │               │    ├───────────────────────┤   │
+     │              │               │──(7a) playSound('levelup')│   │
+     │              │               │    │                       │   │
+     │              │◄─(7b) Modal──│    │ Exibe modal confetes │   │
+     │              │   Level Up    │    │                       │   │
+     │              │               │    └───────────────────────┘   │
+     │              │               │                │              │
+     │              │               │──(8) Itera ────────────────── ►│
+     │              │               │  HQ.ACHIEVEMENTS[]            │
+     │              │               │  checkAchievements()          │
+     │              │               │                │              │
+     │              │               │    ┌───────────────────────┐   │
+     │              │               │    │ ALT [Badge = novo]    │   │
+     │              │               │    ├───────────────────────┤   │
+     │              │               │──(9a) Salva badge ────────────►│
+     │              │               │    │                       │   │
+     │              │               │──(9b) playSound            │   │
+     │              │               │    │  ('achievement')      │   │
+     │              │               │    │                       │   │
+     │              │◄─(9c) Toast──│    │ Notificação flutuante│   │
+     │              │   "Conquista  │    │ com nome do badge    │   │
+     │              │    Desbloq!"  │    │                       │   │
+     │              │               │    └───────────────────────┘   │
+     │              │               │                │              │
+     │              │──(10) Atualiza│                │              │
+     │◄─(11) Exibe─│  barras XP,   │                │              │
+     │   Interface  │  nível, streak│                │              │
+     │   atualizada │               │                │              │
+     │              │               │                │              │
+
+
+
+================================================================================
+ 7. DICIONÁRIO DE DADOS — DEPÓSITOS DO SISTEMA
+================================================================================
+
+  Descrição: Detalha a estrutura e o conteúdo de cada depósito de dados
+  (chaves do localStorage) utilizado pelo sistema HobbyQuest.
+
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  D1: BANCO DE USUÁRIOS                                                 │
+  │  Chave: "hq_users"                                                     │
+  │  Tipo: Array de Objetos JSON                                           │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  Campo           │ Tipo     │ Tamanho   │ Descrição                    │
+  ├───────────────────┼──────────┼───────────┼──────────────────────────────┤
+  │  email            │ String   │ até 254   │ E-mail do usuário [PK]       │
+  │  senha            │ String   │ até 128   │ Senha de acesso              │
+  │  dataCadastro     │ String   │ 10 (ISO)  │ Data de criação da conta     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  D2: PERFIL DO USUÁRIO                                                 │
+  │  Chave: "hq_{email}_profile"                                           │
+  │  Tipo: Objeto JSON                                                     │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  Campo           │ Tipo     │ Tamanho   │ Descrição                    │
+  ├───────────────────┼──────────┼───────────┼──────────────────────────────┤
+  │  codinome         │ String   │ até 24    │ Nome de aventureiro          │
+  │  avatar           │ String   │ até 20    │ ID do personagem selecionado │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  D3: DADOS DE PROGRESSO (XP E NÍVEIS)                                  │
+  │  Chave: "hq_{email}_xp"                                                │
+  │  Tipo: Objeto JSON                                                     │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  Campo           │ Tipo     │ Tamanho   │ Descrição                    │
+  ├───────────────────┼──────────┼───────────┼──────────────────────────────┤
+  │  arte_xp          │ Integer  │ —         │ XP acumulado em Arte         │
+  │  arte_nivel        │ Integer  │ —         │ Nível atual em Arte          │
+  │  leitura_xp       │ Integer  │ —         │ XP acumulado em Leitura      │
+  │  leitura_nivel     │ Integer  │ —         │ Nível atual em Leitura       │
+  │  fitness_xp       │ Integer  │ —         │ XP acumulado em Fitness      │
+  │  fitness_nivel     │ Integer  │ —         │ Nível atual em Fitness       │
+  │  xp_total         │ Integer  │ —         │ Soma de todos os XPs         │
+  │  nivel_global      │ Integer  │ —         │ Nível geral do usuário       │
+  │  tarefas_total     │ Integer  │ —         │ Quantidade total de tarefas  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  D4: CONQUISTAS E STREAKS                                              │
+  │  Chave: "hq_{email}_achieve"                                           │
+  │  Tipo: Objeto JSON                                                     │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  Campo           │ Tipo     │ Tamanho   │ Descrição                    │
+  ├───────────────────┼──────────┼───────────┼──────────────────────────────┤
+  │  achievements[]    │ Array    │ —         │ IDs das conquistas ativas    │
+  │  streak_atual      │ Integer  │ —         │ Dias consecutivos correntes  │
+  │  melhor_streak     │ Integer  │ —         │ Recorde de dias consecutivos │
+  │  ultima_data       │ String   │ 10 (ISO)  │ Última data de atividade     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  D5: PREFERÊNCIAS DE ACESSIBILIDADE                                    │
+  │  Chave: "hq_{email}_a11y"                                              │
+  │  Tipo: Objeto JSON                                                     │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  Campo           │ Tipo     │ Tamanho   │ Descrição                    │
+  ├───────────────────┼──────────┼───────────┼──────────────────────────────┤
+  │  tema_ativo        │ String   │ até 20    │ "padrao", "escuro" ou        │
+  │                    │          │           │ "alto_contraste"             │
+  │  leitura_limpa     │ Boolean  │ —         │ Modo dislexia/TDAH ativo     │
+  │  sem_distracoes    │ Boolean  │ —         │ Oculta decorações de fundo   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+
+================================================================================
+ 8. MATRIZ DE RASTREABILIDADE (Requisitos × Casos de Uso × Módulos)
+================================================================================
+
+  Descrição: Cruza cada requisito funcional com o caso de uso que o
+  atende e o módulo de código responsável pela implementação.
+
+
+  ┌─────────┬──────────────────────────┬────────────┬──────────────────────────┐
+  │ Req.    │ Descrição                │ Caso de Uso│ Módulo / Arquivo         │
+  ├─────────┼──────────────────────────┼────────────┼──────────────────────────┤
+  │ RF01    │ Autenticação Local       │ UC01       │ index.html, script.js    │
+  │ RF02    │ Isolamento de Dados      │ UC01       │ xp-system.js (prefixo)   │
+  │ RF03    │ Personalização Perfil    │ UC02       │ perfil.html, profile.js  │
+  │ RF04    │ Trilhas de Hobbies       │ UC03       │ arte/leitura/fitness.html│
+  │ RF05    │ Check-in Diário          │ UC04       │ meta.html, home.html     │
+  │ RF06    │ Motor de XP              │ UC05       │ xp-system.js (HQ.addXP)  │
+  │ RF07    │ Níveis por Categoria     │ UC05       │ xp-system.js, niveis.html│
+  │ RF08    │ Gestão de Conquistas     │ UC06       │ xp-system.js,            │
+  │         │                          │            │ conquistas.html          │
+  │ RF09    │ Controle de Streaks      │ UC07       │ xp-system.js (streak)    │
+  │ RF10    │ Síntese de Áudio         │ UC04/UC05  │ sound-effects.js         │
+  │ RF11    │ Acessibilidade WCAG      │ UC08       │ accessibility.js         │
+  │ RF12    │ Painel Estatístico       │ UC07       │ progresso.html           │
+  ├─────────┼──────────────────────────┼────────────┼──────────────────────────┤
+  │ RNF01   │ Desempenho < 500ms       │ Todos      │ Otimização geral CSS/JS  │
+  │ RNF02   │ Estética Scrapbook       │ Todos      │ style.css                │
+  │ RNF03   │ Portabilidade Android    │ —          │ capacitor.config.json,   │
+  │         │                          │            │ android/                 │
+  │ RNF04   │ Conformidade WCAG AA     │ UC08       │ accessibility.js         │
+  │ RNF05   │ Confiabilidade dados     │ Todos      │ xp-system.js (save)      │
+  │ RNF06   │ Leveza / Offline         │ Todos      │ sound-effects.js (synth) │
+  └─────────┴──────────────────────────┴────────────┴──────────────────────────┘
+
+
+
+================================================================================
+ 9. DIAGRAMA ENTIDADE-RELACIONAMENTO (ER) — MODELO LÓGICO
+================================================================================
+
+  Descrição: Representa o modelo lógico de dados persistidos no
+  armazenamento local (localStorage) do HobbyQuest.
+
+
+  ┌──────────────┐         ┌───────────────────┐         ┌──────────────────┐
+  │              │  1   N  │                   │  1   3  │                  │
+  │   USUÁRIO    │────────►│  SESSÃO ATIVA     │────────►│  PROGRESSO POR   │
+  │              │         │  (sessionStorage) │         │  CATEGORIA       │
+  │  PK: email   │         │                   │         │                  │
+  │  senha       │         │  loggedIn: Bool    │         │  FK: email       │
+  │  dataCadastro│         │  currentUser: Str  │         │  categoria: Enum │
+  │              │         │                   │         │  xpAcumulado: Int│
+  └──────┬───────┘         └───────────────────┘         │  nivelAtual: Int │
+         │                                               │  tarefasFeitas   │
+         │                                               └──────────────────┘
+         │
+         │  1   1
+         ├──────────►┌──────────────────┐
+         │           │  PERFIL          │
+         │           │                  │
+         │           │  FK: email       │
+         │           │  codinome: Str   │
+         │           │  avatar: Str     │
+         │           └──────────────────┘
+         │
+         │  1   *
+         ├──────────►┌──────────────────┐
+         │           │  CONQUISTA       │
+         │           │  (desbloqueada)  │
+         │           │                  │
+         │           │  FK: email       │
+         │           │  badgeId: Str    │
+         │           │  dataDesblq: Date│
+         │           └──────────────────┘
+         │
+         │  1   1
+         ├──────────►┌──────────────────┐
+         │           │  STREAK          │
+         │           │                  │
+         │           │  FK: email       │
+         │           │  streakAtual: Int│
+         │           │  melhorStreak:Int│
+         │           │  ultimaData: Date│
+         │           └──────────────────┘
+         │
+         │  1   1
+         └──────────►┌──────────────────┐
+                     │  ACESSIBILIDADE  │
+                     │                  │
+                     │  FK: email       │
+                     │  tema: Str       │
+                     │  leitLimpa: Bool │
+                     │  semDistrac: Bool│
+                     └──────────────────┘
+
+
+  CARDINALIDADES:
+  ───────────────
+  • USUÁRIO (1) ◄────────► (1) PERFIL
+  • USUÁRIO (1) ◄────────► (3) PROGRESSO POR CATEGORIA  [Arte, Leitura, Fitness]
+  • USUÁRIO (1) ◄────────► (*) CONQUISTA  [0 a N badges desbloqueados]
+  • USUÁRIO (1) ◄────────► (1) STREAK
+  • USUÁRIO (1) ◄────────► (1) ACESSIBILIDADE
+
+
+
+================================================================================
+ 10. RESUMO DA FASE DE ANÁLISE
+================================================================================
+
+  A fase de análise do projeto HobbyQuest identificou e documentou:
+
+  ┌────────────────────────────────────┬────────────────────────────────────┐
+  │  Artefato de Análise               │  Quantidade / Detalhamento         │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │  Requisitos Funcionais (RF)        │  12 requisitos especificados       │
+  │  Requisitos Não Funcionais (RNF)   │  06 requisitos especificados       │
+  │  Casos de Uso (UC)                 │  08 casos detalhados com fluxos    │
+  │  Entidades de Dados                │  06 entidades no modelo ER         │
+  │  Depósitos de Dados (localStorage) │  05 chaves particionadas           │
+  │  Processos no DFD                  │  06 processos + 04 subprocessos    │
+  │  Módulos de Código                 │  15+ arquivos (HTML/CSS/JS)        │
+  │  Telas do Aplicativo               │  12 páginas HTML interativas       │
+  │  Personagens / Avatares            │  07 (May, Quel, Victor, Nico,      │
+  │                                    │      Gabi, Camiz, Ivi)             │
+  │  Trilhas de Hobby                  │  03 (Arte, Leitura, Fitness)       │
+  │  Temas de Acessibilidade           │  03 (Padrão, Escuro, Alto Contr.)  │
+  └────────────────────────────────────┴────────────────────────────────────┘
+
+
+================================================================================
+                          FIM DO DIAGRAMA DE ANÁLISE
+================================================================================

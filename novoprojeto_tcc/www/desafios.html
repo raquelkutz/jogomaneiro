@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>if (!sessionStorage.getItem('loggedIn')) { window.location.href = 'index.html'; }</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hobby Quest - Desafios</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="xp-system.js"></script>
+  <script src="sound-effects.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Caveat:wght@400;700&family=Walter+Turncoat&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: var(--bg-color);
+      background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 39px, var(--line-color) 40px);
+      background-attachment: fixed;
+      min-height: 100dvh;
+    }
+
+    .desafios-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      position: relative;
+      padding: 20px 10px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      overflow-x: clip;
+    }
+
+    /* Back button */
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+      padding: 5px;
+    }
+    .back-btn svg {
+      stroke: #333;
+    }
+
+    /* Header */
+    .header-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: 20px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .trophy {
+      font-size: 40px;
+      margin: 0 10px;
+      filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
+    }
+
+    .title-bubble {
+      background: #f2f2f2;
+      border: 2px solid #333;
+      border-radius: 40px;
+      padding: 10px 30px;
+      box-shadow: 1px 2px 0px rgba(0,0,0,0.1);
+    }
+
+    .title-bubble h1 {
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 26px;
+      color: #222;
+      font-weight: normal;
+      margin: 0;
+    }
+
+    /* Challenge Rows */
+    .challenge-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      padding: 0 5px;
+    }
+
+    .challenge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .challenge-row:active {
+      transform: scale(0.98);
+    }
+
+    .arrow {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      margin-right: 5px;
+    }
+    
+    .arrow svg {
+      width: 50px;
+      height: 15px;
+    }
+
+    .task-text {
+      flex-grow: 1;
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 20px;
+      text-align: center;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      line-height: 1.2;
+    }
+
+    .task-text.pending, .task-text.success {
+      color: #72b972;
+      text-decoration-color: #72b972;
+    }
+
+    .task-text.fail {
+      color: #d13a3a;
+      text-decoration-color: #d13a3a;
+    }
+
+    .status-icon {
+      flex-shrink: 0;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-icon.pending {
+      background-color: white;
+      border: 1px solid #333;
+    }
+
+    .status-icon.success {
+      background-color: #cbeacb;
+      border: none;
+    }
+
+    .status-icon.fail {
+      background-color: transparent;
+      border: 3px solid #d13a3a;
+    }
+
+    .xp-badge {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      background-color: #f7ca18;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset -2px -2px 0px rgba(0,0,0,0.1);
+    }
+    
+    .xp-badge span {
+      font-family: 'Cabin Sketch', cursive;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 1.1;
+    }
+    
+    .xp-badge.empty {
+      background-color: transparent;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="desafios-container">
+    <button class="back-btn" onclick="window.location.href='progresso.html'">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+
+    <div class="header-section">
+      <span class="trophy">🏆</span>
+      <div class="title-bubble">
+        <h1>Seus desafios</h1>
+      </div>
+      <span class="trophy">🏆</span>
+    </div>
+
+    <div class="challenge-list">
+    </div>
+  </div>
+
+  <script>
+    // ─── Persistência de estados ──────────────────────────────────────────────
+    function loadStates() {
+      try { return JSON.parse(localStorage.getItem(HQ._k('checkin_states')) || '{}'); }
+      catch { return {}; }
+    }
+
+    function saveState(id, state, awarded) {
+      const states = loadStates();
+      states[id] = { state, awarded };
+      localStorage.setItem(HQ._k('checkin_states'), JSON.stringify(states));
+    }
+
+    // ─── Aplicar visual de acordo com o estado ────────────────────────────────
+    function applyState(row, state, awarded, xpValue) {
+      const taskText   = row.querySelector('.task-text');
+      const statusIcon = row.querySelector('.status-icon');
+      const xpBadge    = row.querySelector('.xp-badge');
+
+      taskText.classList.remove('pending', 'success', 'fail');
+      statusIcon.classList.remove('pending', 'success', 'fail');
+      row.setAttribute('data-state', state);
+      row.dataset.awarded = awarded ? 'true' : 'false';
+
+      if (state === 'success') {
+        taskText.classList.add('success');
+        statusIcon.classList.add('success');
+        statusIcon.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a9c4a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        xpBadge.classList.remove('empty');
+        xpBadge.innerHTML = '<span>+' + xpValue + '<br>XP</span>';
+      } else if (state === 'fail') {
+        taskText.classList.add('fail');
+        statusIcon.classList.add('fail');
+        statusIcon.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d13a3a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        xpBadge.classList.add('empty');
+        xpBadge.innerHTML = '';
+      } else {
+        taskText.classList.add('pending');
+        statusIcon.classList.add('pending');
+        statusIcon.innerHTML = '';
+        xpBadge.classList.add('empty');
+        xpBadge.innerHTML = '';
+      }
+    }
+
+    // ─── Toggle ao clicar — usa HQ.addXP / HQ.removeXP ───────────────────────
+    function toggleChallenge(row) {
+      const id         = row.getAttribute('data-id');
+      const xpValue    = parseInt(row.getAttribute('data-xp') || '50', 10);
+      const hobby      = row.getAttribute('data-hobby') || null;
+      const currState  = row.getAttribute('data-state') || 'pending';
+      const wasAwarded = row.dataset.awarded === 'true';
+
+      let newState, newAwarded;
+
+      if (currState === 'pending') {
+        newState   = 'success';
+        newAwarded = true;
+        if (hobby) HQ.addXP(hobby, xpValue, 'Check-in');
+        if (window.SFX) SFX.success();
+
+      } else if (currState === 'success') {
+        newState   = 'fail';
+        newAwarded = false;
+        if (wasAwarded && hobby) HQ.removeXP(hobby, xpValue);
+
+      } else {
+        newState   = 'pending';
+        newAwarded = false;
+      }
+
+      applyState(row, newState, newAwarded, xpValue);
+      saveState(id, newState, newAwarded);
+      if (newState === 'success') row.remove();
+    }
+
+    // ─── Restaurar estados ao carregar a página ───────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Carregar metas/tarefas do localStorage (apenas as que estão na tela objetivos)
+      const challengeList = document.querySelector('.challenge-list');
+      let storedTasks = {};
+      try {
+        storedTasks = JSON.parse(localStorage.getItem(HQ._k('hobbyQuestTasks')) || '{}');
+      } catch (e) {
+        storedTasks = {};
+      }
+
+      // Renderizar as metas no Check-in
+      ['leitura', 'arte', 'fitness'].forEach(cat => {
+        const catTasks = storedTasks[cat] || [];
+        catTasks.forEach(task => {
+          const row = document.createElement('div');
+          row.className = 'challenge-row';
+          row.setAttribute('data-xp', task.xp || 50);
+          row.setAttribute('data-hobby', cat);
+          row.setAttribute('data-state', 'pending');
+          row.setAttribute('data-id', `task-${task.id}`);
+          row.onclick = function() { toggleChallenge(this); };
+
+          row.innerHTML = `
+            <div class="arrow">
+              <svg viewBox="0 0 50 15"><path d="M0,7.5 L45,7.5 M38,2 L48,7.5 L38,13" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="task-text pending">${task.text}</div>
+            <div class="status-icon pending"></div>
+            <div class="xp-badge empty"></div>
+          `;
+
+          challengeList.appendChild(row);
+        });
+      });
+
+      // Aplicar estados salvos e remover as concluídas
+      const allRows = document.querySelectorAll('.challenge-row');
+      const states = loadStates();
+
+      allRows.forEach((row) => {
+        const id = row.getAttribute('data-id');
+        const xpValue = parseInt(row.getAttribute('data-xp') || '50', 10);
+        const saved = states[id];
+        applyState(row, saved ? saved.state : 'pending', saved ? saved.awarded : false, xpValue);
+        if (saved && saved.state === 'success') row.remove();
+      });
+    });
+  </script>
+</body>
+</html>

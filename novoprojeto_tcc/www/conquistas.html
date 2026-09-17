@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>if (!sessionStorage.getItem('loggedIn')) { window.location.href = 'index.html'; }</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hobby Quest - Conquistas</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="xp-system.js"></script>
+  <script src="sound-effects.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Caveat:wght@400;700&family=Walter+Turncoat&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: var(--bg-color);
+      background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 39px, var(--line-color) 40px);
+      background-attachment: fixed;
+      min-height: 100dvh;
+    }
+    .conquistas-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      position: relative;
+      padding: 20px 20px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      overflow-x: clip;
+    }
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+      padding: 5px;
+    }
+    .back-btn svg { stroke: #333; }
+    .page-title {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 38px;
+      color: var(--primary-green);
+      text-align: center;
+      margin: 30px 0 5px;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 0 #fff;
+    }
+    .page-subtitle {
+      font-family: 'Caveat', cursive;
+      font-size: 20px;
+      color: #888;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .achievements-box {
+      background-color: #fce28b;
+      border: 2px dashed #d4b85c;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+      width: 100%;
+    }
+    .achievements-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .achievements-header span:first-child { font-size: 28px; }
+    .achievements-header span:last-child {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 24px;
+      color: #333;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+    .achievements-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .achievement-item {
+      background: rgba(255, 255, 255, 0.6);
+      padding: 12px 16px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px dashed rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+    }
+    .achievement-item:hover { transform: translateX(4px); }
+    .achievement-item .ach-icon { font-size: 24px; }
+    .achievement-item .ach-text {
+      font-family: 'Caveat', cursive;
+      font-size: 19px;
+      color: #444;
+    }
+    .ach-progress {
+      font-family: 'Walter Turncoat', cursive;
+      font-size: 12px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="conquistas-container">
+    <button class="back-btn" onclick="window.location.href='progresso.html'">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+
+    <h1 class="page-title">🏆 CONQUISTAS</h1>
+    <p class="page-subtitle" id="progressText">0 / 0 desbloqueadas</p>
+
+    <div class="achievements-box">
+      <ul class="achievements-list" id="achievementsList"></ul>
+    </div>
+  </div>
+
+  <script>
+    function renderAchievements() {
+      const unlocked = HQ.getUnlockedAchievements();
+      const listEl = document.getElementById('achievementsList');
+      const progressEl = document.getElementById('progressText');
+
+      progressEl.textContent = unlocked.length + ' / ' + HQ.ACHIEVEMENTS.length + ' desbloqueadas';
+
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      HQ.ACHIEVEMENTS.forEach(ach => {
+        const isUnlocked = unlocked.includes(ach.id);
+        const emojiMatch = ach.label.match(/^[\p{Emoji_Presentation}\p{Emoji}\u2190-\u21FF]/u);
+        const emoji = emojiMatch ? emojiMatch[0] : '🏆';
+        const title = ach.label.replace(emoji, '').trim();
+
+        const li = document.createElement('li');
+        li.className = 'achievement-item';
+
+        if (isUnlocked) {
+          li.style.cssText = 'opacity: 1; background: rgba(255, 255, 255, 0.7); border: 1px dashed #d4b85c;';
+          li.innerHTML = `
+            <span class="ach-icon">${emoji}</span>
+            <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
+              <span class="ach-text" style="font-weight: bold; color: #222; font-size: 17px;">${title}</span>
+              <span style="font-family: 'Caveat', cursive; font-size: 15px; color: #555;">${ach.desc}</span>
+            </div>
+            <span style="margin-left: auto; font-size: 18px;">✅</span>
+          `;
+        } else {
+          li.style.cssText = 'opacity: 0.55; background: rgba(230, 220, 190, 0.4); border: 1px dashed #c0a860;';
+          li.innerHTML = `
+            <span class="ach-icon" style="filter: grayscale(1);">🔒</span>
+            <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
+              <span class="ach-text" style="font-weight: bold; color: #777; font-size: 17px; text-decoration: line-through;">${title}</span>
+              <span style="font-family: 'Caveat', cursive; font-size: 15px; color: #888;">${ach.desc}</span>
+            </div>
+          `;
+        }
+        listEl.appendChild(li);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      HQ.updateStreak();
+      HQ.checkAchievements();
+      renderAchievements();
+    });
+
+    window.addEventListener('hq:xpUpdated', renderAchievements);
+    window.addEventListener('storage', (e) => {
+      if (e.key && (e.key === 'hq_achievements' || e.key.startsWith('xp_') || e.key === 'checkin_states' || e.key === 'hq_streak')) {
+        renderAchievements();
+      }
+    });
+  </script>
+</body>
+</html>

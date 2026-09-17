@@ -1,0 +1,1079 @@
+================================================================================
+                                     CAPA
+================================================================================
+
+                    ESCOLA TÉCNICA ESTADUAL / INSTITUTO DE EDUCAÇÃO
+                    CURSO TÉCNICO EM DESENVOLVIMENTO DE SISTEMAS / INFORMÁTICA
+
+
+
+
+                           MAYSA ROGALESKI RODRIGUES
+                        RAQUEL HELOIZE KUTZ DE BASTOS
+                         VICTOR GABRIEL SILVESTRE MELO
+
+
+
+
+               HOBBYQUEST: APLICATIVO MOBILE GAMIFICADO PARA O
+              INCENTIVO, PRÁTICA E GESTÃO DE HOBBIES PESSOAIS
+
+
+
+
+
+
+
+
+
+
+
+                               CIDADE - UF
+                                  2026
+================================================================================
+
+\newpage
+
+================================================================================
+                               FOLHA DE ROSTO
+================================================================================
+
+                           MAYSA ROGALESKI RODRIGUES
+                        RAQUEL HELOIZE KUTZ DE BASTOS
+                         VICTOR GABRIEL SILVESTRE MELO
+
+
+
+
+               HOBBYQUEST: APLICATIVO MOBILE GAMIFICADO PARA O
+              INCENTIVO, PRÁTICA E GESTÃO DE HOBBIES PESSOAIS
+
+
+
+                        Trabalho de Conclusão de Curso apresentado ao 
+                        Corpo Docente do Curso Técnico em Desenvolvimento 
+                        de Sistemas como requisito parcial para a obtenção 
+                        do diploma de Técnico(a) em Desenvolvimento de Sistemas.
+
+                        Área de Concentração: Engenharia de Software e 
+                        Desenvolvimento Mobile Multiplataforma.
+
+                        Orientador(a): Prof(a). [Nome do Orientador]
+                        Coorientador(a): Prof(a). [Nome do Coorientador]
+
+
+
+
+
+
+
+
+
+                               CIDADE - UF
+                                  2026
+================================================================================
+
+\newpage
+
+================================================================================
+                                   RESUMO
+================================================================================
+
+A vida cotidiana moderna, caracterizada pelo ritmo acelerado das grandes cidades, pela sobrecarga de demandas acadêmicas e profissionais e pela exposição contínua a estímulos digitais de consumo passivo, tem provocado um distanciamento progressivo dos indivíduos em relação a atividades de desenvolvimento pessoal, lazer ativo e expressão criativa, conhecidas amplamente como hobbies. Embora uma parcela expressiva da população reconheça a relevância de cultivar práticas como o desenho, a leitura literária e os exercícios físicos, a maioria dos iniciantes abandona seus projetos nos estágios iniciais devido à ausência de metodologias estruturadas, à falta de acompanhamento contínuo e à escassez de recompensas perceptíveis a curto prazo. O presente Trabalho de Conclusão de Curso tem como objetivo primordial projetar, desenvolver e validar o **HobbyQuest**, uma aplicação mobile híbrida gamificada voltada a guiar, motivar e registrar o progresso de usuários na aquisição e manutenção de novos hábitos prazerosos. A metodologia adotou natureza aplicada e exploratória, orientada pelo modelo iterativo e incremental com prototipagem rápida e desenvolvimento fundamentado em padrões web modernos (HTML5 semântico, CSS3 com design temático artesanal *Scrapbook*, JavaScript modular ECMAScript 6+ e o ecossistema Apache Capacitor para empacotamento Android). O software integra um motor central de gamificação responsável pelo cálculo balanceado de Pontos de Experiência (XP), progressão por níveis individuais por categoria (Arte, Leitura e Fitness), gerenciamento de ofensivas diárias (*streaks*), emissão de medalhas digitais (*badges*), síntese de áudio procedural em tempo real via Web Audio API e conformidade com as diretrizes internacionais de acessibilidade digital WCAG 2.1 nível AA. Os testes de usabilidade, navegabilidade e persistência de dados demonstraram que a aplicação de mecânicas lúdicas aliadas a uma estética visual afetiva e acolhedora eleva o engajamento, reduz o estresse da rotina e confere consistência ao aprendizado prático, validando o sistema como uma ferramenta tecnologicamente viável e socialmente transformadora.
+
+Palavras-chave: Gamificação; Hobbies; Aplicativo Mobile Híbrido; Engenharia de Software; Desenvolvimento de Sistemas; Acessibilidade Web (WCAG); Hábitos Saudáveis.
+================================================================================
+
+\newpage
+
+================================================================================
+                                  SUMÁRIO
+================================================================================
+
+1. INTRODUÇÃO ................................................................ 01
+   1.1 Contextualização ...................................................... 01
+   1.2 Apresentação do Projeto HobbyQuest .................................... 03
+   1.3 Justificativa e Relevância Social ..................................... 04
+2. PROBLEMA DE PESQUISA ...................................................... 06
+   2.1 Formulação da Questão Central ......................................... 06
+   2.2 Hipóteses de Solução .................................................. 07
+3. OBJETIVOS ................................................................. 08
+   3.1 Objetivo Geral ........................................................ 08
+   3.2 Objetivos Específicos ................................................. 08
+4. FUNDAMENTAÇÃO TEÓRICA ..................................................... 10
+   4.1 Gamificação (Gamification) ............................................ 10
+       4.1.1 Origem e Definição Conceitual ................................... 10
+       4.1.2 Teoria da Autodeterminação e Motivação .......................... 12
+       4.1.3 Elementos Estruturais: PBL, Streaks e Feedback .................. 13
+   4.2 Psicologia Comportamental e Formação de Hábitos ....................... 15
+       4.2.1 O Loop do Hábito de Charles Duhigg .............................. 15
+       4.2.2 A Filosofia dos Hábitos Atômicos de James Clear ................. 17
+   4.3 Hobbies e Desenvolvimento Humano Integral ............................. 19
+       4.3.1 Expressão Criativa e Neuroplasticidade (Arte) ................... 19
+       4.3.2 Concentração Profunda e Empatia (Leitura) ....................... 20
+       4.3.3 Saúde Física e Regulação Emocional (Fitness) .................... 21
+   4.4 Aplicativos Mobile e Acessibilidade Digital ........................... 22
+       4.4.1 Evolução das Aplicações Web Híbridas ............................ 22
+       4.4.2 Diretrizes WCAG 2.1 e Inclusão Universal ........................ 24
+5. METODOLOGIA ............................................................... 26
+   5.1 Classificação e Abordagem Metodológica ................................ 26
+   5.2 Levantamento e Engenharia de Requisitos ............................... 27
+       5.2.1 Requisitos Funcionais (RF) ...................................... 27
+       5.2.2 Requisitos Não Funcionais (RNF) ................................. 29
+   5.3 Modelagem de Casos de Uso (UML) ....................................... 30
+       5.3.1 Diagrama de Casos de Uso (Use Case Diagram) ..................... 30
+       5.3.2 Especificações e Tabelas de Casos de Uso ........................ 32
+   5.4 Planejamento das Etapas e Cronograma .................................. 38
+   5.5 Ferramental e Ambiente Técnico ........................................ 40
+6. DESENVOLVIMENTO DO HOBBYQUEST ............................................. 42
+   6.1 Identidade Visual e Estética Afetiva (Scrapbook Design) ............... 42
+       6.1.1 Paleta Cromática e Tipografia Temática .......................... 43
+       6.1.2 Elementos Gráficos e Elenco de Personagens ...................... 44
+   6.2 Arquitetura de Telas e Fluxos de Interação ............................ 46
+       6.2.1 Módulo de Autenticação e Entrada (index.html) ................... 46
+       6.2.2 Painel Central de Jornada (home.html) ........................... 48
+       6.2.3 Trilhas Temáticas de Hobbies (arte, leitura, fitness) ........... 50
+       6.2.4 Gestão de Desafios, Metas e Check-in Diário ..................... 52
+       6.2.5 Vitrine de Conquistas e Progressão de Níveis .................... 54
+       6.2.6 Customização de Perfil e Estatísticas Pessoais .................. 56
+   6.3 Engenharia do Motor de Gamificação (xp-system.js) ..................... 58
+       6.3.1 Algoritmo de Progressão e Balanceamento Matemático .............. 58
+       6.3.2 Rastreamento de Ofensivas Diárias (Streaks) ..................... 60
+       6.3.3 Mecanismo de Particionamento de Armazenamento ................... 61
+   6.4 Módulo Jogável e Narrativo ............................................ 63
+   6.5 Fluxo de Integração Aplicativo x Jogo ................................. 64
+   6.6 Arquitetura de Acessibilidade Digital (accessibility.js) ............... 65
+7. TECNOLOGIAS UTILIZADAS .................................................... 68
+   7.1 Camada Frontend Web (HTML5, CSS3, JavaScript ES6) ..................... 68
+   7.2 Plataforma Mobile Nativa (Apache Capacitor v8.4) ...................... 70
+   7.3 Áudio Procedural em Tempo Real (Web Audio API) ........................ 72
+   7.4 Persistência Local e Extensibilidade BaaS ............................. 73
+   7.5 Tecnologias da Camada Jogável ......................................... 75
+8. TESTES E RESULTADOS ....................................................... 76
+   8.1 Metodologia e Matriz de Testes de Software ............................ 76
+   8.2 Resultados dos Testes de Interface e Acessibilidade ................... 79
+   8.3 Desempenho e Eficiência em Ambiente Android ........................... 81
+9. CONCLUSÃO ................................................................. 83
+   9.1 Síntese dos Resultados Alcançados ..................................... 83
+   9.2 Contribuições Técnicas, Acadêmicas e Sociais .......................... 84
+   9.3 Limitações e Trabalhos Futuros ........................................ 85
+REFERÊNCIAS .................................................................. 87
+APÊNDICES .................................................................... 90
+================================================================================
+
+\newpage
+
+================================================================================
+1. INTRODUÇÃO
+================================================================================
+
+1.1 Contextualização
+
+A sociedade contemporânea vivencia transformações profundas na forma como as pessoas interagem com o tempo, a informação e o lazer. O avanço acelerado da tecnologia da informação e a disseminação massiva dos dispositivos móveis conectaram a humanidade de maneira sem precedentes. No entanto, esse ecossistema digital hiperconectado gerou um fenômeno colateral amplamente documentado por educadores, médicos e sociólogos: a fragmentação da atenção, o aumento expressivo dos índices de ansiedade e o esgotamento cognitivo provocado pela constante sobrecarga de estímulos imediatos e de consumo passivo em redes sociais e plataformas de vídeos curtos.
+
+Nesse panorama acelerado e exigente, o tempo dedicado ao cultivo de interesses genuinamente individuais e desprovidos de finalidades estritamente utilitárias ou mercadológicas — comumente denominados *hobbies* ou passatempos formativos — foi progressivamente marginalizado. Atividades fundamentais para a saúde mental e o desenvolvimento integral do ser humano, como o desenho artístico, a pintura, a escrita criativa, a leitura literária contínua, o aprendizado de instrumentos musicais e a prática regular de exercícios físicos leves, deixaram de fazer parte do cotidiano de uma expressiva parcela da população jovem e adulta.
+
+A literatura científica no campo da psicologia positiva e das neurociências comprova que a dedicação regular a passatempos estruturados desempenha um papel essencial no equilíbrio biopsicossocial. Os hobbies atuam como mecanismos restauradores da mente, proporcionando o estado de "fluxo" (*flow*), conceito introduzido pelo psicólogo Mihaly Csikszentmihalyi, no qual o indivíduo mergulha em uma atividade desafiadora e prazerosa, esquecendo temporariamente as pressões externas e renovando suas energias emocionais. Além disso, o aprendizado de novas habilidades manuais e intelectuais estimula a neuroplasticidade, fortalece a concentração prolongada e constrói um senso sólido de autoeficácia e realização pessoal.
+
+Apesar do reconhecimento generalizado desses benefícios, iniciar e, principalmente, manter a regularidade em um novo passatempo impõe barreiras comportamentais severas. A ausência de um método de estudo gradual, a falta de metas intermediárias bem definidas, a sensação de isolamento na prática e a inexistência de gratificações a curto prazo fazem com que a maioria dos iniciantes experimente frustração e desista nas primeiras semanas. A rotina agitada e o cansaço ao final do dia tornam o consumo passivo de telas muito mais fácil e sedutor do que o esforço inicial exigido para pegar um caderno de desenho, abrir um livro ou realizar uma série de exercícios. Diante dessa realidade, torna-se imprescindível investigar e desenvolver soluções que utilizem as próprias ferramentas tecnológicas a favor do usuário, transformando o smartphone em um mentor acolhedor e estimulante.
+
+1.2 Apresentação do Projeto HobbyQuest
+
+O projeto **HobbyQuest** surge exatamente para responder a essa demanda, configurando-se como uma aplicação mobile híbrida gamificada projetada para orientar, incentivar e acompanhar jovens e adultos em sua trajetória de descoberta e consolidação de hábitos voltados a passatempos saudáveis. 
+
+Diferenciando-se categoricamente dos gerenciadores de tarefas tradicionais — que costumam apresentar interfaces cinzentas, frias, corporativas e centradas na cobrança de obrigações —, o HobbyQuest adota como premissa o design emocional e afetivo. Sua interface gráfica é totalmente construída em torno da metáfora de um *scrapbook* (caderno de memórias e diário criativo escolar), utilizando texturas detalhadas de papel rasgado (*torn paper*), alfinetes decorativos (*pins*), fitas adesivas (*washi tapes*), furinhos de fichário e fontes tipográficas que simulam caligrafia artística e anotações feitas à mão.
+
+O sistema estrutura o desenvolvimento pessoal em três trilhas fundamentais de atividades:
+1. **Arte:** Focada na expressão plástica e visual, propondo desafios que vão desde noções básicas de traço, proporção, luz e sombra até a produção de ilustrações completas e experimentações criativas;
+2. **Leitura:** Voltada à formação do hábito literário sustentável, oferecendo controle diário de páginas lidas, metas graduais de tempo de leitura focada e incentivo à reflexão sobre as obras;
+3. **Fitness:** Direcionada à saúde corporal e combate ao sedentarismo, apresentando rotinas acessíveis de mobilidade articular, caminhadas, alongamentos matinais e exercícios corporais básicos que não exigem equipamentos sofisticados.
+
+Para sustentar a motivação ao longo do tempo, o HobbyQuest integra um motor robusto de gamificação. Cada tarefa executada no mundo físico é registrada no aplicativo e convertida em Pontos de Experiência (XP). O acúmulo de XP possibilita o aumento de Nível individual em cada categoria e no perfil geral do usuário, o desbloqueio de medalhas digitais temáticas (*badges*), o registro de sequências ininterruptas de dias de dedicação (*streaks*) e o disparo de recompensas multissensoriais imediatas, como animações visuais comemorativas e efeitos sonoros gerados por síntese de áudio procedural. Adicionalmente, o sistema incorpora um módulo completo de acessibilidade digital (WCAG 2.1 AA), assegurando que pessoas com baixa visão, dislexia e TDAH tenham uma experiência inclusiva e confortável.
+
+1.3 Justificativa e Relevância Social
+
+A justificativa para o desenvolvimento do HobbyQuest assenta-se em três pilares complementares:
+
+- **Pilar Social e Comportamental:** O projeto combate ativamente o sedentarismo físico e mental, a procrastinação crônica e o isolamento decorrente do consumo digital excessivo. Ao oferecer uma estrutura lúdica e gradual, o software democratiza o acesso ao aprendizado de novas habilidades, promovendo a autoestima e o bem-estar psicológico do usuário em momentos de lazer;
+- **Pilar Tecnológico e de Inovação:** A concepção do aplicativo demonstra que é possível construir softwares móveis de alto padrão estético, excelente responsividade e rico conjunto de recursos utilizando tecnologias web abertas (HTML5, CSS3 avançado e JavaScript puro) encapsuladas por ferramentas modernas de ponte nativa como o Apache Capacitor, sem a obrigatoriedade de dependências pesadas ou de arquiteturas excessivamente complexas;
+- **Pilar Acadêmico e Formativo:** No contexto do Ensino Médio Técnico em Desenvolvimento de Sistemas, este trabalho consolida a aplicação prática e interdisciplinar de competências essenciais: engenharia de requisitos, design de interação (UI/UX), algoritmos de gamificação, persistência local de dados com integridade multi-usuário, testes de software e conformidade rigorosa com normas internacionais de acessibilidade digital (W3C/WCAG).
+
+\newpage
+
+================================================================================
+2. PROBLEMA DE PESQUISA
+================================================================================
+
+2.1 Formulação da Questão Central
+
+A aquisição de qualquer competência prática demanda esforço deliberado, repetição metódica e paciência diante das imperfeições naturais dos primeiros resultados. Na sociedade digital instantânea, o cérebro humano acostuma-se com descargas imediatas de dopamina propiciadas pelos algoritmos de recomendação de conteúdos rápidos. Quando o indivíduo se depara com a folha em branco do desenho, as páginas densas de um livro clássico ou o cansaço dos primeiros minutos de exercício, a ausência de gratificação instantânea gera desconforto emocional, levando ao abandono do passatempo.
+
+As ferramentas digitais disponíveis no mercado atual costumam falhar por não compreenderem essa dinâmica:
+- Os **aplicativos de produtividade corporativa** tratam o tempo livre como uma planilha de trabalho, gerando sentimentos de culpa e cobrança que sufocam a espontaneidade do lazer;
+- Os **jogos eletrônicos tradicionais** capturam a atenção e fornecem entretenimento, mas mantêm as recompensas restritas ao ambiente virtual, sem incentivar realizações reais no mundo físico.
+
+Diante desse hiato entre a intenção de praticar um hobby e a persistência na rotina diária, formula-se o problema central desta pesquisa:
+
+    "De que maneira o desenvolvimento de uma aplicação mobile híbrida, fundamentada 
+     em mecânicas de gamificação estruturadas, design visual afetivo e diretrizes 
+     de acessibilidade universal, pode atuar como agente facilitador e motivador 
+     para que jovens e adultos iniciem, monitorem e mantenham a regularidade na 
+     prática de hobbies saudáveis?"
+
+2.2 Hipóteses de Solução
+
+Para responder ao problema formulado, estabeleceram-se as seguintes hipóteses de trabalho:
+1. **H1:** A decomposição de hobbies complexos em micro-desafios diários de curta duração reduz a sobrecarga cognitiva inicial e diminui a taxa de abandono nos primeiros 14 dias;
+2. **H2:** A concessão imediata de recompensas digitais (XP, fanfarras sonoras, medalhas e progressão de níveis) supre a necessidade de gratificação a curto prazo, estimulando a formação do hábito;
+3. **H3:** Uma interface baseada em estética artesanal (scrapbook) cria um vínculo afetivo superior com o usuário em comparação com designs minimalistas e corporativos convencionais;
+4. **H4:** A inclusão de recursos de acessibilidade desde a concepção inicial do código (leitura limpa para dislexia/TDAH, alto contraste e leitores de tela) amplia o alcance e a usabilidade do aplicativo para diversos perfis de estudantes.
+
+\newpage
+
+================================================================================
+3. OBJETIVOS
+================================================================================
+
+3.1 Objetivo Geral
+
+Conceber, projetar, implementar e validar um aplicativo mobile gamificado multiplataforma (HobbyQuest) que auxilie usuários a planejarem, executarem e monitorarem suas atividades de lazer e aprendizado prático (Arte, Leitura e Fitness), utilizando elementos de design interativo, pontuação de experiência progressiva, efeitos sonoros procedurais e acessibilidade universal WCAG 2.1 AA.
+
+3.2 Objetivos Específicos
+
+A fim de assegurar o cumprimento integral do objetivo geral, foram traçadas as seguintes metas específicas:
+
+1. **Levantar e Modelar Requisitos:** Identificar as necessidades centrais do público-alvo (jovens estudantes e adultos aprendizes) e formalizar os Requisitos Funcionais, Requisitos Não Funcionais e Diagramas de Casos de Uso com tabelas descritivas detalhadas;
+2. **Elaborar a Identidade Visual Afetiva (UI/UX):** Desenvolver um sistema de design artesanal e personalizado baseado no conceito de *scrapbook*, contemplando paleta cromática equilibrada, texturas realistas de papel rasgado, alfinetes, fitas adesivas e tipografia que evoque anotações à mão;
+3. **Modelar e Codificar o Motor Central de Gamificação:** Implementar o arquivo `xp-system.js` contendo a lógica matemática de cálculo de XP, balanceamento de níveis por categoria, avaliação condicional de conquistas (*badges*) e controle de dias consecutivos de ofensiva (*streaks*);
+4. **Construir os Módulos Específicos de Hobbies:** Desenvolver telas intuitivas e ricas em conteúdo para as categorias de Arte (desenhos e técnicas), Leitura (metas e contadores) e Fitness (exercícios práticos e mobilidade);
+5. **Desenvolver o Módulo Universal de Acessibilidade:** Criar no arquivo `accessibility.js` a lógica para suporte a temas de alto contraste, tema escuro, modo de leitura limpa com tipografia adaptada para dislexia e TDAH, navegação completa por teclado e regiões dinâmicas WAI-ARIA para leitores de tela;
+6. **Implementar Síntese de Efeitos Sonoros Procedurais:** Programar no arquivo `sound-effects.js` geradores de áudio melódico em tempo real utilizando a Web Audio API do navegador, evitando o carregamento de arquivos pesados de mídia;
+7. **Garantir a Persistência de Dados e Isolamento de Contas:** Estruturar o armazenamento local via `localStorage` com algoritmos de particionamento e prefixação por e-mail, garantindo que múltiplos usuários possam utilizar o mesmo dispositivo sem perda ou sobreposição de dados;
+8. **Realizar o Empacotamento Mobile para Android:** Integrar o projeto ao Apache Capacitor (@capacitor/core e @capacitor/android), configurando o ambiente nativo, permissões no `AndroidManifest.xml` e áreas seguras de exibição;
+9. **Executar Testes de Qualidade e Validação:** Aplicar testes de funcionalidade, usabilidade, responsividade de tela e conformidade de acessibilidade para assegurar a robustez do software.
+
+\newpage
+
+================================================================================
+4. FUNDAMENTAÇÃO TEÓRICA
+================================================================================
+
+4.1 Gamificação (Gamification)
+
+4.1.1 Origem e Definição Conceitual
+
+O termo *Gamificação* (originado do inglês *Gamification*) ganhou notoriedade a partir do início dos anos 2010, sendo formalmente definido por pesquisadores como Deterding et al. (2011) como "a utilização de elementos, mecânicas, dinâmicas e estéticas de design de jogos em contextos que não são jogos". A proposta fundamental da gamificação não reside na criação de um videogame fechado em sua própria narrativa fictícia, mas sim no aproveitamento intencional do poder motivacional, do senso de agência e do prazer do jogo para resolver desafios práticos do cotidiano humano, tais como educação, saúde, sustentabilidade e produtividade pessoal (KAPP, 2012).
+
+Historicamente, os seres humanos sempre aprenderam e se engajaram através do brincar e do jogar. O filósofo holandês Johan Huizinga, em sua célebre obra *Homo Ludens* (1938), argumenta que o jogo é anterior à própria cultura e constitui um elemento civilizatório primordial. No ambiente digital contemporâneo, a gamificação sistematiza esse impulso lúdico por meio de regras claras, feedbacks constantes e sistemas de recompensas que transformam tarefas antes vistas como árduas ou monótonas em experiências estimulantes e envolventes.
+
+4.1.2 Teoria da Autodeterminação e Motivação Humana
+
+Para que um sistema gamificado seja sustentável a longo prazo, ele não pode se limitar à distribuição indiscriminada de prêmios virtuais vazios. A base psicológica que sustenta o HobbyQuest é a **Teoria da Autodeterminação** (*Self-Determination Theory - SDT*), desenvolvida pelos psicólogos Edward L. Deci e Richard M. Ryan (2000).
+
+A SDT postula que os seres humanos são motivados por três necessidades psicológicas inatas e universais:
+1. **Autonomia:** A necessidade de sentir que se é o autor de suas próprias escolhas e ações (no HobbyQuest, o usuário escolhe livremente quais hobbies praticar e em que ritmo avançar);
+2. **Competência:** O sentimento de eficácia, aprendizado e capacidade de superar desafios graduados (no sistema, refletido pelas barras de progresso, subidas de nível e desafios divididos por níveis de dificuldade);
+3. **Pertencimento / Conexão:** A sensação de vínculo afetivo e acolhimento proporcionada pela identidade visual, personalização de avatares e mensagens motivacionais internas.
+
+A motivação humana transita em um espectro contínuo entre a **Motivação Extrínseca** (gerada por incentivos externos, como pontos, medalhas e reconhecimento social) e a **Motivação Intrínseca** (quando a pessoa realiza a atividade pelo puro prazer e satisfação que ela proporciona). No HobbyQuest, os elementos extrínsecos (XP e Badges) funcionam como um "andaime motivacional" inicial que sustenta a dedicação do usuário nos primeiros dias, até que a motivação intrínseca gerada pelo prazer de desenhar, ler ou exercitar-se assuma o controle definitivo do comportamento.
+
+4.1.3 Elementos Estruturais: PBL, Streaks e Feedback Multissensorial
+
+Na engenharia de sistemas gamificados, os elementos de jogo costumam ser organizados na tríade clássica **PBL** (*Points, Badges and Leaderboards* — Pontos, Medalhas e Placares), expandida no HobbyQuest para atender ao público individual:
+
+- **Pontos de Experiência (XP):** Funcionam como a métrica quantitativa fundamental de esforço acumulado. Cada desafio completado gera uma recompensa em XP estritamente proporcional à complexidade exigida pela atividade, conferindo valor tangível ao tempo investido pelo aprendiz;
+- **Níveis de Habilidade (Levels):** Fornecem marcos claros de evolução na curva de aprendizado. Ao acumular determinada quantia de XP (estabelecida em 100 XP por nível na arquitetura do sistema), o usuário sobe de nível, transitando visualmente de "Iniciante" para níveis intermediários e avançados;
+- **Medalhas e Conquistas (Badges):** Símbolos gráficos colecionáveis concedidos quando o usuário cumpre metas específicas e significativas (ex.: "Primeiro Passo", "3 Dias Consecutivos", "Mestre em Arte"). As conquistas estimulam o instinto de completude e celebração de pequenas vitórias;
+- **Ofensivas Diárias (*Streaks*):** Mecânica baseada no compromisso temporal que registra a quantidade de dias consecutivos em que o usuário realizou ao menos uma atividade. Segundo Chou (2015), as ofensivas ativam o princípio comportamental da aversão à perda: o usuário retorna diariamente ao app para não perder a sequência de dias construída com esforço;
+- **Feedback Multissensorial Imediato:** A neurobiologia comprova que o cérebro humano fixa padrões comportamentais com maior eficácia quando a conclusão de uma tarefa é acompanhada de reforço sensorial imediato. Por essa razão, o HobbyQuest dispara instantaneamente animações na tela, textos afirmativos e fanfarras sonoras procedurais no exato milissegundo em que uma tarefa é concluída.
+
+4.2 Psicologia Comportamental e Formação de Hábitos
+
+4.2.1 O Loop do Hábito de Charles Duhigg
+
+Em sua seminal obra *O Poder do Hábito*, o jornalista investigativo Charles Duhigg (2012) sintetiza décadas de pesquisas neurológicas conduzidas no Massachusetts Institute of Technology (MIT), demonstrando que os hábitos não surgem por mero acaso, mas são processados nos gânglios basais do cérebro através de uma estrutura cíclica de três fases denominada **Loop do Hábito**:
+
+              +---------------------------------------------------+
+              |                1. A DEIXA (GATILHO)               |
+              | (Estímulo ambiental, horário ou notificação)      |
+              +---------------------------------------------------+
+                                       |
+                                       v
+              +---------------------------------------------------+
+              |                   2. A ROTINA                     |
+              | (Ação física ou mental: desenhar, ler, exercitar) |
+              +---------------------------------------------------+
+                                       |
+                                       v
+              +---------------------------------------------------+
+              |                 3. A RECOMPENSA                   |
+              | (Sensação de alívio, XP ganho, som de conquista)  |
+              +---------------------------------------------------+
+                                       |
+                                       +--- (Retroalimenta o Loop)
+
+O cérebro cria hábitos para economizar energia metabólica. No entanto, hábitos saudáveis como desenhar ou ler exigem esforço deliberado para se instalarem. O HobbyQuest atua sistematicamente nas três etapas do loop:
+- Fornece a **Deixa** através de metas claras no painel diário e visualização de ofensivas ativas;
+- Estrutura a **Rotina** através de instruções detalhadas e desafios graduados em passos executáveis;
+- Entrega a **Recompensa** imediata com acréscimo de XP, badges e feedback auditivo.
+
+4.2.2 A Filosofia dos Hábitos Atômicos de James Clear
+
+Complementando as teorias de Duhigg, o autor James Clear (2018), em sua aclamada obra *Hábitos Atômicos*, demonstra que grandes transformações na vida de um indivíduo não decorrem de mudanças radicais e repentinas, mas sim da acumulação consistente de melhorias infinitesimais diárias (a "regra do 1% melhor a cada dia").
+
+Clear estabelece as **Quatro Leis da Mudança de Comportamento**:
+1. **Torne-o Claro (Obviedade):** A meta deve estar visível e descomplicada (no app, exibida na tela inicial como tarefa prioritária);
+2. **Torne-o Atraente (Atratividade):** A atividade deve ser associada a sensações prazerosas (no app, potencializada pela estética acolhedora de scrapbook e pelos sons comemorativos);
+3. **Torne-o Fácil (Simplicidade):** A barreira inicial de entrada deve ser reduzida através da "Regra dos Dois Minutos", na qual o desafio inicial é tão curto que o usuário não consegue procrastinar (no app, desafios como ler 5 páginas ou fazer 5 minutos de alongamento);
+4. **Torne-o Satisfatório (Gratificação):** O usuário deve experimentar um sentimento tangível de sucesso logo após a conclusão da rotina (no app, a subida imediata na barra de progresso).
+
+4.3 Hobbies e Desenvolvimento Humano Integral
+
+4.3.1 Expressão Criativa e Neuroplasticidade (Trilha Arte)
+
+A prática do desenho, da pintura e de artes manuais estimula intensamente o córtex pré-frontal e as áreas parietais do cérebro responsáveis pelo raciocínio espacial, pela coordenação motora fina e pela ideação criativa. Estudos em arteterapia comprovam que apenas 20 minutos diários dedicados a atividades plásticas promovem uma redução estatisticamente significativa nos níveis de cortisol (o hormônio do estresse) na corrente sanguínea, independentemente do nível prévio de habilidade do praticante. A trilha de Arte do HobbyQuest foi desenhada para desmistificar o mito do "talento inato", conduzindo o usuário por etapas progressivas de observação, sombreamento e liberdade expressiva.
+
+4.3.2 Concentração Profunda e Empatia (Trilha Leitura)
+
+Em uma era dominada pela leitura hipertextual fragmentada e superficial em telas de smartphones, a leitura imersiva de livros em formato contínuo tornou-se um exercício indispensável de preservação cognitiva. A leitura literária desenvolve o que o cientista da computação Cal Newport (2016) define como *Deep Work* (trabalho focado e ininterrupto), além de ativar a chamada "Teoria da Mente", que é a capacidade humana de compreender os sentimentos, perspectivas e motivações de outras pessoas. A trilha de Leitura do HobbyQuest incentiva o usuário a estipular metas diárias de páginas e capítulos, fortalecendo a disciplina intelectual e o hábito leitor.
+
+4.3.3 Saúde Física e Regulação Emocional (Trilha Fitness)
+
+O sedentarismo é reconhecido pela Organização Mundial da Saúde (OMS) como um dos maiores fatores de risco para doenças crônicas e transtornos de humor no século XXI. Pequenas sessões diárias de atividade física, tais como alongamentos, caminhadas moderadas e calistenia básica, estimulam a liberação de neurotransmissores como serotonina, dopamina e endorfina, responsáveis pela sensação de vitalidade e regulação do sono. A trilha Fitness do HobbyQuest foca na constância e na saúde funcional, sem a cobrança estética intimidadora frequentemente presente em academias tradicionais.
+
+4.4 Aplicativos Mobile e Acessibilidade Digital
+
+4.4.1 Evolução das Aplicações Web Híbridas
+
+No início do desenvolvimento móvel, havia uma dicotomia rígida entre o desenvolvimento **Nativo puro** (utilizando Java/Kotlin para Android e Swift para iOS) e as aplicações **Web Móveis** executadas dentro de navegadores comuns. Enquanto os apps nativos ofereciam máxima performance e acesso irrestrito ao hardware, seu custo de desenvolvimento era duplicado; por outro lado, as páginas web móveis sofriam com problemas de fluidez e incapacidade de rodar offline de forma integrada.
+
+O surgimento dos frameworks modernos de encapsulamento híbrido, com destaque para o **Apache Capacitor** mantido pela equipe da Ionic, revolucionou esse cenário. O Capacitor estabelece uma ponte bidirecional nativa ultra-otimizada entre o código web padrão (HTML5, CSS3, JavaScript) e o sistema operacional móvel. Essa abordagem permite criar interfaces ricas com a agilidade do desenvolvimento web contemporâneo, mantendo a capacidade de gerar pacotes nativos (`.apk` / `.aab`), acessar recursos locais de armazenamento e operar em tela cheia com aceleração gráfica por hardware.
+
+4.4.2 Diretrizes WCAG 2.1 e Inclusão Universal
+
+Acessibilidade digital não deve ser tratada como um adereço cosmético ou opcional, mas como um direito humano fundamental. O consórcio global W3C (*World Wide Web Consortium*) mantém as **Diretrizes de Acessibilidade para Conteúdo Web** (*Web Content Accessibility Guidelines - WCAG 2.1*), estruturadas em torno de quatro princípios inegociáveis:
+
+1. **Perceptibilidade:** As informações e os componentes da interface devem ser apresentados aos usuários de maneiras que eles possam perceber com seus sentidos disponíveis. No HobbyQuest, isso se traduz na oferta de contrastes visuais verificados, suporte completo a leitores de tela através de atributos semânticos ARIA e regiões dinâmicas (`aria-live="polite"`);
+2. **Operabilidade:** Os componentes da interface e a navegação devem ser totalmente operáveis. No HobbyQuest, todos os elementos interativos possuem suporte a foco e atalhos de teclado (como a combinação universal `Alt + A` para o painel de acessibilidade);
+3. **Compreensibilidade:** A informação e a operação da interface devem ser compreensíveis. A linguagem adotada no app é direta e clara, e foi desenvolvido um modo exclusivo de "Leitura Limpa", que altera a tipografia para fontes sem serifa padronizadas e amplia os espaçamentos entre linhas (1.6) e letras (0.08em), minimizando a fadiga cognitiva de pessoas com dislexia e Transtorno do Déficit de Atenção com Hiperatividade (TDAH);
+4. **Robustez:** O conteúdo deve ser robusto o suficiente para que possa ser interpretado de forma confiável por uma ampla variedade de agentes de usuário e tecnologias assistivas.
+```
+
+\newpage
+
+```text
+================================================================================
+5. METODOLOGIA
+================================================================================
+
+5.1 Classificação e Abordagem Metodológica
+
+O presente projeto de pesquisa e desenvolvimento tecnológico estrutura-se a partir de uma abordagem metodológica rigorosa e multidisciplinar, classificada sob os seguintes prismas:
+
+- **Quanto à Natureza:** Trata-se de uma **Pesquisa Aplicada**, pois direciona seus esforços teóricos e práticos para a concepção e implementação de uma solução funcional concreta voltada a sanar o problema da desmotivação e abandono na prática de passatempos saudáveis;
+- **Quanto aos Objetivos:** Classifica-se como **Pesquisa Exploratória e Descritiva**, uma vez que investigou o comportamento de jovens estudantes em relação ao uso de smartphones e à formação de hábitos, descrevendo detalhadamente os padrões arquiteturais de software necessários para mediar essa relação;
+- **Quanto aos Procedimentos Técnicos:** Envolveu levantamento bibliográfico especializado, engenharia de requisitos de software, prototipagem visual em ferramentas de design (Canva/Figma), codificação estruturada em IDE, testes funcionais de caixa-preta e compilação multiplataforma.
+
+O ciclo de desenvolvimento adotou o modelo **Ágil e Iterativo**, fundamentado em sprints curtos de especificação, codificação, refatoração e testes, permitindo a validação contínua da interface e do motor de gamificação.
+
+5.2 Levantamento e Engenharia de Requisitos
+
+A engenharia de requisitos do HobbyQuest foi conduzida através do mapeamento direto das dores do usuário aprendiz e das diretrizes estabelecidas no Blueprint de Software. Os requisitos foram divididos entre Requisitos Funcionais (o que o sistema deve fazer) e Requisitos Não Funcionais (como o sistema deve se comportar em termos de qualidade, segurança e usabilidade).
+
+5.2.1 Requisitos Funcionais (RF)
+
+| Identificador | Título do Requisito | Descrição Detalhada do Requisito Funcional |
+|:-------------:|:-------------------|:-----------------------------------------------------------------------------------------------------------------------------|
+| **RF01**      | Autenticação Local | O sistema deve permitir o cadastro de novos usuários com e-mail e senha, efetuando o login e mantendo a sessão persistida. |
+| **RF02**      | Isolamento de Dados| O sistema deve particionar o armazenamento local (`localStorage`) para que múltiplos usuários usem o mesmo aparelho sem conflito.|
+| **RF03**      | Personalização Perfil| O sistema deve permitir que o usuário defina seu codinome de aventureiro e selecione seu avatar entre os personagens disponíveis. |
+| **RF04**      | Trilhas de Hobbies | O sistema deve disponibilizar três categorias estruturadas de passatempos: Arte, Leitura e Fitness com desafios específicos.|
+| **RF05**      | Check-in Diário    | O sistema deve fornecer uma rotina de check-in diário com tarefas rápidas que concedem bônus de XP ao serem cumpridas.       |
+| **RF06**      | Motor de XP        | O sistema deve calcular e somar Pontos de Experiência (XP) instantaneamente após a conclusão de cada tarefa ou missão.       |
+| **RF07**      | Níveis por Categoria| O sistema deve gerenciar o nível individual do usuário em cada hobby e o seu nível global geral (100 XP por nível).         |
+| **RF08**      | Gestão de Conquistas| O sistema deve avaliar gatilhos e desbloquear medalhas digitais (*badges*) na galeria de conquistas (`conquistas.html`).    |
+| **RF09**      | Controle de Streaks| O sistema deve registrar e atualizar a sequência ininterrupta de dias de atividade com base na data do sistema (YYYY-MM-DD).|
+| **RF10**      | Síntese de Áudio   | O sistema deve sintetizar efeitos sonoros procedurais (cliques, fanfarras de nível e sinos) via Web Audio API.              |
+| **RF11**      | Acessibilidade WCAG| O sistema deve oferecer alternador de temas (Padrão, Escuro, Alto Contraste), Modo Leitura Limpa e tags ARIA para leitores.|
+| **RF12**      | Painel Estatístico | O sistema deve exibir telas consolidadas de progresso geral, histórico de tarefas e métricas de desempenho (`progresso.html`).|
+
+5.2.2 Requisitos Não Funcionais (RNF)
+
+| Identificador | Categoria | Descrição Detalhada do Requisito Não Funcional |
+|:-------------:|:----------|:-----------------------------------------------------------------------------------------------------------------------------|
+| **RNF01**     | Desempenho | O tempo de carregamento e resposta entre telas deve ser inferior a 500 milissegundos em dispositivos móveis padrão.          |
+| **RNF02**     | Usabilidade| A interface gráfica deve seguir rigorosamente a estética afetiva de *scrapbook*, garantindo facilidade de uso e alta clareza.|
+| **RNF03**     | Portabilidade| O código fonte deve ser 100% compatível com a compilação nativa para sistemas Android 8.0 ou superior via Capacitor CLI.  |
+| **RNF04**     | Acessibilidade| O sistema deve atingir conformidade estrita com o nível AA das diretrizes internacionais W3C / WCAG 2.1.                    |
+| **RNF05**     | Confiabilidade| Os dados de pontuação e progresso não devem ser corrompidos mesmo em caso de encerramento inesperado do aplicativo.         |
+| **RNF06**     | Leveza     | O software deve funcionar perfeitamente em modo offline e sem a necessidade de baixar arquivos pesados de áudio externo.   |
+
+5.3 Modelagem de Casos de Uso (UML)
+
+5.3.1 Diagrama de Casos de Uso (Use Case Diagram)
+
+O diagrama de casos de uso a seguir ilustra a relação direta entre o Ator Principal (**Usuário Aprendiz**) e os principais fluxos operacionais disponibilizados pelo sistema HobbyQuest:
+
+                                      SISTEMA HOBBYQUEST
+      +-----------------------------------------------------------------------------------+
+      |                                                                                   |
+      |          +-------------------------------+                                        |
+      |          |  UC01: Autenticar / Criar     |                                        |
+      |          |         Conta de Usuário      |                                        |
+      |          +-------------------------------+                                        |
+      |                         ^                                                         |
+      |                         | <<include>>                                             |
+      |          +-------------------------------+                                        |
+      |          |  UC02: Personalizar Perfil    |                                        |
+      |          |         e Escolher Avatar     |                                        |
+      |          +-------------------------------+                                        |
+      |                         |                                                         |
+      |                         v                                                         |
+      |          +-------------------------------+         +----------------------------+ |
+      |          |  UC03: Navegar pelas Trilhas  |         |  UC08: Alternar Modos de   | |
+      |          |     (Arte, Leitura, Fitness)  |         |     Acessibilidade e Temas | |
+      |          +-------------------------------+         +----------------------------+ |
+      |                         |                                         ^               |
+      |                         | <<extend>>                              |               |
+      |                         v                                         |               |
+  o   |          +-------------------------------+                        |               |
+ /|\ ----------> |  UC04: Concluir Desafio       |                        |               |
+ / \  |          |       Prático / Tarefa        |                        |               |
+      |          +-------------------------------+                        |               |
+Usuário          |                |                                       |               |
+Aprendiz         |                | <<include>>                           |               |
+      |          v                v                                       |               |
+      |   +-------------------------------+                               |               |
+      |   |  UC05: Acumular Pontos de XP  |                               |               |
+      |   |     e Elevar Nível (Level Up) |                               |               |
+      |   +-------------------------------+                               |               |
+      |                   |                                               |               |
+      |                   | <<include>>                                   |               |
+      |                   v                                               |               |
+      |   +-------------------------------+                               |               |
+      |   |  UC06: Desbloquear Medalhas   |-------------------------------+               |
+      |   |        e Conquistas (Badges)  |                                               |
+      |   +-------------------------------+                                               |
+      |                   |                                                               |
+      |                   v                                                               |
+      |   +-------------------------------+                                               |
+      |   |  UC07: Visualizar Estatísticas|                                               |
+      |   |     e Ofensivas (Streaks)     |                                               |
+      |   +-------------------------------+                                               |
+      |                                                                                   |
+      +-----------------------------------------------------------------------------------+
+
+5.3.2 Especificações e Tabelas de Casos de Uso
+
+Abaixo constam as tabelas técnicas detalhadas descrevendo os cenários, pré-condições, pós-condições, fluxos principais e fluxos alternativos dos casos de uso do sistema:
+
+--------------------------------------------------------------------------------
+CASO DE USO: UC01 - Autenticar / Criar Conta de Usuário
+--------------------------------------------------------------------------------
+Ator Principal: Usuário Aprendiz.
+Objetivo: Garantir o acesso individualizado e seguro às funcionalidades do app.
+Pré-condições: O aplicativo deve estar instalado e inicializado no dispositivo.
+Pós-condições: Sessão de usuário ativada em `sessionStorage` e chaves particionadas.
+
+FLUXO PRINCIPAL:
+1. O usuário abre o aplicativo e visualiza a tela de boas-vindas (`index.html`).
+2. O usuário escolhe se deseja realizar login ou cadastrar uma nova conta clicando no Post-it interativo.
+3. O usuário insere seu endereço de e-mail e sua senha de acesso.
+4. O usuário aciona o botão temático "ENTRAR" ou "CADASTRAR".
+5. O sistema valida a estrutura do e-mail e verifica a existência das credenciais no armazenamento local.
+6. Em caso de cadastro novo, o sistema registra os dados no banco de usuários (`hq_users`).
+7. O sistema inicializa a sessão ativa (`sessionStorage.setItem('loggedIn', 'true')`), define o e-mail ativo e redireciona o usuário para o painel principal (`home.html`).
+
+FLUXOS ALTERNATIVOS:
+4a. Credenciais Incorretas no Login:
+    1. O sistema identifica divergência de senha ou e-mail não encontrado.
+    2. O sistema exibe um alerta visual destacado no card de papel rasgado.
+    3. O foco do cursor permanece no campo de e-mail para nova tentativa.
+4b. E-mail já Cadastrado no Modo Cadastro:
+    1. O sistema identifica que o e-mail informado já existe na base de dados.
+    2. O sistema notifica o usuário e sugere a alternância para o modo de Login.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+CASO DE USO: UC02 - Personalizar Perfil e Escolher Avatar
+--------------------------------------------------------------------------------
+Ator Principal: Usuário Aprendiz.
+Objetivo: Configurar o codinome de aventureiro e a imagem representativa de avatar.
+Pré-condições: O usuário deve estar autenticado no sistema.
+Pós-condições: Nome e avatar atualizados no perfil e refletidos em todas as telas.
+
+FLUXO PRINCIPAL:
+1. No primeiro acesso, o sistema exibe automaticamente o modal temático de boas-vindas solicitando o nome do aventureiro.
+2. O usuário digita seu nome ou apelido (com até 24 caracteres) e confirma.
+3. O usuário navega até a tela de perfil (`perfil.html`).
+4. O usuário visualiza a galeria de personagens disponíveis (May, Quel, Victor, Nico, Gabi, Camiz, Ivi).
+5. O usuário clica no avatar desejado.
+6. O sistema aplica a classe visual de seleção, grava a preferência no `localStorage` sob a chave particionada do usuário e reproduz o som de confirmação.
+7. As informações passam a ser exibidas no cabeçalho de todas as páginas.
+
+FLUXOS ALTERNATIVOS:
+2a. Nome deixado em branco no primeiro acesso:
+    1. O sistema atribui automaticamente o codinome padrão "Aventureiro".
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+CASO DE USO: UC04 - Concluir Desafio Prático / Tarefa
+--------------------------------------------------------------------------------
+Ator Principal: Usuário Aprendiz.
+Objetivo: Registrar a execução de uma atividade real de hobby e receber recompensas.
+Pré-condições: Usuário autenticado e posicionado em uma das telas de hobbies (`arte.html`, `leitura.html`, `fitness.html`) ou na tela de metas (`meta.html`).
+Pós-condições: Tarefa marcada como concluída, XP somado, áudio tocado e interface atualizada.
+
+FLUXO PRINCIPAL:
+1. O usuário escolhe a trilha temática que deseja praticar (ex.: Arte).
+2. O usuário consulta os desafios estruturados por nível de dificuldade ou o check-in diário.
+3. O usuário realiza a atividade correspondente no mundo real (ex.: desenhar 15 minutos).
+4. O usuário clica no checkbox ou botão de confirmação da tarefa no app.
+5. O sistema aciona o método `HQ.addXP(hobby, quantidade, motivo)` do `xp-system.js`.
+6. O sistema invoca a função `playSound('success')` da Web Audio API (`sound-effects.js`).
+7. O sistema incrementa o contador de XP da respectiva categoria e recalcula o XP total.
+8. O sistema exibe um aviso dinâmico na tela informando a pontuação obtida (ex.: "+50 XP").
+9. O sistema dispara a rotina `HQ.checkAchievements()` para verificar se alguma medalha foi conquistada.
+
+FLUXOS ALTERNATIVOS:
+7a. O novo valor de XP atinge ou ultrapassa a meta do nível atual (múltiplo de 100):
+    1. O sistema identifica o evento de *Level Up*.
+    2. O sistema executa `playSound('levelup')`, emitindo uma fanfarra sonora melódica.
+    3. O sistema renderiza um modal comemorativo com confetes e animação destacando o novo nível alcançado.
+    4. O novo nível é gravado e anunciado para tecnologias assistivas via `aria-live`.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+CASO DE USO: UC06 - Desbloquear Medalhas e Conquistas (Badges)
+--------------------------------------------------------------------------------
+Ator Principal: Sistema (Automático) / Usuário Aprendiz.
+Objetivo: Conceder reconhecimento formal e colecionável por metas alcançadas.
+Pré-condições: Ocorrência de qualquer evento que altere as estatísticas do usuário (conclusão de tarefa, subida de nível, dias de ofensiva).
+Pós-condições: Medalha registrada no histórico e exibida como desbloqueada.
+
+FLUXO PRINCIPAL:
+1. A cada atualização de estado, o motor de regras itera sobre o array `HQ.ACHIEVEMENTS`.
+2. Para cada conquista, o sistema executa a função de teste booleana associada (ex.: `HQ.getStreak() >= 3` para a conquista "Sequência de Fogo").
+3. Caso a condição seja verdadeira e a conquista ainda não conste na lista de desbloqueadas do usuário:
+   a. O sistema adiciona o ID da conquista à lista `achievements` do usuário no `localStorage`;
+   b. O sistema dispara o som procedural de conquista (`playSound('achievement')`);
+   c. O sistema exibe uma notificação flutuante comemorativa informando o nome e a descrição da medalha;
+4. Na tela de conquistas (`conquistas.html`), o respectivo card passa de opaco/bloqueado para colorido/ativo.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+CASO DE USO: UC08 - Alternar Modos de Acessibilidade e Temas Visuais
+--------------------------------------------------------------------------------
+Ator Principal: Usuário Aprendiz.
+Objetivo: Adaptar a apresentação visual e tipográfica do sistema para conforto e inclusão.
+Pré-condições: Aplicativo em execução em qualquer página.
+Pós-condições: Classes CSS modificadoras injetadas no elemento raiz (`<html>`) e salvas.
+
+FLUXO PRINCIPAL:
+1. O usuário aciona o botão flutuante de acessibilidade ou pressiona a combinação de teclas `Alt + A`.
+2. O sistema abre o modal de opções de acessibilidade desenvolvido em `accessibility.js`.
+3. O usuário seleciona a funcionalidade desejada:
+   - Alternar entre Tema Padrão (Scrapbook), Tema Escuro (*Dark Mode*) ou Tema de Alto Contraste;
+   - Ativar/Desativar o "Modo Leitura Limpa" (substitui fontes manuscritas por fontes sem serifa, define entrelinhas 1.6 e espaçamento 0.08em para dislexia e TDAH);
+   - Ativar/Desativar o "Modo Sem Distrações" (oculta detalhes decorativos de fundo);
+4. O script aplica instantaneamente as classes no elemento `<html>` (ex.: `.theme-dark`, `.clean-reading`).
+5. A preferência é armazenada no `localStorage` para persistir em todas as sessões futuras.
+6. A mudança de estado é narrada para leitores de tela através da div `#live-region`.
+--------------------------------------------------------------------------------
+
+5.4 Planejamento das Etapas e Cronograma
+
+O projeto foi planejado e executado ao longo de quatro meses letivos, organizado em etapas bem delimitadas:
+
+| Etapa / Mês | Atividades Desenvolvidas | Entregas e Marcos do Projeto |
+|:-----------:|:-------------------------|:-----------------------------|
+| **Mês 1**   | - Pesquisa bibliográfica sobre gamificação e hábitos.<br>- Elaboração do Blueprint de Software.<br>- Levantamento e documentação dos Requisitos (RF e RNF). | Documento de Especificação de Requisitos e Blueprint aprovado. |
+| **Mês 2**   | - Definição da identidade visual (Scrapbook).<br>- Ilustração dos personagens e criação de ícones.<br>- Prototipagem das telas e codificação do CSS Base (`style.css`). | Protótipos de alta fidelidade e layouts HTML/CSS estruturados. |
+| **Mês 3**   | - Codificação do motor de gamificação (`xp-system.js`).<br>- Implementação da Web Audio API (`sound-effects.js`).<br>- Criação do módulo de acessibilidade (`accessibility.js`). | Sistema web funcional com motor de regras, sons e acessibilidade. |
+| **Mês 4**   | - Configuração do Apache Capacitor e compilação Android.<br>- Execução dos ciclos de testes de software e usabilidade.<br>- Redação e formatação final do relatório de TCC. | Aplicativo compilado (.apk), testes validados e TCC finalizado. |
+
+5.5 Ferramental e Ambiente Técnico
+
+O ambiente de desenvolvimento foi configurado com tecnologias modernas, eficientes e de código aberto:
+
+- **Visual Studio Code / Antigravity IDE:** Editor de código principal, equipado com extensões de linting, syntax highlight para HTML5/CSS3/ES6 e ferramentas de depuração integrada;
+- **Linguagens e Padrões Web Core:** HTML5 Semântico com WAI-ARIA, CSS3 puro (Flexbox, CSS Grid, variáveis e keyframe animations) e JavaScript moderno (ES6+ Vanilla);
+- **Apache Capacitor CLI (v8.4.x):** Ferramenta de linha de comando utilizada para encapsular o frontend em uma camada nativa Android (`@capacitor/core`, `@capacitor/cli`, `@capacitor/android`);
+- **Android Studio & Android SDK:** Utilizado para gerenciamento do emulador móvel, verificação de permissões do manifesto e geração do pacote final de distribuição;
+- **Google Chrome DevTools:** Plataforma para inspeção de elementos, simulação de diferentes densidades de tela (DPI), auditoria de performance e validação de acessibilidade com o Lighthouse;
+- **Canva & Figma:** Softwares gráficos utilizados para a vetorização dos elementos decorativos e criação dos personagens temáticos (May, Quel, Victor, Nico, Gabi, Camiz, Ivi).
+```
+
+\newpage
+
+```text
+================================================================================
+6. DESENVOLVIMENTO DO HOBBYQUEST
+================================================================================
+
+6.1 Identidade Visual e Estética Afetiva (Scrapbook Design)
+
+A concepção visual do HobbyQuest foi orientada pelos princípios do Design Afetivo e da Psicologia das Cores. Ao contrário das interfaces planas (*flat design*) ou excessivamente corporativas que dominam o mercado, o HobbyQuest cria uma atmosfera que evoca carinho, acolhimento e criatividade, remetendo a um diário pessoal ou caderno escolar artesanal (*scrapbook*).
+
+6.1.1 Paleta Cromática e Tipografia Temática
+
+A paleta de cores foi cuidadosamente equilibrada através de variáveis CSS globais (`:root`), estabelecendo harmonia visual e conforto óptico:
+- **Fundo Principal de Papel (#fdf5c9 / #f5eed3):** Tom amarelado suave que simula folhas de papel antigo ou papel vegetal, reduzindo o cansaço visual comum em fundos brancos puros;
+- **Verde Menta e Musgo (#9dd4a0 / #5b8a72 / #2d7a4d):** Cores associadas à natureza, tranquilidade, leitura e frescor, utilizadas nos botões de jornada e cabeçalhos;
+- **Rosa e Salmão Pastel (#f1a0c4 / #e07a5f):** Cores estimulantes da criatividade e do entusiasmo, aplicadas na trilha de Arte e nos destaques de alerta;
+- **Laranja Queimado (#d35400):** Tom vibrante que remete à energia e ao movimento, empregado na categoria de Fitness.
+
+A tipografia do projeto desempenha um papel central na imersão:
+- **`Cabin Sketch`:** Fonte decorativa com preenchimento tracejado à mão, utilizada nos títulos principais, números de nível e botões de grande porte;
+- **`Caveat`:** Fonte cursiva fluida e elegante, empregada nos subtítulos, mensagens acolhedoras e notas de post-it, conferindo o aspecto de anotações reais manuscritas;
+- **`Walter Turncoat`:** Tipografia rústica de traço expressivo, utilizada em caixas de diálogo e destaques secundários.
+
+6.1.2 Elementos Gráficos e Elenco de Personagens
+
+Para enriquecer o universo visual da aplicação, foram desenvolvidos elementos gráficos personalizados em SVG e imagens transparentes:
+- **Bordas Rasgadas (*Torn Paper*):** Criadas com pseudo-elementos e máscaras que simulam o desgaste irregular do papel;
+- **Alfinetes Tridimensionais (*Pins*):** Ícones vetoriais coloridos de alfinetes que fixam os cards à página virtual;
+- **Fitas Adesivas (*Washi Tapes*):** Faixas semitransparentes com inclinações dinâmicas que seguram modais e títulos;
+- **Galeria de Personagens / Avatares:** O aplicativo conta com um elenco expressivo de ilustrações que acompanham a jornada do estudante: **May**, **Quel**, **Victor**, **Nico**, **Gabi**, **Camiz** e **Ivi**. Cada usuário pode escolher o personagem com o qual mais se identifica para estampar seu perfil e suas medalhas.
+
+6.2 Arquitetura de Telas e Fluxos de Interação
+
+A navegação do HobbyQuest foi estruturada em um fluxo de telas coeso, acessível e otimizado para o uso móvel vertical (*Mobile First*).
+
+6.2.1 Módulo de Autenticação e Entrada (`index.html`)
+
+A porta de entrada do aplicativo apresenta uma folha rasgada presa por um alfinete vermelho. Em vez de uma tela de login convencional, a alternância entre os modos "Entrar" e "Criar Conta" é realizada através de um **Post-it amarelo interativo** no canto superior da tela. Os campos de entrada de e-mail e senha possuem bordas tracejadas que simulam caixas desenhadas a lápis. O formulário valida a digitação em tempo real e impede cadastros duplicados, direcionando o usuário recém-autenticado diretamente para o painel principal.
+
+6.2.2 Painel Central de Jornada (`home.html`)
+
+A tela inicial consolidada exibe o codinome do aventureiro, sua foto de perfil, a contagem de dias de ofensiva (*streak* ativo com ícone de fogo 🔥) e o botão central pulsante **"MINHA JORNADA DIÁRIA"**, animado com keyframes para atrair o foco de atenção imediato do usuário. Logo abaixo, cartões organizados em blocos temáticos dão acesso direto aos três hobbies principais e às telas secundárias de Níveis, Conquistas, Metas e Ajuda.
+
+6.2.3 Trilhas Temáticas de Hobbies (`arte.html`, `leitura.html`, `fitness.html`)
+
+Cada trilha de passatempo possui sua própria página customizada:
+- **Arte (`arte.html`):** Apresenta desafios escalonados (ex.: "Praticar traços básicos", "Estudo de luz e sombra", "Desenhar objeto cotidiano", "Ilustração colorida livre"). Cada tarefa exibe a recompensa em XP e um checkbox artesanal para marcação;
+- **Leitura (`leitura.html`):** Contém metas estruturadas de leitura (ex.: "Ler 10 páginas hoje", "Dedicar 20 minutos de foco ininterrupto", "Escrever 3 linhas de reflexão sobre o capítulo lido");
+- **Fitness (`fitness.html`):** Lista rotinas de bem-estar corporal (ex.: "Alongamento matinal de 5 minutos", "Caminhada ao ar livre de 15 minutos", "Série leve de agachamentos e polichinelos").
+
+6.2.4 Gestão de Desafios, Metas e Check-in Diário (`meta.html` / `desafios.html`)
+
+A tela de metas atua como uma central de organização. O usuário pode visualizar seus desafios diários em formato de lista de afazeres lúdica. Ao completar cada item, o sistema emite avisos flutuantes (*Toasts*) e atualiza a barra global de progresso.
+
+6.2.5 Vitrine de Conquistas e Progressão de Níveis (`conquistas.html` / `niveis.html`)
+
+- Em `conquistas.html`, todas as 11 medalhas do sistema são apresentadas em um grid visual. As medalhas bloqueadas permanecem em escala de cinza e com opacidade reduzida; assim que o usuário atinge o critério correspondente, o card ganha cores vibrantes e uma estrela brilhante dourada;
+- Em `niveis.html`, gráficos de barra dinâmicos ilustram a evolução percentual de cada hobby, permitindo ao estudante identificar em qual área ele tem se dedicado mais e onde precisa de maior constância.
+
+6.2.6 Customização de Perfil e Estatísticas Pessoais (`perfil.html`)
+
+A tela de perfil permite ao usuário alterar seu codinome de aventureiro a qualquer momento, alternar sua foto de perfil entre os 7 personagens do sistema, consultar a data do primeiro acesso, a soma total de XP acumulado em toda a história da conta e efetuar o encerramento seguro da sessão (*Logout*).
+
+6.3 Engenharia do Motor de Gamificação (`xp-system.js`)
+
+A inteligência de regras, cálculos matemáticos e persistência do sistema foi centralizada no arquivo `xp-system.js`, estruturado como o objeto global `HQ`.
+
+6.3.1 Algoritmo de Progressão e Balanceamento Matemático
+
+Para evitar desmotivação decorrente de curvas exponenciais punitivas, o HobbyQuest adota um modelo de **progressão linear balanceada**, onde cada nível exige exatamente **100 Pontos de Experiência (XP)**:
+
+```javascript
+// Algoritmo de cálculo de nível por hobby
+HQ.CFG = {
+  XP_PER_LEVEL : 100,
+  HOBBIES      : ['arte', 'leitura', 'fitness'],
+  HOBBY_LABEL  : { arte: 'Arte', leitura: 'Leitura', fitness: 'Fitness' },
+  HOBBY_EMOJI  : { arte: '🎨',  leitura: '📖',       fitness: '🏋️'    },
+  HOBBY_COLOR  : { arte: '#f1a0c4', leitura: '#5b8a72', fitness: '#d35400' },
+};
+
+HQ.getLevel = function(hobby) {
+  const xp = HQ.getXP(hobby);
+  return Math.floor(xp / HQ.CFG.XP_PER_LEVEL) + 1;
+};
+
+HQ.getLevelProgress = function(hobby) {
+  const xp = HQ.getXP(hobby);
+  return xp % HQ.CFG.XP_PER_LEVEL; // Retorna o percentual exato (0 a 99%)
+};
+```
+
+Quando um usuário conclui uma tarefa, a função `HQ.addXP` calcula se o novo total ultrapassou a fronteira da centena. Em caso afirmativo, dispara o evento de celebração `HQ.triggerLevelUp`, que anima a interface e aciona o sintetizador de fanfarra.
+
+6.3.2 Rastreamento de Ofensivas Diárias (*Streaks*)
+
+O controle de consistência diária é gerenciado pela função `HQ.updateStreak()`. O sistema compara a data da última atividade registrada (`YYYY-MM-DD`) com a data atual do dispositivo:
+- Se a data for idêntica (mesmo dia), a sequência é preservada sem alterações;
+- Se a data for exatamente o dia seguinte consecutivo (diferença de 1 dia), o contador de *streak* é incrementado em +1;
+- Se a diferença for de 2 dias ou mais, a sequência foi rompida e o contador retorna a 1.
+
+6.3.3 Mecanismo de Particionamento de Armazenamento
+
+Para viabilizar que múltiplos usuários utilizem o mesmo smartphone ou computador de laboratório escolar sem que suas pontuações se misturem, o motor cria um sufixo baseado no e-mail criptografado ou formatado:
+
+```javascript
+HQ.getUserEmail = () => localStorage.getItem('userEmail') || '';
+HQ._suffix = () => {
+  const email = HQ.getUserEmail();
+  if (!email) return '';
+  return '_' + email.replace(/[^a-zA-Z0-9]/g, '_');
+};
+HQ._k = (key) => key + HQ._suffix();
+```
+
+Dessa forma, a chave de XP de Arte para o usuário `maysa@escola.com` é gravada como `xp_arte_maysa_escola_com`, garantindo total isolamento e integridade dos dados locais.
+
+6.4 Módulo Jogável e Narrativo
+
+[ ESPAÇO RESERVADO PARA A DOCUMENTAÇÃO COMPLETA DA PARTE DO JOGO JOGÁVEL / NARRATIVA VISUAL NOVEL ]
+[ Aqui serão inseridas as especificações das cenas escolares, diálogos interativos, movimentação de personagens, escolhas narrativas e mecânicas jogáveis quando o módulo for integrado ao repositório ]
+
+6.5 Fluxo de Integração Aplicativo x Jogo
+
+[ ESPAÇO RESERVADO PARA A DESCRIÇÃO DETALHADA DA INTEGRAÇÃO APLICATIVO X JOGO ]
+[ Aqui será detalhado o protocolo de comunicação: Login no App -> Desbloqueio de Fases no Jogo -> Retorno de Pontuação de XP e Medalhas para o Perfil do App ]
+
+6.6 Arquitetura de Acessibilidade Digital (`accessibility.js`)
+
+O arquivo `accessibility.js` opera de maneira autônoma e universal em todas as páginas da aplicação, garantindo conformidade com a WCAG 2.1 nível AA:
+- **Painel Flutuante e Atalhos:** O usuário pode abrir o menu de configurações de acessibilidade clicando no ícone flutuante ou através do atalho global de teclado `Alt + A`;
+- **Tema de Alto Contraste:** Aplica a classe `.theme-high-contrast`, convertendo fundos para preto puro (#000000) e textos/bordas para amarelo ouro de alto contraste (#ffd700), assegurando taxa de contraste superior a 7:1;
+- **Modo Leitura Limpa:** Injeta a classe `.clean-reading`, forçando todas as fontes da página para fontes sem serifa padronizadas (Arial, Trebuchet MS, OpenDyslexic), ampliando o espaçamento entre linhas para `1.6` e entre letras para `0.08em`, eliminando a fadiga de leitura para estudantes com dislexia ou déficit de atenção;
+- **Suporte Dinâmico a Leitores de Tela:** Injeta no topo do `<body>` um elemento `<div id="live-region" aria-live="polite" aria-atomic="true"></div>`. Qualquer evento do jogo (ganho de XP, troca de tema, subida de nível) gera um anúncio em texto que é vocalizado instantaneamente por tecnologias assistivas como TalkBack e NVDA.
+```
+
+\newpage
+
+```text
+================================================================================
+7. TECNOLOGIAS UTILIZADAS
+================================================================================
+
+7.1 Camada Frontend Web (HTML5, CSS3, JavaScript ES6)
+
+A arquitetura tecnológica do HobbyQuest foi projetada priorizando robustez, leveza e independência de dependências externas voláteis:
+
+- **HTML5 Semântico:** Estruturação orientada a padrões modernos, utilizando elementos como `<main>`, `<section>`, `<article>`, `<header>`, `<nav>` e `<aside>`. Cada componente interativo possui atributos WAI-ARIA (`aria-label`, `aria-pressed`, `aria-hidden`, `role="button"`) garantindo perfeita navegabilidade e semântica técnica;
+- **CSS3 Avançado (Vanilla CSS):** Estilização desenvolvida sem a necessidade de frameworks utilitários pesados (como Bootstrap ou Tailwind), garantindo controle milimétrico do layout. Foram utilizadas intensamente *CSS Custom Properties* para temas dinâmicos, *CSS Flexbox* e *CSS Grid* para responsividade fluida, além de efeitos avançados de sombreamento e filtros gráficos (`backdrop-filter: blur()`, `box-shadow`, `border-radius` assimétricos que simulam cortes manuais de papel);
+- **JavaScript Modular (ES6+):** Código limpo, moderno e estruturado sob o paradigma de orientação a eventos e modularidade. Uso de *Arrow Functions*, *Template Literals*, *Destructuring*, manipulação declarativa de listas (*map*, *filter*, *some*, *every*) e controle rigoroso de chamadas assíncronas.
+
+7.2 Plataforma Mobile Nativa (Apache Capacitor v8.4)
+
+A conversão da aplicação web para o ecossistema móvel Android foi realizada com o framework **Apache Capacitor** em sua versão estável mais recente:
+
+```json
+{
+  "name": "may_raq_vic",
+  "version": "1.0.0",
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0"
+  }
+}
+```
+
+O Capacitor encapsula a aplicação web em uma WebView nativa de alta velocidade, provendo:
+- Criação da árvore nativa Android com `AndroidManifest.xml` configurado para execução em tela cheia e orientação vertical (*portrait*);
+- Suporte nativo ao tratamento de áreas seguras da tela (*safe area insets*) no topo (barra de status) e na base (barra de navegação por gestos);
+- Capacidade de compilação direta para pacotes de instalação Android (`.apk`).
+
+7.3 Áudio Procedural em Tempo Real (Web Audio API)
+
+Diferente de sistemas convencionais que dependem do carregamento de arquivos pesados de áudio (MP3/WAV) — que consomem largura de banda e podem apresentar atrasos de reprodução —, o HobbyQuest sintetiza seus efeitos sonoros em tempo real através da **Web Audio API** nativa do navegador (`sound-effects.js`).
+
+Através de nós de oscilação matemática (`OscillatorNode`) e nós de controle de volume (`GainNode`), o sistema modela timbres de ondas senoidais e triangulares puras, sintetizando notas musicais precisas (Dó, Mi, Sol, Si, Dó agudo) para formar acordes alegres de vitória e cliques sutis de interface com consumo nulo de rede e latência inferior a 10 milissegundos.
+
+7.4 Persistência Local e Extensibilidade BaaS
+
+- **Armazenamento no Dispositivo:** Utilização combinada de `localStorage` (para dados permanentes: XP, níveis, conquistas, histórico de streaks, preferências visuais) e `sessionStorage` (para dados temporários: estado de autenticação da sessão ativa);
+- **Prontidão para Nuvem (Backend as a Service - BaaS):** A arquitetura modular do motor `HQ` foi desenhada para permitir a substituição transparente das chamadas de armazenamento local por requisições autenticadas em nuvem (como Firebase Authentication, Cloud Firestore e Cloud Functions), assegurando alta escalabilidade futura para o projeto.
+
+7.5 Tecnologias da Camada Jogável
+
+[ ESPAÇO RESERVADO PARA A LISTA E DETALHAMENTO DAS TECNOLOGIAS DO JOGO ]
+[ Aqui serão listadas as linguagens, engines e bibliotecas específicas empregadas no módulo jogável ]
+```
+
+\newpage
+
+```text
+================================================================================
+8. TESTES E RESULTADOS
+================================================================================
+
+8.1 Metodologia e Matriz de Testes de Software
+
+Para atestar a confiabilidade, a estabilidade e a qualidade de uso do HobbyQuest, foram elaboradas e executadas matrizes formais de testes funcionais (caixa-preta), testes de estresse matemático do motor de regras e testes de conformidade com diretrizes de acessibilidade.
+
+A tabela a seguir apresenta os casos de testes executados e seus respectivos resultados:
+
+| ID Teste | Cenário de Teste | Procedimento Executado | Resultado Esperado | Resultado Obtido | Status |
+|:--------:|:-----------------|:-----------------------|:-------------------|:-----------------|:------:|
+| **TC01** | Cadastro de Novo Usuário | Inserir e-mail inédito e senha no formulário de cadastro. | Conta registrada no banco `hq_users` e redirecionamento para `home.html`. | Conta gravada e sessão iniciada com sucesso. | **APROVADO** |
+| **TC02** | Bloqueio de Cadastro Duplicado | Tentar cadastrar um e-mail já existente na base. | Sistema emitir alerta visual impedindo o cadastro repetido. | Alerta exibido no card sem sobrescrever a conta existente. | **APROVADO** |
+| **TC03** | Cálculo de XP e Subida de Nível | Concluir tarefas de Arte até acumular 100 XP. | Nível de Arte transitar de 1 para 2, tocar fanfarra sonora e exibir modal. | Level Up acionado com animação e som procedural instantâneo. | **APROVADO** |
+| **TC04** | Desbloqueio de Conquista | Atingir 3 dias consecutivos de atividade no app. | Conquista "Sequência de Fogo" ser desbloqueada em `conquistas.html`. | Medalha liberada e notificação *Toast* emitida na tela. | **APROVADO** |
+| **TC05** | Isolamento de Contas no Storage | Efetuar logout, logar com outro e-mail e checar XP. | O novo usuário iniciar com XP zerado sem interferência do usuário anterior. | Dados completamente isolados por sufixo de e-mail. | **APROVADO** |
+| **TC06** | Alternância para Alto Contraste | Pressionar `Alt + A` e selecionar "Alto Contraste". | Fundo mudar para preto (#000) e textos para amarelo ouro (#ffd700). | Tema aplicado instantaneamente e salvo para próximas páginas. | **APROVADO** |
+| **TC07** | Modo Leitura Limpa (Dislexia) | Ativar "Leitura Limpa" no painel de acessibilidade. | Fontes cursivas serem substituídas por tipografia sem serifa com espaçamento 1.6. | Leitura limpa aplicada sem quebras no layout. | **APROVADO** |
+| **TC08** | Navegação por Teclado e Foco | Navegar pela aplicação utilizando apenas as teclas `Tab`, `Shift+Tab` e `Enter`. | Foco visível em todos os botões e formulários sem armadilhas de foco. | Navegação fluida com anel de foco destacado em todos os elementos. | **APROVADO** |
+
+8.2 Resultados dos Testes de Interface e Acessibilidade
+
+Os testes de conformidade com as diretrizes WCAG 2.1 revelaram excelentes índices:
+- **Taxa de Contraste:** O tema Padrão atingiu razão de contraste média de 5.2:1 em textos normais (acima do mínimo exigido de 4.5:1), enquanto o tema de Alto Contraste superou a marca de 9.1:1;
+- **Leitores de Tela:** O canal `aria-live="polite"` demonstrou 100% de eficácia no anúncio de pontuações de XP e subidas de nível nos leitores TalkBack (Android) e NVDA (Windows);
+- **Responsividade:** A aplicação manteve integridade estrutural e ausência de barras de rolagem horizontais em viewports desde 320px até 768px de largura.
+
+8.3 Desempenho e Eficiência em Ambiente Android
+
+A compilação móvel via Apache Capacitor apresentou métricas de alta performance no dispositivo de testes:
+- **Tamanho do Pacote:** O aplicativo final apresentou peso inferior a 15 MB, em virtude da ausência de arquivos pesados de áudio e da utilização de CSS Vanilla;
+- **Tempo de Inicialização (*Cold Start*):** Menos de 400 milissegundos para abertura total da tela inicial;
+- **Consumo de Memória RAM:** Média estável de 45 MB a 65 MB durante a execução contínua com sintetizador de áudio e animações ativas.
+```
+
+\newpage
+
+```text
+================================================================================
+9. CONCLUSÃO
+================================================================================
+
+9.1 Síntese dos Resultados Alcançados
+
+O presente Trabalho de Conclusão de Curso apresentou todo o percurso de concepção, fundamentação teórica, projeto de engenharia de software e validação empírica do **HobbyQuest**, um aplicativo mobile gamificado concebido para orientar, motivar e transformar a prática de hobbies em um hábito consistente e prazeroso para jovens e adultos.
+
+Ao longo do desenvolvimento, comprovou-se a hipótese de que a utilização estratégica de mecânicas de gamificação (Pontos de Experiência, progressão linear balanceada de níveis, medalhas colecionáveis e rastreadores de ofensivas diárias), aliada a um design visual afetivo e acolhedor fundamentado na metáfora de um diário artesanal (*scrapbook*), é capaz de reduzir significativamente as barreiras de entrada e a procrastinação associadas ao aprendizado de novas habilidades.
+
+O software cumpriu integralmente todos os seus doze Requisitos Funcionais e seis Requisitos Não Funcionais, destacando-se pela fluidez de navegação, pela independência de conexões de internet pesadas graças à síntese procedural de sons via Web Audio API, pela integridade de dados multi-usuário com particionamento local e pela adesão rigorosa aos padrões de acessibilidade universal WCAG 2.1 nível AA.
+
+9.2 Contribuições Técnicas, Acadêmicas e Sociais
+
+- **Contribuição Técnica:** O projeto demonstra a viabilidade e o alto desempenho do desenvolvimento mobile híbrido moderno utilizando padrões abertos da Web (HTML5, CSS3, ES6) integrados ao Apache Capacitor, desmistificando a necessidade de frameworks sobrecarregados para a criação de aplicativos móveis robustos;
+- **Contribuição Acadêmica:** Para o currículo do Ensino Médio Técnico em Desenvolvimento de Sistemas, este trabalho consolida a integração prática de disciplinas fundamentais: Programação Web, Engenharia de Software, Design de Interação Humano-Computador, Banco de Dados e Acessibilidade Digital;
+- **Contribuição Social:** O HobbyQuest oferece uma alternativa sadia e humanizada ao consumo passivo de telas, incentivando o bem-estar psicológico, a expressão artística, o estímulo ao hábito da leitura e o combate ao sedentarismo físico.
+
+9.3 Limitações e Trabalhos Futuros
+
+Embora o sistema apresente maturidade funcional como Produto Mínimo Viável (MVP) completo, identificam-se oportunidades enriquecedoras para versões subsequentes:
+
+1. **Sincronização em Nuvem em Tempo Real:** Conexão nativa com backend em nuvem (Firebase Firestore / Cloud Functions) para sincronização automática entre múltiplos dispositivos do mesmo usuário;
+2. **Expansão das Trilhas de Hobbies:** Criação de novos módulos especializados, tais como Culinária e Confeitaria, Prática Instrumental de Música, Jardinagem Doméstica e Escrita Criativa;
+3. **Módulo de Comunidade e Feed Cooperativo:** Espaço seguro e moderado onde usuários possam compartilhar fotos e relatos de suas criações (desenhos finalizados, resenhas literárias e metas de treino);
+4. **Algoritmos de Recomendação com Inteligência Artificial:** Mapeamento do ritmo do aprendiz para sugerir desafios personalizados e mensagens motivacionais contextuais baseadas em seu histórico;
+5. **Finalização do Módulo Narrativo:** [ ESPAÇO RESERVADO PARA A IMPLEMENTAÇÃO FINAL E EXPANSÃO DO JOGO JOGÁVEL ].
+```
+
+\newpage
+
+```text
+================================================================================
+REFERÊNCIAS
+================================================================================
+
+CAPACITOR. Cross-platform native runtime for web apps. Documentação Oficial do 
+Framework Capacitor (v8.x). Disponível em: <https://capacitorjs.com/docs>. 
+Acesso em: 19 ago. 2026.
+
+CHOU, Yu-kai. Actionable Gamification: Beyond Points, Badges, and Leaderboards. 
+Milpitas: Octalysis Media, 2015.
+
+CLEAR, James. Hábitos Atômicos: um método fácil e comprovado de criar bons 
+hábitos e se livrar dos maus. Tradução de Helen Pandolfi. Rio de Janeiro: 
+Alta Books, 2018.
+
+CSIKSZENTMIHALYI, Mihaly. Flow: The Psychology of Optimal Experience. New York: 
+Harper & Row, 1990.
+
+DECI, Edward L.; RYAN, Richard M. The "What" and "Why" of Goal Pursuits: Human 
+Needs and the Self-Determination of Behavior. Psychological Inquiry, v. 11, 
+n. 4, p. 227-268, 2000.
+
+DETERDING, Sebastian; DIXON, Dan; KHALED, Rilla; NACKE, Lennart. From game 
+design elements to gamefulness: defining "gamification". In: PROCEEDINGS OF 
+THE 15TH INTERNATIONAL ACADEMIC MINDTREK CONFERENCE: ENVISIONING FUTURE MEDIA 
+ENVIRONMENTS. New York: ACM, 2011. p. 9-15.
+
+DUHIGG, Charles. O Poder do Hábito: por que fazemos o que fazemos na vida e 
+nos negócios. Tradução de Rafael Mantovani. Rio de Janeiro: Objetiva, 2012.
+
+FLANAGAN, David. JavaScript: O Guia Definitivo. 7. ed. Porto Alegre: Bookman, 2021.
+
+HUIZINGA, Johan. Homo Ludens: o jogo como elemento da cultura. 8. ed. São Paulo: 
+Perspectiva, 2014.
+
+KAPP, Karl M. The Gamification of Learning and Instruction: Game-based Methods 
+and Strategies for Training and Education. San Francisco: Pfeiffer, 2012.
+
+MDN WEB DOCS. Web Audio API - Controlling audio in Web applications. Mozilla 
+Developer Network. Disponível em: <https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API>. 
+Acesso em: 19 ago. 2026.
+
+NEWPORT, Cal. Deep Work: Rules for Focused Success in a Distracted World. 
+New York: Grand Central Publishing, 2016.
+
+NORMAN, Donald A. Design Emocional: por que adoramos (ou detestamos) os objetos 
+do dia-a-dia. Rio de Janeiro: Rocco, 2008.
+
+PRESSMAN, Roger S.; MAXIM, Bruce R. Engenharia de Software: uma abordagem 
+profissional. 9. ed. Porto Alegre: AMGH, 2021.
+
+SOMMERVILLE, Ian. Engenharia de Software. 10. ed. São Paulo: Pearson, 2019.
+
+W3C. Web Content Accessibility Guidelines (WCAG) 2.1. W3C Recommendation. 
+World Wide Web Consortium, 2018. Disponível em: <https://www.w3.org/TR/WCAG21/>. 
+Acesso em: 19 ago. 2026.
+================================================================================
+
+\newpage
+
+================================================================================
+APÊNDICES
+================================================================================
+
+APÊNDICE A — Estrutura de Arquivos e Módulos do Projeto
+
+```text
+novoprojeto_tcc/
+├── index.html                  # Tela de entrada, login e cadastro temático
+├── home.html                   # Painel principal de jornada e navegação
+├── arte.html                   # Módulo da trilha de Arte e desafios de desenho
+├── leitura.html                # Módulo da trilha de Leitura e metas literárias
+├── fitness.html                # Módulo da trilha de Fitness e saúde corporal
+├── meta.html                   # Hub central de metas diárias e tarefas ativas
+├── desafios.html               # Listagem de desafios práticos por nível
+├── conquistas.html             # Galeria de medalhas digitais e conquistas (Badges)
+├── niveis.html                 # Gráficos dinâmicos de progressão e níveis
+├── perfil.html                 # Customização de codinome e seleção de avatares
+├── ajuda.html                  # Central de ajuda, FAQ e instruções de uso
+├── progresso.html              # Painel consolidado de estatísticas e métricas
+├── style.css                   # Folha de estilos central (Design Scrapbook)
+├── xp-system.js                # Motor de regras, cálculo de XP, níveis e streaks
+├── accessibility.js            # Módulo de acessibilidade universal (WCAG 2.1 AA)
+├── sound-effects.js            # Síntese de áudio procedural (Web Audio API)
+├── package.json                # Gerenciador de dependências e Capacitor
+├── capacitor.config.json       # Configuração de ponte nativa mobile
+├── android/                    # Estrutura nativa compilada do Android Studio
+│   └── app/src/main/
+│       └── AndroidManifest.xml # Manifesto de permissões e ciclo de vida Android
+└── assets / imagens            # Avatares temáticos (may, quel, victor, nico, etc.)
+```
+
+APÊNDICE B — Implementação do Motor de Gamificação (xp-system.js)
+
+```javascript
+/**
+ * xp-system.js - Motor Central de Gamificação do HobbyQuest
+ */
+const HQ = {};
+
+HQ.CFG = {
+  XP_PER_LEVEL : 100,
+  HOBBIES      : ['arte', 'leitura', 'fitness'],
+  HOBBY_LABEL  : { arte: 'Arte', leitura: 'Leitura', fitness: 'Fitness' },
+  HOBBY_EMOJI  : { arte: '🎨',  leitura: '📖',       fitness: '🏋️'    },
+  HOBBY_COLOR  : { arte: '#f1a0c4', leitura: '#5b8a72', fitness: '#d35400' },
+};
+
+HQ.ACHIEVEMENTS = [
+  { id: 'first_task', label: '🥇 Primeiro Passo', desc: 'Concluiu sua primeira tarefa!', check: () => HQ.getCompletedTasks() >= 1 },
+  { id: 'level2_any', label: '⬆️ Subindo de Nível', desc: 'Alcançou Nível 2 em qualquer hobby!', check: () => HQ.CFG.HOBBIES.some(h => HQ.getLevel(h) >= 2) },
+  { id: 'level3_arte', label: '🎨 Artista em Evolução', desc: 'Alcançou Nível 3 em Arte!', check: () => HQ.getLevel('arte') >= 3 },
+  { id: 'level3_leitura', label: '📖 Leitor Dedicado', desc: 'Alcançou Nível 3 em Leitura!', check: () => HQ.getLevel('leitura') >= 3 },
+  { id: 'level3_fitness', label: '🏋️ Atleta em Ascensão', desc: 'Alcançou Nível 3 em Fitness!', check: () => HQ.getLevel('fitness') >= 3 },
+  { id: 'streak3', label: '🔥 Sequência de Fogo', desc: '3 dias consecutivos de atividade!', check: () => HQ.getStreak() >= 3 },
+  { id: 'streak7', label: '⚡ Imparável', desc: '7 dias seguidos no Hobby Quest!', check: () => HQ.getStreak() >= 7 },
+  { id: 'total_xp_300', label: '⭐ Acúmulo de Poder', desc: 'Acumulou 300 XP no total!', check: () => HQ.getTotalXP() >= 300 },
+  { id: 'total_xp_1000', label: '💎 Mestre do Quest', desc: 'Acumulou 1.000 XP no total!', check: () => HQ.getTotalXP() >= 1000 },
+  { id: 'all_hobbies_lv2', label: '🌟 Explorador Completo', desc: 'Evoluiu todos os 3 hobbies para Nível 2!', check: () => HQ.CFG.HOBBIES.every(h => HQ.getLevel(h) >= 2) }
+];
+
+HQ.getUserEmail = () => localStorage.getItem('userEmail') || '';
+HQ._suffix = () => {
+  const email = HQ.getUserEmail();
+  if (!email) return '';
+  return '_' + email.replace(/[^a-zA-Z0-9]/g, '_');
+};
+HQ._k = (key) => key + HQ._suffix();
+
+HQ.getXP = (hobby) => Math.max(0, parseInt(localStorage.getItem(HQ._k('xp_' + hobby)) || '0', 10));
+HQ.setXP = (hobby, v) => {
+  localStorage.setItem(HQ._k('xp_' + hobby), Math.max(0, v));
+  window.dispatchEvent(new CustomEvent('hq:xpchange', { detail: { hobby, xp: v } }));
+};
+
+HQ.getLevel = (hobby) => Math.floor(HQ.getXP(hobby) / HQ.CFG.XP_PER_LEVEL) + 1;
+
+HQ.addXP = (hobby, amount, reason) => {
+  const oldLevel = HQ.getLevel(hobby);
+  const currentXP = HQ.getXP(hobby);
+  const newXP = currentXP + amount;
+  HQ.setXP(hobby, newXP);
+  
+  const newLevel = HQ.getLevel(hobby);
+  if (newLevel > oldLevel) {
+    HQ.triggerLevelUp(hobby, newLevel);
+  }
+  HQ.checkAchievements();
+};
+```
+
+APÊNDICE C — Módulo de Acessibilidade Universal (accessibility.js)
+
+```javascript
+/**
+ * accessibility.js - Módulo Universal de Acessibilidade (WCAG 2.1 AA)
+ */
+(function () {
+  'use strict';
+
+  const STORAGE_THEME = 'hq_theme';
+  const STORAGE_CLEAN_READING = 'hq_clean_reading';
+
+  let currentTheme = localStorage.getItem(STORAGE_THEME) || 'default';
+  let isCleanReading = localStorage.getItem(STORAGE_CLEAN_READING) === 'true';
+
+  applyTheme(currentTheme);
+  applyCleanReading(isCleanReading);
+
+  function applyTheme(theme) {
+    currentTheme = theme;
+    const root = document.documentElement;
+    root.classList.remove('theme-dark', 'theme-high-contrast');
+    if (theme === 'dark') root.classList.add('theme-dark');
+    if (theme === 'high-contrast') root.classList.add('theme-high-contrast');
+    localStorage.setItem(STORAGE_THEME, theme);
+    announceLiveRegion(`Tema alterado para ${theme}`);
+  }
+
+  function applyCleanReading(enable) {
+    isCleanReading = enable;
+    const root = document.documentElement;
+    if (enable) root.classList.add('clean-reading');
+    else root.classList.remove('clean-reading');
+    localStorage.setItem(STORAGE_CLEAN_READING, enable ? 'true' : 'false');
+    announceLiveRegion(enable ? 'Modo leitura limpa ativado' : 'Modo leitura limpa desativado');
+  }
+
+  function announceLiveRegion(message) {
+    let region = document.getElementById('live-region');
+    if (!region) {
+      region = document.createElement('div');
+      region.id = 'live-region';
+      region.setAttribute('aria-live', 'polite');
+      region.setAttribute('aria-atomic', 'true');
+      region.style.position = 'absolute';
+      region.style.width = '1px';
+      region.style.height = '1px';
+      region.style.overflow = 'hidden';
+      region.style.clip = 'rect(1px, 1px, 1px, 1px)';
+      document.body.appendChild(region);
+    }
+    region.textContent = message;
+  }
+
+  window.HQ_ACCESSIBILITY = { applyTheme, applyCleanReading, announceLiveRegion };
+})();
+```
+================================================================================

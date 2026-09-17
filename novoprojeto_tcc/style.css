@@ -1,0 +1,408 @@
+:root {
+  --primary-green: #67a760;
+  --bg-color: #eef2f5;
+  --line-color: #cdd7e0;
+  --gold: #e2b740;
+  --dark-blue: #161642;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Acessibilidade: oculta visualmente mantendo acessível para leitores de tela */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+body {
+  background-color: var(--bg-color);
+  /* Notebook horizontal lines */
+  background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 39px, var(--line-color) 40px);
+  background-attachment: fixed;
+  font-family: 'Walter Turncoat', cursive;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100dvh;
+  /* NÃO usar overflow-x: hidden aqui — quebra position:fixed no Android WebView */
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  position: relative;
+  padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: clip; /* clip não quebra position:fixed, ao contrário de hidden */
+  background-color: transparent;
+}
+
+/* Decorations */
+.deco {
+  position: absolute;
+  z-index: 1;
+}
+
+.star {
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.1));
+}
+
+.star-1 {
+  top: 30px;
+  left: 30px;
+  transform: rotate(-15deg);
+}
+
+.star-2 {
+  top: 10px;
+  right: 20px;
+  transform: rotate(25deg);
+}
+
+.title {
+  font-family: 'Cabin Sketch', cursive;
+  font-size: 42px;
+  color: var(--primary-green);
+  text-align: center;
+  margin-top: 50px;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 2px 2px 4px rgba(0,0,0,0.1);
+  z-index: 2;
+  letter-spacing: 2px;
+}
+
+/* Post-it Note */
+.post-it-wrapper {
+  position: absolute;
+  top: 110px;
+  right: 5px;
+  z-index: 10;
+}
+
+.dashed-line {
+  position: absolute;
+  top: -20px;
+  left: -40px;
+  pointer-events: none;
+}
+
+.post-it {
+  background-color: #fce28b;
+  width: 110px;
+  padding: 20px 10px 15px;
+  transform: rotate(8deg);
+  box-shadow: 3px 5px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  text-align: center;
+  border-bottom-right-radius: 20px 5px;
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+.post-it:hover {
+  transform: rotate(8deg) scale(1.05);
+}
+
+.pin-postit {
+  position: absolute;
+  top: -15px;
+  right: 10px;
+  transform: rotate(20deg);
+  filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+}
+
+.post-it p {
+  font-family: 'Cabin Sketch', cursive;
+  font-weight: 700;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.2;
+}
+
+/* Torn Paper / Title card */
+.torn-paper {
+  background-color: #e5d9c5; /* cardboard color */
+  width: 85%;
+  padding: 15px;
+  margin: 50px 0 30px;
+  position: relative;
+  text-align: center;
+  box-shadow: 2px 4px 6px rgba(0,0,0,0.1);
+  /* jagged edges using clip-path */
+  clip-path: polygon(
+    0% 2%, 5% 0%, 10% 3%, 15% 1%, 20% 4%, 25% 0%, 30% 2%, 35% 1%, 40% 3%, 45% 0%, 50% 2%, 55% 1%, 60% 4%, 65% 0%, 70% 3%, 75% 1%, 80% 4%, 85% 0%, 90% 2%, 95% 1%, 100% 3%, 
+    99% 98%, 95% 100%, 90% 97%, 85% 99%, 80% 96%, 75% 100%, 70% 97%, 65% 99%, 60% 96%, 55% 100%, 50% 98%, 45% 99%, 40% 96%, 35% 100%, 30% 98%, 25% 99%, 20% 96%, 15% 100%, 10% 97%, 5% 99%, 0% 96%
+  );
+  z-index: 5;
+  background-image: repeating-linear-gradient(transparent, transparent 19px, rgba(0,0,0,0.05) 19px, rgba(0,0,0,0.05) 20px);
+  display: flex;
+  align-items: center;
+}
+
+.holes {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-right: 15px;
+  margin-left: 5px;
+}
+
+.hole {
+  width: 12px;
+  height: 12px;
+  background-color: var(--bg-color);
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.pencil-box {
+  flex-grow: 1;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 10px;
+  margin-right: 10px;
+  position: relative;
+}
+
+.pencil-box::before, .pencil-box::after {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 1px;
+  background-color: rgba(0,0,0,0.3);
+}
+
+.pencil-box::before { top: -3px; left: 10px; }
+.pencil-box::after { bottom: -3px; right: 10px; }
+
+.pin-left {
+  position: absolute;
+  left: 20px;
+  top: -15px;
+  transform: rotate(-15deg);
+  filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+  z-index: 2;
+}
+
+.torn-paper h2 {
+  font-family: 'Cabin Sketch', cursive;
+  font-size: 32px;
+  color: var(--primary-green);
+  letter-spacing: 3px;
+}
+
+/* Form Styles */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 5;
+}
+
+.input-wrapper {
+  width: 75%;
+  background-color: #f1c97a;
+  padding: 15px 20px;
+  /* Paint brush stroke effect using clip-path and border-radius */
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+  box-shadow: inset 0px 0px 5px rgba(0,0,0,0.1), 2px 2px 0px rgba(0,0,0,0.05);
+  position: relative;
+}
+
+.input-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.input-wrapper input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Cabin Sketch', cursive;
+  font-size: 24px;
+  color: var(--primary-green);
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.input-wrapper input::placeholder {
+  color: var(--primary-green);
+  opacity: 0.8;
+}
+
+.forgot-password {
+  color: #5b9bd5;
+  font-family: 'Walter Turncoat', cursive;
+  font-size: 18px;
+  text-decoration: none;
+  margin-top: -10px;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* Submit Button */
+.submit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 20px 50px;
+  margin-top: 10px;
+  outline: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit-btn span {
+  font-family: 'Cabin Sketch', cursive;
+  font-size: 28px;
+  color: var(--gold);
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 2;
+  letter-spacing: 2px;
+}
+
+.btn-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.submit-btn:active {
+  transform: scale(0.95);
+}
+
+/* Corner scribbles */
+.scribble {
+  bottom: 10px;
+  opacity: 0.8;
+}
+
+.scribble-left {
+  left: 10px;
+}
+
+.scribble-right {
+  right: 10px;
+}
+
+/* Green scribbles by the title card */
+.green-lines {
+  position: absolute;
+  left: 10px;
+  top: 150px;
+}
+
+/* Back button used across hobby pages */
+.back-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: rgba(255,255,255,0.6);
+  border: 2px dashed #bbb;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.back-btn:hover { transform: scale(1.1) rotate(-5deg); background: rgba(255,255,255,0.9); }
+.back-btn svg { stroke: #333; width: 30px; height: 30px; }
+
+/* Bottom nav (Global) */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background-color: #e5d9c5;
+  border-top: 2px dashed var(--line-color);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0 calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.nav-item:hover {
+  transform: scale(1.1);
+}
+
+.nav-item span {
+  font-family: 'Cabin Sketch', cursive;
+  font-size: 10px;
+  color: var(--primary-green);
+  letter-spacing: 1px;
+}
+
+.nav-item.active span {
+  color: #2d7a26;
+}
+
+.nav-item svg {
+  stroke: var(--primary-green);
+}
+
+.nav-item.active svg {
+  stroke: #2d7a26;
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Hobby Quest</title>
+  <meta name="description" content="Hobby Quest — App de aventura e hobbies com jogo integrado">
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Caveat:wght@400;700&family=Walter+Turncoat&display=swap" rel="stylesheet">
+
+  <!-- Scripts do projeto -->
+  <script src="xp-system.js"></script>
+  <script src="sound-effects.js"></script>
+  <script src="gerenciador-audio.js"></script>
+  <script src="game-bridge.js"></script>
+  <script src="jogo-audrey-engine.js"></script>
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+       GLOBAL RESET & APP BASE
+    ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      --primary-green: #67a760;
+      --bg-color: #eef2f5;
+      --line-color: #cdd7e0;
+      --gold: #e2b740;
+      --dark-blue: #161642;
+      --error-red: #e07a5f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    a { text-decoration: none; color: inherit; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: 'Walter Turncoat', cursive;
+      background-color: var(--bg-color);
+      background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 39px, var(--line-color) 40px);
+      background-attachment: fixed;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SPA ROUTER — Screen System
+    ═══════════════════════════════════════════════════════════════════ */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      z-index: 1;
+      background-color: var(--bg-color);
+      background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 39px, var(--line-color) 40px);
+    }
+    .screen.active {
+      display: flex;
+      opacity: 1;
+      z-index: 10;
+    }
+    .screen.game-active {
+      overflow: hidden;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BOTTOM NAVIGATION (persistent across screens except login/game)
+    ═══════════════════════════════════════════════════════════════════ */
+    #app-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background-color: #e5d9c5;
+      border-top: 2px dashed var(--line-color);
+      display: none;
+      justify-content: space-around;
+      padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+      z-index: 100;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    }
+    #app-nav.visible { display: flex; }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      background: none; border: none; padding: 0;
+    }
+    .nav-item:hover { transform: scale(1.1); }
+    .nav-item span {
+      font-family: 'Cabin Sketch', cursive;
+      font-size: 10px;
+      color: var(--primary-green);
+      letter-spacing: 1px;
+    }
+    .nav-item.active span { color: #2d7a26; }
+    .nav-item svg { stroke: var(--primary-green); }
+    .nav-item.active svg { stroke: #2d7a26; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SCREEN: LOGIN
+    ═══════════════════════════════════════════════════════════════════ */
+    .mobile-container {
+      width: 100%; max-width: 480px; min-height: 100dvh;
+      position: relative; padding: 20px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+      display: flex; flex-direction: column; align-items: center;
+      overflow-x: clip;
+    }
+    .deco { position: absolute; z-index: 1; }
+    .star { filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.1)); }
+    .star-1 { top: 30px; left: 30px; transform: rotate(-15deg); }
+    .star-2 { top: 10px; right: 20px; transform: rotate(25deg); }
+    .title {
+      font-family: 'Cabin Sketch', cursive; font-size: 42px;
+      color: var(--primary-green); text-align: center;
+      margin-top: 50px; margin-bottom: 20px;
+      text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 2px 2px 4px rgba(0,0,0,0.1);
+      z-index: 2; letter-spacing: 2px;
+    }
+    .post-it-wrapper { position: absolute; top: 110px; right: 5px; z-index: 10; }
+    .post-it {
+      background-color: #fce28b; width: 110px; padding: 20px 10px 15px;
+      transform: rotate(8deg); box-shadow: 3px 5px 8px rgba(0,0,0,0.15);
+      cursor: pointer; text-align: center; border-bottom-right-radius: 20px 5px;
+      transition: transform 0.2s ease; position: relative;
+    }
+    .post-it:hover { transform: rotate(8deg) scale(1.05); }
+    .pin-postit { position: absolute; top: -15px; right: 10px; transform: rotate(20deg); filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3)); }
+    .post-it p { font-family: 'Cabin Sketch', cursive; font-weight: 700; font-size: 13px; color: #333; line-height: 1.2; }
+    .torn-paper {
+      background-color: #e5d9c5; width: 85%; padding: 15px; margin: 50px 0 30px;
+      position: relative; text-align: center; box-shadow: 2px 4px 6px rgba(0,0,0,0.1);
+      clip-path: polygon(0% 2%,5% 0%,10% 3%,15% 1%,20% 4%,25% 0%,30% 2%,35% 1%,40% 3%,45% 0%,50% 2%,55% 1%,60% 4%,65% 0%,70% 3%,75% 1%,80% 4%,85% 0%,90% 2%,95% 1%,100% 3%,99% 98%,95% 100%,90% 97%,85% 99%,80% 96%,75% 100%,70% 97%,65% 99%,60% 96%,55% 100%,50% 98%,45% 99%,40% 96%,35% 100%,30% 98%,25% 99%,20% 96%,15% 100%,10% 97%,5% 99%,0% 96%);
+      z-index: 5;
+      background-image: repeating-linear-gradient(transparent, transparent 19px, rgba(0,0,0,0.05) 19px, rgba(0,0,0,0.05) 20px);
+      display: flex; align-items: center;
+    }
+    .holes { display: flex; flex-direction: column; gap: 15px; margin-right: 15px; margin-left: 5px; }
+    .hole { width: 12px; height: 12px; background-color: var(--bg-color); border-radius: 50%; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); }
+    .pencil-box { flex-grow: 1; border: 1px solid rgba(0,0,0,0.3); padding: 10px; margin-right: 10px; position: relative; }
+    .pin-left { position: absolute; left: 20px; top: -15px; transform: rotate(-15deg); filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3)); z-index: 2; }
+    .torn-paper h2 { font-family: 'Cabin Sketch', cursive; font-size: 32px; color: var(--primary-green); letter-spacing: 3px; }
+    .auth-form { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 5; }
+    .input-wrapper {
+      width: 75%; background-color: #f1c97a; padding: 15px 20px;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: inset 0px 0px 5px rgba(0,0,0,0.1), 2px 2px 0px rgba(0,0,0,0.05);
+    }
+    .input-wrapper input {
+      width: 100%; background: transparent; border: none; outline: none;
+      font-family: 'Cabin Sketch', cursive; font-size: 24px;
+      color: var(--primary-green); text-align: center; letter-spacing: 2px;
+    }
+    .input-wrapper input::placeholder { color: var(--primary-green); opacity: 0.8; }
+    .forgot-password { color: #5b9bd5; font-family: 'Walter Turncoat', cursive; font-size: 18px; margin-top: -10px; }
+    .submit-btn {
+      background: transparent; border: none; cursor: pointer; padding: 20px 50px;
+      margin-top: 10px; outline: none; display: flex; justify-content: center; align-items: center;
+    }
+    .submit-btn span {
+      font-family: 'Cabin Sketch', cursive; font-size: 28px; color: var(--gold);
+      text-shadow: 1px 1px 0px rgba(0,0,0,0.1); letter-spacing: 2px;
+    }
+    .submit-btn:active { transform: scale(0.95); }
+    .scribble { bottom: 10px; opacity: 0.8; }
+    .scribble-left { left: 10px; }
+    .scribble-right { right: 10px; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SCREEN: HOME
+    ═══════════════════════════════════════════════════════════════════ */
+    @keyframes pulseJornada {
+      0% { transform: scale(1) rotate(-1deg); box-shadow: 0 0 0 0 rgba(157,212,160,0.7); }
+      50% { transform: scale(1.05) rotate(1deg); box-shadow: 0 0 15px 5px rgba(157,212,160,0.4); }
+      100% { transform: scale(1) rotate(-1deg); box-shadow: 0 0 0 0 rgba(157,212,160,0); }
+    }
+    .home-container {
+      width: 100%; max-width: 480px; min-height: 100dvh; position: relative; padding: 20px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+      display: flex; flex-direction: column; align-items: center; overflow-x: clip;
+    }
+    .home-title {
+      font-family: 'Cabin Sketch', cursive; font-size: 38px; color: var(--primary-green);
+      text-align: center; margin-top: 50px; margin-bottom: 10px;
+      text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 2px 2px 4px rgba(0,0,0,0.1);
+      z-index: 2; letter-spacing: 2px;
+    }
+    .welcome-text {
+      font-family: 'Caveat', cursive; font-size: 22px; color: #555;
+      text-align: center; margin-bottom: 30px; z-index: 2;
+    }
+    .action-buttons { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 30px; z-index: 5; width: 75%; }
+    .action-btn {
+      width: 100%; border: none; border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 18px 22px; cursor: pointer;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.1), 2px 3px 0 rgba(0,0,0,0.05);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .action-btn:hover { transform: scale(1.03) rotate(-0.5deg); }
+    .action-btn:active { transform: scale(0.97); }
+    .action-btn span { font-family: 'Cabin Sketch', cursive; font-size: 22px; letter-spacing: 2px; }
+    .btn-jornada {
+      background: linear-gradient(180deg, #c7f0d8, #9dd4a0); color: #fff;
+      border: 2px dashed rgba(29,163,103,0.18);
+      animation: pulseJornada 2.5s infinite ease-in-out;
+    }
+    .btn-jornada .btn-icon {
+      font-size: 20px; display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 6px; background: rgba(255,255,255,0.95);
+      color: #166c3a; border: 1px solid rgba(29,163,103,0.08);
+      font-family: 'Cabin Sketch', cursive;
+    }
+    .btn-jornada .btn-text { color: #fff; font-family: 'Cabin Sketch', cursive; }
+    .hobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; padding: 0 10px; z-index: 5; margin-bottom: 30px; }
+    .hobby-card {
+      background-color: #fce28b; border-radius: 12px; padding: 20px 14px; text-align: center;
+      box-shadow: 3px 4px 8px rgba(0,0,0,0.12); cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden;
+    }
+    .hobby-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: var(--primary-green); opacity: 0.5; border-radius: 12px 12px 0 0; }
+    .hobby-card:hover { transform: translateY(-4px) rotate(-1deg); box-shadow: 4px 6px 14px rgba(0,0,0,0.18); }
+    .hobby-card:active { transform: scale(0.96); }
+    .hobby-card .card-icon { font-size: 36px; margin-bottom: 8px; display: block; }
+    .hobby-card .card-title { font-family: 'Cabin Sketch', cursive; font-size: 18px; color: var(--primary-green); letter-spacing: 1px; margin-bottom: 4px; }
+    .hobby-card .card-desc { font-family: 'Walter Turncoat', cursive; font-size: 13px; color: #666; }
+    .torn-corner {
+      position: absolute; bottom: 70px; right: 0; width: 120px; height: 120px;
+      background: linear-gradient(135deg, transparent 40%, #c6e067 45%, #a8d648 100%);
+      clip-path: polygon(100% 0%, 100% 100%, 0% 100%); opacity: 0.5; z-index: 0;
+    }
+    .nav-spacer { height: 80px; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SCREEN: JOGO (GAME)
+    ═══════════════════════════════════════════════════════════════════ */
+    #screen-jogo {
+      background: #000;
+      background-image: none;
+    }
+    #game-hud {
+      position: absolute; top: 0; left: 0; right: 0; height: 48px;
+      background: rgba(229,217,197,0.92); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 100;
+      border-bottom: 2px dashed rgba(103,167,96,0.3);
+    }
+    #game-hud.hidden { opacity: 0; pointer-events: none; }
+    #btn-game-back {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.55); border: 1.5px dashed rgba(103,167,96,0.5);
+      border-radius: 999px; padding: 6px 14px 6px 10px; cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+    #btn-game-back:hover { background: rgba(199,240,216,0.7); transform: scale(1.04); }
+    #btn-game-back svg { stroke: var(--primary-green); width: 18px; height: 18px; flex-shrink: 0; }
+    #btn-game-back span { font-family: 'Cabin Sketch', cursive; font-size: 14px; color: var(--primary-green); letter-spacing: 1px; }
+    #game-area { position: absolute; top: 48px; left: 0; right: 0; bottom: 0; background: #000; overflow: hidden; }
+    #gameCanvas { width: 100%; height: 100%; display: block; background: #000; outline: none; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HOBBY SCREENS (Arte, Leitura, Fitness) — Shared Styles
+    ═══════════════════════════════════════════════════════════════════ */
+    .hobby-screen-container {
+      width: 100%; max-width: 480px; min-height: 100dvh; position: relative;
+      padding: 16px 18px;
+      padding-top: calc(16px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+      display: flex; flex-direction: column; align-items: center; overflow-x: clip;
+    }
+    .back-btn {
+      align-self: flex-start; background: rgba(255,255,255,0.75); border: 2px dashed #ccc;
+      border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease; flex-shrink: 0;
+    }
+    .back-btn:hover { transform: scale(1.1) rotate(-5deg); background: rgba(255,255,255,0.95); }
+    .back-btn svg { stroke: #666; width: 20px; height: 20px; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .hero {
+      width: 100%; border-radius: 24px; padding: 24px 20px 20px; margin: 8px 0 6px;
+      position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .hero-text h1 { font-family: 'Cabin Sketch', cursive; font-size: 38px; margin: 0; letter-spacing: 1px; line-height: 1.1; }
+    .hero-text p { font-family: 'Caveat', cursive; font-size: 20px; margin: 2px 0 0; }
+    .hero-deco { position: absolute; border-radius: 50%; opacity: 0.12; pointer-events: none; }
+    .hero-icon { flex-shrink: 0; width: 64px; height: 64px; animation: float 4s ease-in-out infinite; }
+    .section-title {
+      font-family: 'Caveat', cursive; font-size: 26px; color: #555; margin: 20px 0 10px;
+      align-self: flex-start; display: flex; align-items: center; gap: 8px;
+    }
+    .desafios-card { width: 100%; background: #fff; border-radius: 20px; padding: 18px 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+    .about-text { font-family: 'Walter Turncoat', cursive; font-size: 16px; color: #555; line-height: 1.6; margin: 4px 0; padding: 4px 8px; }
+    .doodle { width: 50%; margin: 6px 0 4px; }
+    .status-card { width: 100%; background: #fff; border-radius: 20px; padding: 20px 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 18px; }
+    .status-header { display: flex; align-items: center; gap: 10px; }
+    .status-header h3 { font-family: 'Caveat', cursive; font-size: 24px; margin: 0; color: #555; }
+    .status-avatars { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; align-items: flex-end; }
+    .avatar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    .avatar { width: 100px; height: 128px; border-radius: 16px; object-fit: cover; object-position: top center; border: 3px solid white; box-shadow: 0 5px 14px rgba(0,0,0,0.14); cursor: pointer; transition: box-shadow 0.25s ease; display: block; }
+    .avatar-label { font-family: 'Walter Turncoat', cursive; font-size: 12px; color: #999; background: rgba(255,255,255,0.9); border: 1px dashed #ddd; border-radius: 8px; padding: 2px 10px; }
+    .status-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .level-badge { display: flex; align-items: center; gap: 10px; }
+    .level-circle { width: 54px; height: 54px; background: linear-gradient(135deg, var(--gold), #e0a818); border: 3px solid #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Walter Turncoat', cursive; font-size: 18px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; box-shadow: 0 3px 10px rgba(240,192,32,0.35); position: relative; }
+    .level-circle::after { content: '⭐'; position: absolute; top: -8px; right: -6px; font-size: 12px; }
+    .level-label { font-family: 'Caveat', cursive; font-size: 18px; color: #777; }
+    .xp-block { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .xp-bar-track { width: 120px; height: 16px; background: #f0ece4; border: 2px solid #ddd; border-radius: 10px; overflow: hidden; }
+    .xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), #ffd426); border-radius: 8px; transition: width 0.5s ease; }
+    .xp-numbers { font-family: 'Walter Turncoat', cursive; font-size: 13px; color: #999; }
+
+    /* Arte specific */
+    #screen-arte .hero { background: linear-gradient(135deg, #fce4ef, #ffe8f0, #fce0ef); }
+    #screen-arte .hero-text h1 { color: #d47aa0; }
+    #screen-arte .hero-text p { color: #b08aa0; }
+    #screen-arte .section-title::before { content: ''; flex: 0 0 4px; height: 24px; background: #f1a0c4; border-radius: 2px; }
+
+    /* Leitura specific */
+    #screen-leitura .hero { background: linear-gradient(135deg, #e0f0e6, #d0e8dc, #e5f0ea); }
+    #screen-leitura .hero-text h1 { color: #3d6b52; }
+    #screen-leitura .hero-text p { color: #80a890; }
+    #screen-leitura .section-title::before { content: ''; flex: 0 0 4px; height: 24px; background: #5b8a72; border-radius: 2px; }
+
+    /* Fitness specific */
+    #screen-fitness .hero { background: linear-gradient(135deg, #ffe8d8, #ffd8c0, #ffe8d8); }
+    #screen-fitness .hero-text h1 { color: #a04000; }
+    #screen-fitness .hero-text p { color: #cc9060; }
+    #screen-fitness .section-title::before { content: ''; flex: 0 0 4px; height: 24px; background: #d35400; border-radius: 2px; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SCREEN: PERFIL
+    ═══════════════════════════════════════════════════════════════════ */
+    @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes shimmer { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 3px 3px 0px #ff4757; } 50% { box-shadow: 3px 3px 12px #ff4757; } }
+    .perfil-container {
+      width: 100%; max-width: 480px; min-height: 100dvh; position: relative; padding: 24px 20px;
+      padding-top: calc(24px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+      display: flex; flex-direction: column; align-items: center; overflow-x: clip;
+      animation: fadeSlideUp 0.6s ease-out;
+    }
+    .polaroid-avatar-wrapper {
+      background: white; padding: 12px 12px 36px 12px; border-radius: 4px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15); width: fit-content;
+      margin: 30px auto 16px; transform: rotate(-3deg); position: relative;
+      transition: transform 0.3s ease; animation: float 4s ease-in-out infinite;
+    }
+    .polaroid-avatar-wrapper:hover { transform: rotate(1deg) scale(1.05); animation: none; }
+    .washi-tape {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(5deg);
+      width: 75px; height: 24px; background: rgba(168,216,234,0.7);
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.15); z-index: 10; animation: shimmer 2s ease-in-out infinite;
+    }
+    .profile-avatar-img {
+      width: 110px; height: 110px; background: #eee; display: flex; align-items: center;
+      justify-content: center; overflow: hidden; border: 1px solid #ddd; position: relative;
+    }
+    .profile-avatar-img svg { fill: #aaa; width: 60px; height: 60px; }
+    .polaroid-caption {
+      font-family: 'Caveat', cursive; font-size: 22px; color: #333; text-align: center;
+      position: absolute; bottom: 6px; width: 100%; left: 0; letter-spacing: 1px;
+    }
+    .profile-title {
+      font-family: 'Cabin Sketch', cursive; font-size: 38px; color: var(--primary-green);
+      text-align: center; margin: 0 0 5px; letter-spacing: 2px; text-shadow: 1px 1px 0 #fff;
+    }
+    .profile-subtitle { font-family: 'Caveat', cursive; font-size: 24px; color: #777; text-align: center; margin: 0 0 25px; }
+    .info-tags-container { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; width: 100%; }
+    .info-tag {
+      border-radius: 10px; padding: 14px 20px; display: flex; justify-content: space-between;
+      align-items: center; box-shadow: 2px 3px 5px rgba(0,0,0,0.05); border: 2px dashed; overflow: hidden;
+    }
+    .name-tag { background: #fdf5c9; border-color: #d4b85c; justify-content: flex-start; gap: 15px; }
+    .name-tag .tag-label { font-family: 'Walter Turncoat', cursive; font-size: 14px; color: #997a3e; }
+    .name-tag .tag-value { font-family: 'Cabin Sketch', cursive; font-size: 22px; color: #d946ef; overflow-wrap: break-word; }
+    .email-tag { background: #e6f7ff; border-color: #9bcdeb; justify-content: flex-start; gap: 15px; }
+    .email-tag .tag-label { font-family: 'Walter Turncoat', cursive; font-size: 14px; color: #5c8ca8; }
+    .email-tag .tag-value { font-family: 'Cabin Sketch', cursive; font-size: 20px; color: #3b82f6; overflow-wrap: break-word; }
+    .profile-stats-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      width: 100%; max-width: 320px; margin: 0 auto 24px;
+    }
+    .stat-badge-perfil {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 12px 8px; border-radius: 12px; text-align: center; box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    }
+    .stat-badge-perfil .stat-number { font-family: 'Cabin Sketch', cursive; font-size: 24px; font-weight: bold; }
+    .stat-badge-perfil .stat-label { font-family: 'Walter Turncoat', cursive; font-size: 11px; color: #666; margin-top: 4px; }
+    .logout-btn {
+      width: 100%; padding: 14px; background: #fff0f0; border: 2px dashed #ff4757;
+      border-radius: 12px; color: #ff4757; display: flex; align-items: center;
+      justify-content: center; gap: 10px; cursor: pointer;
+      font-family: 'Cabin Sketch', cursive; font-size: 20px; letter-spacing: 1px;
+      box-shadow: 3px 3px 0px #ff4757; transition: transform 0.1s ease;
+    }
+    .logout-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #ff4757; }
+    .logout-btn svg { stroke: #ff4757; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NAME MODAL (first login)
+    ═══════════════════════════════════════════════════════════════════ */
+    @keyframes levelUpIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .name-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .name-modal {
+      background: #fdf5c9;
+      background-image: repeating-linear-gradient(transparent,transparent 27px,rgba(0,0,0,0.04) 27px,rgba(0,0,0,0.04) 28px);
+      border-radius: 16px; padding: 32px 24px 24px; max-width: 340px; width: 100%;
+      box-shadow: 4px 6px 24px rgba(0,0,0,0.25), 0 0 0 3px #f0e08a; text-align: center;
+      position: relative; animation: levelUpIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    .name-modal h2 { font-family: 'Cabin Sketch', cursive; font-size: 26px; color: var(--error-red); margin: 0 0 8px; }
+    .name-modal p { font-family: 'Caveat', cursive; font-size: 18px; color: #666; margin: 0 0 20px; }
+    .name-modal input {
+      width: 100%; padding: 12px 16px; border: 2px dashed #d4b85c; border-radius: 12px;
+      font-family: 'Cabin Sketch', cursive; font-size: 20px; text-align: center;
+      outline: none; background: rgba(255,255,255,0.8); box-sizing: border-box; margin-bottom: 16px;
+    }
+    .name-modal input:focus { border-color: var(--error-red); }
+    .name-modal button {
+      width: 100%; background: linear-gradient(135deg, #c7f0d8, #9dd4a0);
+      border: 2px dashed rgba(30,130,70,0.22);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 14px; font-family: 'Cabin Sketch', cursive; font-size: 20px;
+      color: #1a6633; cursor: pointer; box-shadow: 2px 3px 8px rgba(0,0,0,0.12); letter-spacing: 1px;
+    }
+    .name-modal button:hover { transform: scale(1.02); }
+    .name-washi { position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-2deg); width: 70px; height: 22px; background: rgba(168,216,234,0.75); box-shadow: 1px 1px 3px rgba(0,0,0,0.12); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: #fff9d2; color: #333; padding: 12px 20px; border-radius: 12px;
+      border: 2px dashed #9dd4a0; box-shadow: 0 4px 15px rgba(0,0,0,0.18);
+      font-family: 'Cabin Sketch', cursive; font-size: 17px; letter-spacing: 1px;
+      z-index: 999; text-align: center; max-width: 85%;
+      transition: opacity 0.3s ease; pointer-events: none; opacity: 0;
+    }
+    .toast.visible { opacity: 1; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: LOGIN
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-login" class="screen active">
+    <div class="mobile-container">
+      <svg class="deco star star-1" viewBox="0 0 100 100" width="50" height="50">
+        <path d="M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z" fill="#e2b740" stroke="#cfa638" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <svg class="deco star star-2" viewBox="0 0 100 100" width="60" height="60">
+        <path d="M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z" fill="#e2b740" stroke="#cfa638" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <h1 class="title">HOBBY QUEST</h1>
+      <div class="post-it-wrapper" id="toggleMode">
+        <div class="post-it">
+          <svg class="pin pin-postit" width="24" height="30" viewBox="0 0 40 50"><path d="M20 30 L20 48 L22 50 L24 48 L24 30 Z" fill="#a0a0a0"/><path d="M10 25 L34 25 L30 30 L14 30 Z" fill="#7a1f1f"/><path d="M14 10 Q22 0 30 10 L34 25 L10 25 Z" fill="#bd3124"/><path d="M16 12 Q22 4 28 12" stroke="#e06255" stroke-width="2" fill="none"/></svg>
+          <p id="toggleText">NÃO TEM UMA<br>CONTA?<br>CRIAR CONTA</p>
+        </div>
+      </div>
+      <div class="torn-paper">
+        <svg class="pin pin-left" width="30" height="40" viewBox="0 0 40 50"><path d="M20 30 L20 48 L22 50 L24 48 L24 30 Z" fill="#a0a0a0"/><path d="M10 25 L34 25 L30 30 L14 30 Z" fill="#7a1f1f"/><path d="M14 10 Q22 0 30 10 L34 25 L10 25 Z" fill="#bd3124"/><path d="M16 12 Q22 4 28 12" stroke="#e06255" stroke-width="2" fill="none"/></svg>
+        <div class="holes"><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+        <div class="pencil-box"><h2 id="formTitle">LOGIN</h2></div>
+      </div>
+      <form id="authForm" class="auth-form" onsubmit="return handleAuth(event)">
+        <div class="input-wrapper"><input type="email" id="authEmail" placeholder="EMAIL" required></div>
+        <div class="input-wrapper"><input type="password" id="authPassword" placeholder="SENHA" required></div>
+        <div class="input-wrapper" id="confirmPasswordWrapper" style="display:none;"><input type="password" id="authConfirmPassword" placeholder="CONFIRMAR SENHA"></div>
+        <a href="#" class="forgot-password" id="forgotPassword">esqueci a senha</a>
+        <button type="submit" class="submit-btn"><span id="submitText">ENTRAR</span></button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: HOME
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-home" class="screen">
+    <div class="home-container">
+      <svg class="deco star star-1" viewBox="0 0 100 100" width="45" height="45">
+        <path d="M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z" fill="#e2b740" stroke="#cfa638" stroke-width="2"/>
+      </svg>
+      <svg class="deco star star-2" viewBox="0 0 100 100" width="55" height="55">
+        <path d="M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z" fill="#e2b740" stroke="#cfa638" stroke-width="2"/>
+      </svg>
+      <h1 class="home-title">HOBBY QUEST</h1>
+      <p class="welcome-text">Bem-vindo de volta! ✨</p>
+      <div class="action-buttons">
+        <button class="action-btn btn-jornada" id="btn-iniciar-jornada" onclick="iniciarJornada()">
+          <span class="btn-icon">✨</span>
+          <span class="btn-text">INICIAR JORNADA</span>
+        </button>
+      </div>
+      <div class="hobby-grid">
+        <div class="hobby-card" onclick="showScreen('arte')">
+          <span class="card-icon">🎨</span>
+          <p class="card-title">ARTE</p>
+          <p class="card-desc">Desenho e pintura</p>
+        </div>
+        <div class="hobby-card" onclick="showScreen('leitura')">
+          <span class="card-icon">📖</span>
+          <p class="card-title">LEITURA</p>
+          <p class="card-desc">Livros e mangás</p>
+        </div>
+        <div class="hobby-card" style="grid-column: 1 / -1; width: 50%; justify-self: center;" onclick="showScreen('fitness')">
+          <span class="card-icon">🏋️</span>
+          <p class="card-title">FITNESS</p>
+          <p class="card-desc">Exercícios diários</p>
+        </div>
+      </div>
+      <div class="torn-corner"></div>
+      <div class="nav-spacer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: JOGO (Canvas Fullscreen)
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-jogo" class="screen game-active">
+    <header id="game-hud">
+      <button id="btn-game-back" onclick="sairDoJogo()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>VOLTAR</span>
+      </button>
+      <div style="font-family:'Cabin Sketch',cursive;font-size:15px;color:var(--primary-green);letter-spacing:1px;display:flex;align-items:center;gap:6px;">
+        <span>🎮</span><span>HOBBY QUEST</span>
+      </div>
+      <div id="hud-xp" style="display:flex;align-items:center;gap:6px;font-family:'Cabin Sketch',cursive;font-size:14px;color:#a07a2e;">
+        <span>⭐</span><span id="hud-xp-value">0</span><span>XP</span>
+      </div>
+    </header>
+    <main id="game-area">
+      <canvas id="gameCanvas" width="1000" height="750" tabindex="0"></canvas>
+    </main>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: ARTE
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-arte" class="screen">
+    <div class="hobby-screen-container">
+      <button class="back-btn" onclick="showScreen('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="hero">
+        <div class="hero-deco" style="width:80px;height:80px;background:#f1a0c4;top:-20px;right:-10px;"></div>
+        <div class="hero-deco" style="width:50px;height:50px;background:#8e78aa;bottom:-10px;left:-10px;"></div>
+        <svg class="hero-icon" viewBox="0 0 100 100"><path d="M40,10 Q50,0 60,15 Q80,10 75,30 Q95,40 85,60 Q90,80 70,75 Q50,95 30,80 Q10,85 15,65 Q0,50 15,30 Q10,10 30,20 Z" fill="#e74c3c"/><path d="M30,20 Q40,5 50,25 Q70,20 65,40 Q85,50 75,70 Q80,90 60,85 Q40,105 20,90 Q0,95 5,75 Q-10,60 5,40 Q0,20 20,30 Z" fill="#3498db" transform="rotate(45 50 50) scale(0.8)" opacity="0.7"/><path d="M50,15 Q60,5 70,20 Q90,15 85,35 Q105,45 95,65 Q100,85 80,80 Q60,100 40,85 Q20,90 25,70 Q10,55 25,35 Q20,15 40,25 Z" fill="#f1c40f" transform="rotate(90 50 50) scale(0.6)" opacity="0.9"/></svg>
+        <div class="hero-text"><h1>Arte</h1><p>Desenho & Pintura 🎨</p></div>
+      </div>
+      <h2 class="section-title">🎨 Sobre a Arte</h2>
+      <div class="desafios-card"><p class="about-text">A arte é uma forma poderosa de expressão que estimula a criatividade, melhora a coordenação motora e reduz o estresse. Desenhar e pintar ajudam a desenvolver o pensamento visual e a inteligência emocional. 🎨✨</p></div>
+      <svg class="doodle" viewBox="0 0 200 20"><path d="M10,10 Q30,2 50,10 Q70,18 90,10 Q110,2 130,10 Q150,18 170,10 Q190,2 200,10" fill="none" stroke="#e0d5c0" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2 class="section-title">🌟 Status do Hobby</h2>
+      <div class="status-card">
+        <div class="status-header"><span style="font-size:20px;">👥</span><h3>Artistas</h3></div>
+        <div class="status-avatars">
+          <div class="avatar-wrapper"><img class="avatar" src="camiz%20(1).png" alt="Camila"><span class="avatar-label">Camila</span></div>
+          <div class="avatar-wrapper"><img class="avatar" src="quel%20(1).png" alt="Raquel"><span class="avatar-label">Raquel</span></div>
+          <div class="avatar-wrapper"><img class="avatar" src="nico%20(1).png" alt="Nicolas"><span class="avatar-label">Nicolas</span></div>
+        </div>
+        <div class="status-bottom">
+          <div class="level-badge"><div class="level-circle" id="arte-level-circle">1.LV</div><span class="level-label">Nível</span></div>
+          <div class="xp-block"><div class="xp-bar-track"><div class="xp-fill" id="arte-xp-fill" style="width:0%"></div></div><span class="xp-numbers" id="arte-xp-text">0 / 100 XP</span></div>
+        </div>
+      </div>
+      <div class="nav-spacer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: LEITURA
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-leitura" class="screen">
+    <div class="hobby-screen-container">
+      <button class="back-btn" onclick="showScreen('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="hero">
+        <div class="hero-deco" style="width:80px;height:80px;background:#5b8a72;top:-20px;right:-10px;"></div>
+        <div class="hero-deco" style="width:50px;height:50px;background:#a8d8ea;bottom:-10px;left:-10px;"></div>
+        <svg class="hero-icon" viewBox="0 0 100 100"><path d="M10,25 Q15,20 50,22 Q85,20 90,25 L90,80 Q85,75 50,77 Q15,75 10,80 Z" fill="#e8d5b7" stroke="#8B4513" stroke-width="2"/><line x1="50" y1="22" x2="50" y2="77" stroke="#8B4513" stroke-width="2"/><line x1="18" y1="35" x2="45" y2="34" stroke="#bbb" stroke-width="1.5"/><line x1="18" y1="42" x2="45" y2="41" stroke="#bbb" stroke-width="1.5"/><line x1="55" y1="34" x2="82" y2="35" stroke="#bbb" stroke-width="1.5"/><line x1="55" y1="41" x2="82" y2="42" stroke="#bbb" stroke-width="1.5"/></svg>
+        <div class="hero-text"><h1>Leitura</h1><p>Livros & Histórias 📖</p></div>
+      </div>
+      <h2 class="section-title">📖 Sobre a Leitura</h2>
+      <div class="desafios-card"><p class="about-text">A leitura expande o conhecimento, melhora o vocabulário e estimula a imaginação. Ler regularmente desenvolve o pensamento crítico e a empatia. 📚✨</p></div>
+      <svg class="doodle" viewBox="0 0 200 20"><path d="M10,10 Q30,2 50,10 Q70,18 90,10 Q110,2 130,10 Q150,18 170,10 Q190,2 200,10" fill="none" stroke="#d0c8b8" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2 class="section-title">🌟 Status do Hobby</h2>
+      <div class="status-card">
+        <div class="status-header"><span style="font-size:20px;">👥</span><h3>Leitores</h3></div>
+        <div class="status-avatars">
+          <div class="avatar-wrapper"><img class="avatar" src="gabi.png" alt="Gabi"><span class="avatar-label">Gabi</span></div>
+          <div class="avatar-wrapper"><img class="avatar" src="ivi%20(1).jpg" alt="Ivi"><span class="avatar-label">Ivi</span></div>
+          <div class="avatar-wrapper"><img class="avatar" src="may%20(1).png" alt="Maysa"><span class="avatar-label">Maysa</span></div>
+        </div>
+        <div class="status-bottom">
+          <div class="level-badge"><div class="level-circle" id="leitura-level-circle">1.LV</div><span class="level-label">Nível</span></div>
+          <div class="xp-block"><div class="xp-bar-track"><div class="xp-fill" id="leitura-xp-fill" style="width:0%"></div></div><span class="xp-numbers" id="leitura-xp-text">0 / 100 XP</span></div>
+        </div>
+      </div>
+      <div class="nav-spacer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: FITNESS
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-fitness" class="screen">
+    <div class="hobby-screen-container">
+      <button class="back-btn" onclick="showScreen('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="hero">
+        <div class="hero-deco" style="width:80px;height:80px;background:#d35400;top:-20px;right:-10px;"></div>
+        <div class="hero-deco" style="width:50px;height:50px;background:#ffb088;bottom:-10px;left:-10px;"></div>
+        <svg class="hero-icon" viewBox="0 0 100 100"><rect x="30" y="42" width="40" height="6" rx="3" fill="#555"/><rect x="12" y="30" width="12" height="30" rx="3" fill="#e74c3c"/><rect x="76" y="30" width="12" height="30" rx="3" fill="#e74c3c"/><path d="M50,70 L53,76 L60,76 L55,80 L57,87 L50,83 L43,87 L45,80 L40,76 L47,76 Z" fill="#f1c40f"/></svg>
+        <div class="hero-text"><h1>Fitness</h1><p>Exercícios & Movimento 🏋️</p></div>
+      </div>
+      <h2 class="section-title">💪 Sobre Fitness</h2>
+      <div class="desafios-card"><p class="about-text">A prática de exercícios fortalece o corpo, melhora a saúde cardiovascular e libera endorfinas que elevam o humor. Essencial para uma vida equilibrada! 🏋️✨</p></div>
+      <svg class="doodle" viewBox="0 0 200 20"><path d="M10,10 Q30,2 50,10 Q70,18 90,10 Q110,2 130,10 Q150,18 170,10 Q190,2 200,10" fill="none" stroke="#d0c8b8" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2 class="section-title">🌟 Status do Hobby</h2>
+      <div class="status-card">
+        <div class="status-header"><span style="font-size:20px;">👥</span><h3>Atletas</h3></div>
+        <div class="status-avatars">
+          <div class="avatar-wrapper"><img class="avatar" src="victor%20(1).png" alt="Victor"><span class="avatar-label">Victor</span></div>
+        </div>
+        <div class="status-bottom">
+          <div class="level-badge"><div class="level-circle" id="fitness-level-circle">1.LV</div><span class="level-label">Nível</span></div>
+          <div class="xp-block"><div class="xp-bar-track"><div class="xp-fill" id="fitness-xp-fill" style="width:0%"></div></div><span class="xp-numbers" id="fitness-xp-text">0 / 100 XP</span></div>
+        </div>
+      </div>
+      <div class="nav-spacer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SCREEN: PERFIL
+  ═══════════════════════════════════════════════════════════════════ -->
+  <section id="screen-perfil" class="screen">
+    <div class="perfil-container">
+      <div class="polaroid-avatar-wrapper">
+        <div class="washi-tape"></div>
+        <div class="profile-avatar-img">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-4.97 4.03-9 9-9s9 4.03 9 9"/></svg>
+        </div>
+        <div class="polaroid-caption">Eu! 📷</div>
+      </div>
+      <h1 class="profile-title">PERFIL</h1>
+      <p class="profile-subtitle">Aventureiro(a) Criativo(a) ✨</p>
+      <div class="info-tags-container">
+        <div class="info-tag name-tag"><span class="tag-label">NOME:</span><span id="profileNameDisplay" class="tag-value">Aventureiro</span></div>
+        <div class="info-tag email-tag"><span class="tag-label">EMAIL:</span><span id="profileEmailDisplay" class="tag-value">usuario@email.com</span></div>
+      </div>
+      <div class="profile-stats-grid">
+        <div class="stat-badge-perfil" style="background:#ffe5e5;border:1px dashed #ffb3b3;">
+          <span class="stat-number" id="profileTotalXp" style="color:#ff6b6b;">0</span>
+          <span class="stat-label">XP Total</span>
+        </div>
+        <div class="stat-badge-perfil" style="background:#fffae5;border:1px dashed #ffeeb3;">
+          <span class="stat-number" id="profileAchievements" style="color:#fbc531;">0/0</span>
+          <span class="stat-label">Conquistas</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>SAIR DA CONTA</span>
+      </button>
+      <div class="nav-spacer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       BOTTOM NAVIGATION (shared)
+  ═══════════════════════════════════════════════════════════════════ -->
+  <nav id="app-nav">
+    <button class="nav-item" data-screen="home" onclick="showScreen('home')">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10L12 3l9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1V10z"/><path d="M9 21V13h6v8"/></svg>
+      <span>HOME</span>
+    </button>
+    <button class="nav-item" data-screen="arte" onclick="showScreen('arte')">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="11.5" r="2.5"/><circle cx="6" cy="12.5" r="2.5"/><circle cx="17" cy="18.5" r="2.5"/><circle cx="8.5" cy="18.5" r="2.5"/></svg>
+      <span>HOBBIES</span>
+    </button>
+    <button class="nav-item" data-screen="perfil" onclick="showScreen('perfil')">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-4.97 4.03-9 9-9s9 4.03 9 9"/></svg>
+      <span>PERFIL</span>
+    </button>
+  </nav>
+
+  <!-- Toast -->
+  <div id="app-toast" class="toast"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       APP LOGIC — SPA Router + Auth + Game Integration
+  ═══════════════════════════════════════════════════════════════════ -->
+  <script>
+    // ─── SPA ROUTER ──────────────────────────────────────────────────
+    let currentScreen = 'login';
+    const screensWithNav = ['home', 'arte', 'leitura', 'fitness', 'perfil'];
+    const screensNoNav = ['login', 'jogo'];
+
+    function showScreen(screenId) {
+      // Hide all screens
+      document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active');
+      });
+
+      // Show target screen
+      const target = document.getElementById('screen-' + screenId);
+      if (target) {
+        target.classList.add('active');
+        currentScreen = screenId;
+      }
+
+      // Show/hide nav
+      const nav = document.getElementById('app-nav');
+      if (screensWithNav.includes(screenId)) {
+        nav.classList.add('visible');
+      } else {
+        nav.classList.remove('visible');
+      }
+
+      // Update active nav item
+      document.querySelectorAll('#app-nav .nav-item').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.screen === screenId) btn.classList.add('active');
+      });
+
+      // Screen-specific init
+      if (screenId === 'home') initHomeScreen();
+      if (screenId === 'perfil') initPerfilScreen();
+      if (screenId === 'arte') initHobbyScreen('arte');
+      if (screenId === 'leitura') initHobbyScreen('leitura');
+      if (screenId === 'fitness') initHobbyScreen('fitness');
+      if (screenId === 'jogo') initGameScreen();
+
+      // Handle back button
+      history.pushState({ screen: screenId }, '', '#' + screenId);
+    }
+
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.screen) {
+        showScreen(e.state.screen);
+      }
+    });
+
+    // ─── AUTH ─────────────────────────────────────────────────────────
+    let isRegisterMode = false;
+
+    document.getElementById('toggleMode').addEventListener('click', () => {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('formTitle').textContent = isRegisterMode ? 'CRIAR CONTA' : 'LOGIN';
+      document.getElementById('submitText').textContent = isRegisterMode ? 'CRIAR' : 'ENTRAR';
+      document.getElementById('toggleText').innerHTML = isRegisterMode
+        ? 'JÁ TEM UMA<br>CONTA?<br>FAZER LOGIN'
+        : 'NÃO TEM UMA<br>CONTA?<br>CRIAR CONTA';
+      document.getElementById('confirmPasswordWrapper').style.display = isRegisterMode ? 'block' : 'none';
+      document.getElementById('forgotPassword').style.display = isRegisterMode ? 'none' : 'inline';
+    });
+
+    function handleAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const key = email.toLowerCase();
+
+      if (isRegisterMode) {
+        const confirm = document.getElementById('authConfirmPassword').value;
+        if (password !== confirm) {
+          showToast('⚠️ As senhas não coincidem!');
+          return false;
+        }
+        const users = JSON.parse(localStorage.getItem('hq_users') || '{}');
+        if (users[key]) {
+          showToast('⚠️ Email já cadastrado!');
+          return false;
+        }
+        users[key] = { email, password, name: 'Aventureiro', created: new Date().toISOString() };
+        localStorage.setItem('hq_users', JSON.stringify(users));
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', 'Aventureiro');
+        sessionStorage.setItem('loggedIn', 'true');
+        sessionStorage.setItem('newUser', 'true');
+        showScreen('home');
+        setTimeout(() => showNameModal(), 300);
+      } else {
+        const users = JSON.parse(localStorage.getItem('hq_users') || '{}');
+        const user = users[key];
+        if (!user || user.password !== password) {
+          showToast('⚠️ Email ou senha incorretos!');
+          return false;
+        }
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', user.name || 'Aventureiro');
+        sessionStorage.setItem('loggedIn', 'true');
+        showScreen('home');
+      }
+      return false;
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('loggedIn');
+      sessionStorage.removeItem('newUser');
+      showScreen('login');
+    }
+
+    // ─── NAME MODAL ──────────────────────────────────────────────────
+    function showNameModal() {
+      const overlay = document.createElement('div');
+      overlay.className = 'name-modal-overlay';
+      overlay.id = 'nameModalOverlay';
+      overlay.innerHTML = `
+        <div class="name-modal">
+          <div class="name-washi"></div>
+          <h2>✨ BEM-VINDO!</h2>
+          <p>Como você quer ser chamado?</p>
+          <input type="text" id="nameInput" maxlength="24" placeholder="Seu nome de aventureiro..." autofocus>
+          <button onclick="saveUserName()">COMEÇAR!</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      setTimeout(() => {
+        const inp = document.getElementById('nameInput');
+        if (inp) { inp.focus(); inp.addEventListener('keydown', e => { if (e.key === 'Enter') saveUserName(); }); }
+      }, 100);
+    }
+
+    function saveUserName() {
+      const input = document.getElementById('nameInput');
+      const name = (input ? input.value.trim() : '') || 'Aventureiro';
+      localStorage.setItem('userName', name);
+      const email = localStorage.getItem('userEmail');
+      if (email) {
+        try {
+          const users = JSON.parse(localStorage.getItem('hq_users') || '{}');
+          const key = email.toLowerCase().trim();
+          if (users[key]) { users[key].name = name; localStorage.setItem('hq_users', JSON.stringify(users)); }
+        } catch {}
+      }
+      sessionStorage.removeItem('newUser');
+      const overlay = document.getElementById('nameModalOverlay');
+      if (overlay) overlay.remove();
+    }
+
+    // ─── TOAST ────────────────────────────────────────────────────────
+    function showToast(msg) {
+      const toast = document.getElementById('app-toast');
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 4000);
+    }
+
+    // ─── HOME SCREEN ─────────────────────────────────────────────────
+    function initHomeScreen() {
+      if (typeof HQ !== 'undefined') HQ.updateStreak();
+    }
+
+    function iniciarJornada() {
+      if (window.SFX) SFX.journey();
+      showScreen('jogo');
+    }
+
+    // ─── GAME SCREEN ─────────────────────────────────────────────────
+    let jogoAudreyInstance = null;
+
+    function initGameScreen() {
+      const canvas = document.getElementById('gameCanvas');
+      if (canvas) canvas.focus();
+
+      // Update HUD XP
+      if (typeof HQ !== 'undefined') {
+        const xpEl = document.getElementById('hud-xp-value');
+        if (xpEl) xpEl.textContent = HQ.getTotalXP().toLocaleString('pt-BR');
+      }
+
+      // Init engine if not already
+      if (!jogoAudreyInstance && typeof JogoAudreyEngine !== 'undefined') {
+        try {
+          jogoAudreyInstance = new JogoAudreyEngine('gameCanvas');
+          window.jogoAudrey = jogoAudreyInstance;
+        } catch (err) {
+          console.error('[Engine] Erro ao iniciar:', err);
+        }
+      }
+    }
+
+    function sairDoJogo() {
+      if (jogoAudreyInstance && typeof jogoAudreyInstance.salvarEstado === 'function') {
+        jogoAudreyInstance.salvarEstado(jogoAudreyInstance.slotAtual);
+      }
+      showScreen('home');
+    }
+
+    // ─── HOBBY SCREENS ───────────────────────────────────────────────
+    function initHobbyScreen(hobby) {
+      if (typeof HQ === 'undefined') return;
+      try {
+        HQ.updateHobbyUI(hobby);
+        const xpData = HQ.getXP(hobby);
+        const totalXP = HQ.getTotalXPByHobby(hobby);
+        const xpText = document.getElementById(hobby + '-xp-text');
+        if (xpText) xpText.textContent = (totalXP || 0) + ' / ' + xpData.needed + ' XP';
+      } catch {}
+    }
+
+    // ─── PERFIL SCREEN ───────────────────────────────────────────────
+    function initPerfilScreen() {
+      const name = localStorage.getItem('userName') || 'Aventureiro';
+      const email = localStorage.getItem('userEmail') || 'usuario@email.com';
+      const nameEl = document.getElementById('profileNameDisplay');
+      const emailEl = document.getElementById('profileEmailDisplay');
+      if (nameEl) nameEl.textContent = name;
+      if (emailEl) emailEl.textContent = email;
+
+      if (typeof HQ !== 'undefined') {
+        HQ.updateStreak();
+        try { HQ.checkAchievements(); } catch {}
+        const totalXpEl = document.getElementById('profileTotalXp');
+        if (totalXpEl) totalXpEl.textContent = HQ.getTotalXP();
+        const achEl = document.getElementById('profileAchievements');
+        if (achEl) {
+          try {
+            const unlocked = HQ.getUnlockedAchievements();
+            achEl.textContent = unlocked.length + '/' + HQ.ACHIEVEMENTS.length;
+          } catch { achEl.textContent = '0/0'; }
+        }
+      }
+    }
+
+    // ─── INIT ON LOAD ────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if already logged in
+      if (localStorage.getItem('userEmail') || localStorage.getItem('userName')) {
+        sessionStorage.setItem('loggedIn', 'true');
+      }
+      if (sessionStorage.getItem('loggedIn') === 'true') {
+        showScreen('home');
+        // Check if new user needs name modal
+        const isNewUser = sessionStorage.getItem('newUser') === 'true';
+        const name = localStorage.getItem('userName') || '';
+        if (isNewUser && (name === '' || name === 'Aventureiro')) {
+          setTimeout(() => showNameModal(), 300);
+        }
+      } else {
+        showScreen('login');
+      }
+
+      // Listen for XP updates
+      window.addEventListener('hqgame:missionComplete', () => {
+        const xpEl = document.getElementById('hud-xp-value');
+        if (xpEl && typeof HQ !== 'undefined') xpEl.textContent = HQ.getTotalXP().toLocaleString('pt-BR');
+      });
+    });
+  </script>
+</body>
+</html>

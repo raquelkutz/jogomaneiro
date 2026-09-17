@@ -1,0 +1,20 @@
+{
+  "name": "may_raq_vic",
+  "version": "1.0.0",
+  "description": "",
+  "main": "profile.js",
+  "scripts": {
+    "build": "powershell -Command \"if (!(Test-Path www)) { New-Item -ItemType Directory -Path www }; Copy-Item *.html, *.js, *.css, *.png, *.jpg www/ -Force; Copy-Item audios, imagens www/ -Recurse -Force\"",
+    "cap:sync": "npm run build && npx cap sync android",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0"
+  }
+}

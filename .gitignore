@@ -4,3 +4,6 @@ savegame.db
 *.code-workspace
 build/
 oracleJdk-26/
+node_modules/
+**/node_modules/
+
