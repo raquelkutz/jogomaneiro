@@ -309,9 +309,9 @@ public class Screen {
         if (transformY > 0) { // Se o monstro estiver na frente da câmera
             int spriteScreenX = (int)((width / 2) * (1 + transformX / transformY));
 
-            double scale = (entity.type == 1) ? 0.90 : 1.1;
-            // Moedas ligeiramente abaixo do centro
-            int vMoveScreen = (entity.type == 1) ? (int)((height / transformY) * 0.08) : 0;
+            double scale = (entity.type == 1) ? 0.48 : 1.1;
+            // Moedas ligeiramente abaixo do centro para flutuarem naturalmente
+            int vMoveScreen = (entity.type == 1) ? (int)((height / transformY) * 0.14) : 0;
 
             int spriteHeight = Math.abs((int)((height / transformY) * scale)); // Calcular altura
             int drawStartY = -spriteHeight / 2 + height / 2 + vMoveScreen;

@@ -36,6 +36,7 @@ public class ServidorIntegradoJava {
                 iniciado = true;
                 System.out.println("[ServidorIntegradoJava] ✨ Servidor HTTP do TCC iniciado na porta " + PORT + "!");
                 System.out.println("[ServidorIntegradoJava] 👉 App disponível em http://localhost:" + PORT + "/home.html");
+                // abrirNoMicrosoftEdge("http://localhost:" + PORT + "/home.html");
             } catch (Exception e) {
                 System.out.println("[ServidorIntegradoJava] Porta " + PORT + " ocupada ou servidor já rodando: " + e.getMessage());
             }
@@ -45,18 +46,18 @@ public class ServidorIntegradoJava {
     public static void abrirNoMicrosoftEdge(String url) {
         new Thread(() -> {
             try {
-                // Tenta abrir diretamente com o Microsoft Edge no Windows
-                ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", "msedge", url);
-                pb.start();
-                System.out.println("[Edge] Abrindo Microsoft Edge em: " + url);
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    Desktop.getDesktop().browse(new URI(url));
+                } else {
+                    ProcessBuilder pb = new ProcessBuilder("msedge", url);
+                    pb.start();
+                }
             } catch (Exception e) {
-                // Fallback para o navegador padrão do sistema
                 try {
-                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                        Desktop.getDesktop().browse(new URI(url));
-                    }
+                    ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", "", url);
+                    pb.start();
                 } catch (Exception ex) {
-                    System.err.println("[Edge ERRO] " + ex.getMessage());
+                    System.err.println("[Browser ERRO] " + ex.getMessage());
                 }
             }
         }).start();
