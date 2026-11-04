@@ -38,7 +38,10 @@ public class JogoAudrey extends JFrame {
         }
 
         // List of subfolders to check
-        String[] subfolders = {"", "imagens/", "audios/", "codigos/"};
+        String[] subfolders = {
+            "", "imagens/", "audios/", "codigos/", "imagens/cutscene/", "cutscene/",
+            "../imagens/", "../audios/", "../codigos/", "../imagens/cutscene/", "../cutscene/"
+        };
 
         // 1. Try relative to the class folder (very robust for IDEs)
         try {
@@ -49,9 +52,7 @@ public class JogoAudrey extends JFrame {
             for (String sub : subfolders) {
                 java.io.File targetFile = new java.io.File(classDir, sub + relativePath);
                 if (targetFile.exists()) {
-                    String absPath = targetFile.getAbsolutePath();
-                    System.out.println("[DEBUG] resolvePath: " + relativePath + " -> (classDir + " + sub + ") " + absPath);
-                    return absPath;
+                    return targetFile.getAbsolutePath();
                 }
             }
         } catch (Exception e) {
@@ -62,7 +63,6 @@ public class JogoAudrey extends JFrame {
         for (String sub : subfolders) {
             java.io.File file = new java.io.File(sub + relativePath);
             if (file.exists()) {
-                System.out.println("[DEBUG] resolvePath: " + relativePath + " -> (CWD + " + sub + ") " + file.getPath());
                 return file.getPath();
             }
         }
@@ -71,20 +71,15 @@ public class JogoAudrey extends JFrame {
         for (String sub : subfolders) {
             java.io.File subFile = new java.io.File("jogomaneiro-main/" + sub + relativePath);
             if (subFile.exists()) {
-                String subPath = "jogomaneiro-main/" + sub + relativePath;
-                System.out.println("[DEBUG] resolvePath: " + relativePath + " -> (subfolder exists + " + sub + ") " + subPath);
-                return subPath;
+                return subFile.getPath();
             }
         }
 
         // 4. Check if the parent folder jogomaneiro-main exists, if so prefix it
         if (new java.io.File("jogomaneiro-main").isDirectory()) {
-            String subPath = "jogomaneiro-main/" + relativePath;
-            System.out.println("[DEBUG] resolvePath: " + relativePath + " -> (subfolder directory) " + subPath);
-            return subPath;
+            return "jogomaneiro-main/" + relativePath;
         }
 
-        System.out.println("[DEBUG] resolvePath: " + relativePath + " -> (fallback) " + relativePath);
         return relativePath;
     }
 
@@ -229,8 +224,17 @@ public class JogoAudrey extends JFrame {
         this.slotAtual = slot;
     }
 
+    private HobbyQuestAppPanel hobbyQuestAppPanel;
     private ConfiguracoesPanel configuracoesPanel;
     private ImportadorImagem importadorImagem;
+
+    public void mostrarHobbyQuestApp() {
+        cardLayout.show(mainPanel, "hobbyQuestApp");
+        if (hobbyQuestAppPanel != null) {
+            hobbyQuestAppPanel.requestFocusInWindow();
+            hobbyQuestAppPanel.requestFocus();
+        }
+    }
 
     public int getSlotAtual() {
         return this.slotAtual;
@@ -277,6 +281,12 @@ public class JogoAudrey extends JFrame {
             }
         });
         setTitle("hobby Quest");
+        try {
+            String iconePath = resolvePath("icon.png");
+            if (iconePath != null && new java.io.File(iconePath).exists()) {
+                setIconImage(ImageIO.read(new java.io.File(iconePath)));
+            }
+        } catch (Exception ignored) {}
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -289,6 +299,8 @@ public class JogoAudrey extends JFrame {
         menuSlots = new MenuSlots(this);
         configuracoesPanel = new ConfiguracoesPanel(this);
 
+        hobbyQuestAppPanel = new HobbyQuestAppPanel(this);
+        mainPanel.add(hobbyQuestAppPanel, "hobbyQuestApp");
         mainPanel.add(telaCarregamento, "carregamento");
         mainPanel.add(cutscenePanel, "cutscene");
         mainPanel.add(menuPrincipal, "menuPrincipal");
@@ -312,8 +324,14 @@ public class JogoAudrey extends JFrame {
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setVisible(true);
+        toFront();
+        requestFocus();
 
-        cardLayout.show(mainPanel, "menuPrincipal");
+        if (modoDiretoJogo) {
+            cardLayout.show(mainPanel, "menuPrincipal");
+        } else {
+            cardLayout.show(mainPanel, "hobbyQuestApp");
+        }
         GerenciadorAudio.tocarMusicaFundo();
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -380,7 +398,7 @@ public class JogoAudrey extends JFrame {
 
     private Game minigame;
 
-    public void iniciarEasterEgg() {
+    public void iniciarMinigame() {
         if (minigame == null) {
             minigame = new Game();
             minigame.parentFrame = JogoAudrey.this;
@@ -390,7 +408,7 @@ public class JogoAudrey extends JFrame {
         minigame.requestFocusInWindow();
     }
 
-    public void voltarDoEasterEgg() {
+    public void encerrarMinigame() {
         if (minigame != null) {
             mainPanel.remove(minigame);
             minigame = null;
@@ -820,7 +838,13 @@ public class JogoAudrey extends JFrame {
         mainPanel.repaint();
     }
 
+    public static boolean modoDiretoJogo = false;
+
     public static void main(String[] args) {
+        if (args != null && args.length > 0 && "game".equalsIgnoreCase(args[0])) {
+            modoDiretoJogo = true;
+        }
+
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {}
@@ -1046,7 +1070,7 @@ class TelaCarregamento extends JPanel implements ActionListener {
 class MenuPrincipal extends JPanel implements ActionListener {
 
     private JogoAudrey frame;
-    private JButton btnPlay, btnContinuar, btnConfig, btnSobre, btnSair;
+    private JButton btnPlay, btnContinuar, btnConfig, btnSobre, btnVoltarApp;
     private JButton btnSuporte, btnPerfil;
     private Font fontCrayonHand, fontTitulo;
     private Color corPrincipal;
@@ -1112,9 +1136,9 @@ class MenuPrincipal extends JPanel implements ActionListener {
         btnSobre.addActionListener(e -> mostrarSobre());
         add(btnSobre);
 
-        btnSair = criarBotao("SAIR");
-        btnSair.addActionListener(e -> frame.confirmarSaida());
-        add(btnSair);
+        btnVoltarApp = criarBotao("VOLTAR AO APP 🏠");
+        btnVoltarApp.addActionListener(e -> frame.mostrarHobbyQuestApp());
+        add(btnVoltarApp);
 
         // Botao de suporte (?)
         btnSuporte = new JButton("?") {
@@ -1179,17 +1203,16 @@ class MenuPrincipal extends JPanel implements ActionListener {
         int w = getWidth();
         int h = getHeight();
         int bw = Math.max(240, w / 4);
-        int bh = Math.max(55, h / 12);
-        int bx = (int) (w * 0.05); // alinhado a esquerda
-        int startY = (int) (h * 0.35); // subiu para cima
-        int gap = (int) (h * 0.11); // espaçamento maior entre botoes
-        JButton[] btns = {btnPlay, btnContinuar, btnConfig, btnSobre, btnSair};
+        int bh = Math.max(48, h / 14);
+        int bx = (int) (w * 0.05);
+        int startY = (int) (h * 0.28);
+        int gap = (int) (h * 0.11);
+        JButton[] btns = {btnPlay, btnContinuar, btnConfig, btnSobre, btnVoltarApp};
         for (int i = 0; i < btns.length; i++) {
             if (btns[i] != null) {
                 btns[i].setBounds(bx, startY + i * gap, bw, bh);
             }
         }
-        // Botoes de canto superior direito
         int btnSize = 44;
         int margin = 16;
         if (btnPerfil != null) {
@@ -2456,7 +2479,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
     private int posArmarioX = 650;
     private int posNicolasXSalaAula = 500;
     private int posPortaX = 300;
-    private int cliquesArmarioEasterEgg = 0;
+    private int contadorCliquesArmario = 0;
 
     private int puertaSaidaX = 20;
     private int puertaSaidaLargura = 80;
@@ -2876,7 +2899,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             } else if (indiceMapa == 1) {
                 g2d.drawImage(fundoCenario2, 0, 0, LARGURA, ALTURA, this);
 
-                // Easter egg invisível no armário do Corredor 2 (sem highlight visual)
+                // Interação oculta com o armário do Corredor 2
 
                 if (!personagensNaBiblioteca) {
                     int npcBaseY = audreyY + 150;
@@ -5847,7 +5870,7 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
         int realX = p.x;
         int realY = p.y;
         
-        // Easter egg: Clicar 3 vezes seguidas no armário em Vermelho Vivo (Corredor 2 ou Armário Aberto)
+        // Verificar interação com área superior do armário
         boolean ehArmarioDeCima = false;
         if (armarioEstaAberto) {
             int imgW = (imgArmarioAberto != null) ? imgArmarioAberto.getWidth(this) : 800;
@@ -5860,39 +5883,35 @@ class JogoPanel extends JPanel implements ActionListener, KeyListener, MouseList
             int lx = (LARGURA - lw) / 2;
             int ly = (ALTURA - 150 - lh) / 2;
 
-            // Os dois armários de cima ocupam a metade superior da imagem dos armários
+            // Metade superior da imagem dos armários
             if (realX >= lx && realX <= lx + lw && realY >= ly && realY <= ly + (lh / 2)) {
                 ehArmarioDeCima = true;
             }
         } else if (indiceMapa == 1) {
-            // No Corredor 2 (indiceMapa == 1), na área do armário
+            // Corredor 2 — zona do armário
             if (realX >= 50 && realX <= 250 && realY >= 150 && realY <= 370) {
                 ehArmarioDeCima = true;
             }
         } else if (indiceMapa == 0 && Math.abs(audreyX - posArmarioX) < 250) {
-            // No Corredor 1 (indiceMapa == 0), na área do armário
+            // Corredor 1 — zona do armário
             if (realX >= 500 && realX <= 800 && realY >= 50 && realY <= 450) {
                 ehArmarioDeCima = true;
             }
         }
 
         if (ehArmarioDeCima) {
-            cliquesArmarioEasterEgg++;
-            System.out.println("Easter Egg: Clicou nos armários de cima! Clique " + cliquesArmarioEasterEgg + "/3");
-            if (cliquesArmarioEasterEgg >= 3) {
-                cliquesArmarioEasterEgg = 0;
-                System.out.println("Easter Egg: 3 cliques seguidos nos armários de cima! Iniciando minigame...");
+            contadorCliquesArmario++;
+            if (contadorCliquesArmario >= 3) {
+                contadorCliquesArmario = 0;
                 try {
-                    frame.iniciarEasterEgg();
-                    System.out.println("Easter Egg: Jogo 3D iniciado com sucesso!");
+                    frame.iniciarMinigame();
                 } catch (Exception ex) {
-                    System.out.println("Easter Egg ERRO: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }
         } else {
-            // Clicou fora dos dois armários de cima: reseta a contagem de cliques seguidos
-            cliquesArmarioEasterEgg = 0;
+            // Reinicia contagem ao clicar fora
+            contadorCliquesArmario = 0;
         }
 
         // 1. Botões do Topo (Menu, Mochila, Diário, Missões, Fechar)
