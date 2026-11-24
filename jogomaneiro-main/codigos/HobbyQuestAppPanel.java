@@ -3695,83 +3695,85 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     // 4. TELA OBJETIVOS
     // ==========================================
     private void desenharObjetivos(Graphics2D g2, int cx, int w, int h) {
-        // ── Header pill estilizado: 🎯 OBJETIVOS com decorações ──
-        int headW = 300, headH = 50;
-        int headX = cx + (CONTAINER_W - headW) / 2;
-        int headY = 14;
+        // ── Título estilo Perfil / Scrapbook ──
+        g2.setFont(fontTitulo.deriveFont(38f));
+        String titulo = "MEUS OBJETIVOS";
+        FontMetrics fmTit = g2.getFontMetrics();
+        int titW = fmTit.stringWidth(titulo);
+        int titX = cx + (CONTAINER_W - titW) / 2;
+        int titY = 46;
 
-        // Aura coral pulsando atrás do header
-        float titleGlow = (float)(0.72 + 0.28 * Math.sin(animTicks * 2.3));
-        g2.setColor(new Color(240, 120, 90, (int)(28 * titleGlow)));
-        g2.fillRoundRect(headX - 8, headY - 6, headW + 16, headH + 12, 32, 32);
+        // Fita washi tape decorativa atrás do título
+        desenharWashiTapePoas(g2, titX + titW / 2 - 60, titY - 24, 120, 16, new Color(255, 235, 170, 150), 0);
 
-        // Fundo creme
-        g2.setColor(new Color(255, 250, 230));
-        g2.fillRoundRect(headX, headY, headW, headH, 26, 26);
+        // Outline branco e texto coral/scrapbook
+        g2.setColor(Color.WHITE);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -2; dy <= 2; dy++) {
+                if (dx != 0 || dy != 0) g2.drawString(titulo, titX + dx, titY + dy);
+            }
+        }
+        g2.setColor(new Color(235, 115, 95));
+        g2.drawString(titulo, titX, titY);
 
-        // Borda tracejada coral
-        g2.setColor(COLOR_CORAL);
-        g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{6, 4}, 0));
-        g2.drawRoundRect(headX, headY, headW, headH, 26, 26);
+        // Estrelinhas e sparkles ao lado do título (igual Perfil)
+        desenharBrilhoCintilante(g2, titX - 35, titY - 12, 10, new Color(255, 215, 75));
+        desenharEstrela(g2, titX - 60, titY - 8, 9, animTicks * 1.1 % 360);
+        desenharBrilhoCintilante(g2, titX + titW + 35, titY - 12, 10, new Color(255, 215, 75));
+        desenharEstrela(g2, titX + titW + 60, titY - 8, 9, -(animTicks * 1.1 % 360));
 
-        // Ícone e texto
-        g2.setFont(new Font("SansSerif", Font.PLAIN, 24));
-        g2.drawString("\uD83C\uDFAF", headX + 18, headY + 34);
-        g2.setColor(new Color(45, 45, 45));
-        g2.setFont(fontCabin.deriveFont(Font.BOLD, 26f));
-        g2.drawString("OBJETIVOS", headX + 58, headY + 34);
+        // ── Banner guia creme estilo Perfil / Ajuda ──
+        int centerW = CONTAINER_W - 40;
+        int centerX = cx + 20;
+        int banY = titY + 14;
+        int banH = 34;
 
-        // Estrelinhas ao lado do header
-        desenharBrilhoCintilante(g2, headX - 20, headY + headH / 2, 9, new Color(255, 215, 75));
-        desenharEstrela(g2, headX - 44, headY + headH / 2 - 5, 10, animTicks * 1.1 % 360);
-        desenharBrilhoCintilante(g2, headX + headW + 20, headY + headH / 2, 9, new Color(255, 215, 75));
-        desenharEstrela(g2, headX + headW + 44, headY + headH / 2 - 5, 10, -(animTicks * 1.1 % 360));
-
-        // Washi tapes decorando o header
-        desenharWashiTapePoas(g2, headX + 10, headY - 8, 46, 14, new Color(255, 200, 220, 220), -4);
-        desenharFitaScrapbook(g2, headX + headW - 56, headY - 8, 46, 14, new Color(255, 230, 140, 220), 4);
-
-        // Divisória horizontal suave com flores nas pontas
-        g2.setColor(new Color(200, 210, 220, 120));
-        g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 5}, 0));
-        g2.drawLine(cx + 50, 74, cx + CONTAINER_W - 50, 74);
-        desenharBrilhoCintilante(g2, cx + 36, 74, 5, new Color(200, 215, 240));
-        desenharBrilhoCintilante(g2, cx + CONTAINER_W - 36, 74, 5, new Color(200, 215, 240));
+        g2.setColor(new Color(255, 250, 225, 220));
+        g2.fillRoundRect(centerX + 40, banY, centerW - 80, banH, 18, 18);
+        g2.setColor(new Color(230, 205, 130, 180));
+        g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{5, 4}, 0));
+        g2.drawRoundRect(centerX + 40, banY, centerW - 80, banH, 18, 18);
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 13f));
+        g2.setColor(new Color(150, 115, 60));
+        String bannerTxt = "Marque suas metas di\u00e1rias para ganhar XP e subir de n\u00edvel!";
+        FontMetrics fmBan = g2.getFontMetrics();
+        g2.drawString(bannerTxt, centerX + (centerW - fmBan.stringWidth(bannerTxt)) / 2, banY + 22);
+        g2.setStroke(new BasicStroke(1.5f));
 
         // Ponto inicial vertical com desconto de scroll
-        int startY = 80 - scrollY;
+        int startY = banY + banH + 16 - scrollY;
 
-        // Espaçamento bem ajustado entre os blocos de hobby
-        int gapSecoes = 22;
+        // Espaçamento entre os blocos de hobby
+        int gapSecoes = 18;
 
         // Seção Leitura 📖
-        int yFimLeitura = desenharSecaoObjetivo(g2, cx, startY, "Leitura \uD83D\uDCD6", COLOR_PILL_LEITURA,
+        int yFimLeitura = desenharSecaoObjetivo(g2, cx, startY, "Leitura", COLOR_PILL_LEITURA,
                 metasLeitura, txtNovaMetaLeitura, btnAddLeitura, btnRefLeitura);
 
         // Seção Arte 🎨
-        int yFimArte = desenharSecaoObjetivo(g2, cx, yFimLeitura + gapSecoes, "Arte \uD83C\uDFA8", COLOR_PILL_ARTE,
+        int yFimArte = desenharSecaoObjetivo(g2, cx, yFimLeitura + gapSecoes, "Arte", COLOR_PILL_ARTE,
                 metasArte, txtNovaMetaArte, btnAddArte, btnRefArte);
 
         // Seção Fitness 🏋️
-        int yFimFitness = desenharSecaoObjetivo(g2, cx, yFimArte + gapSecoes, "Fitness 🏋️", COLOR_PILL_FITNESS,
+        int yFimFitness = desenharSecaoObjetivo(g2, cx, yFimArte + gapSecoes, "Fitness", COLOR_PILL_FITNESS,
                 metasFitness, txtNovaMetaFitness, btnAddFitness, btnRefFitness);
 
         // Cálculo dinâmico do limite de rolagem com margem inferior ampla
-        int conteudoTotal = (yFimFitness + scrollY) - 78;
-        int areaVisivel = (h - 78) - 78;
-        maxScrollObjetivos = Math.max(0, conteudoTotal - areaVisivel + 40);
+        int conteudoTotal = (yFimFitness + scrollY) - (banY + banH + 16);
+        int areaVisivel = h - (banY + banH + 16) - 68;
+        maxScrollObjetivos = Math.max(0, conteudoTotal - areaVisivel + 30);
 
         // Barra de rolagem discreta e elegante quando o conteúdo excede o espaço
         if (maxScrollObjetivos > 0) {
-            int barX = cx + CONTAINER_W - 10;
-            int barY = 78;
+            int barX = cx + CONTAINER_W - 8;
+            int barY = banY + banH + 16;
             int barH = areaVisivel;
             g2.setColor(new Color(0, 0, 0, 15));
             g2.fillRoundRect(barX, barY, 5, barH, 4, 4);
 
             int thumbH = Math.max(26, (int) ((double) areaVisivel / (conteudoTotal + 15) * barH));
             int thumbY = barY + (int) ((double) scrollY / maxScrollObjetivos * (barH - thumbH));
-            g2.setColor(new Color(82, 135, 111, 150));
+            g2.setColor(new Color(235, 115, 95, 160));
             g2.fillRoundRect(barX, thumbY, 5, thumbH, 4, 4);
         }
 
@@ -3882,9 +3884,9 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
 
         // Texto branco na pílula
         g2.setColor(Color.WHITE);
-        g2.setFont(fontCabin.deriveFont(20f));
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 18f));
         FontMetrics fmP = g2.getFontMetrics();
-        g2.drawString(tituloSecao, pillX + (pillW - fmP.stringWidth(tituloSecao)) / 2, y + 32);
+        g2.drawString(tituloSecao, pillX + (pillW - fmP.stringWidth(tituloSecao)) / 2, y + 33);
 
         // Renderizar cada meta da lista — largura proporcional
         int curY = y + headerAreaH;
