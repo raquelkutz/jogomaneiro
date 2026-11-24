@@ -3995,8 +3995,8 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         desenharFitaScrapbook(g2, titX + fmTit.stringWidth(titulo) - 40, 60, 50, 13, new Color(200, 185, 240, 210), 3);
 
         // ── Card de Apresentação / Guia (igual ao estilo do botão Nome do perfil) ──
-        int centerW = Math.min(CONTAINER_W - 60, 520);
-        int centerX = cx + (CONTAINER_W - centerW) / 2;
+        int centerW = CONTAINER_W - 50;  // quase toda a largura do container
+        int centerX = cx + 25;           // margem pequena nas laterais
 
         int bannerY = 82;
         int bannerH = 36;
@@ -4053,7 +4053,6 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         };
 
         int cardY = 126;
-        int cardH = 88;
         int gap = 10;
 
         for (int i = 0; i < faqs.length; i++) {
@@ -4061,6 +4060,17 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             String resposta = faqs[i][1];
             String emoji = faqs[i][2];
             String tag = faqs[i][3];
+
+            // Pré-medir o texto para calcular a altura do card
+            g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 16.5f));
+            FontMetrics fmResp = g2.getFontMetrics();
+            int seloSize = 40;
+            int contentX = centerX + 18 + seloSize + 14;
+            int contentW = centerW - (contentX - centerX) - 18;
+            List<String> linhas = quebraTexto(resposta, fmResp, contentW);
+            // Altura: cabeçalho (45px) + linhas texto (18px cada) + padding inferior (16px)
+            int cardH = 45 + linhas.size() * 18 + 16;
+            cardH = Math.max(cardH, 82); // mínimo de altura
 
             // Sombra suave multicamada
             g2.setColor(new Color(0, 0, 0, 12));
@@ -4095,7 +4105,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             // Ícone circular (Selo Scrapbook)
             int seloX = centerX + 18;
             int seloY = cardY + cardH / 2 - 20;
-            int seloSize = 40;
+            // seloSize já definido no pré-passo acima
             // Sombra do selo
             g2.setColor(new Color(0, 0, 0, 10));
             g2.fillOval(seloX + 1, seloY + 2, seloSize, seloSize);
@@ -4111,10 +4121,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             FontMetrics fmE = g2.getFontMetrics();
             g2.drawString(emoji, seloX + (seloSize - fmE.stringWidth(emoji)) / 2, seloY + seloSize / 2 + 7);
 
-            // Conteúdo textual
-            int contentX = seloX + seloSize + 14;
-            int contentW = centerW - (contentX - centerX) - 18;
-
+            // Conteúdo textual – reutiliza contentX/contentW já calculados no pré-passo
             // Mini Badge de Categoria
             g2.setFont(fontCabin.deriveFont(Font.BOLD, 10f));
             g2.setColor(titulos[i]);
@@ -4130,13 +4137,11 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 3}, 0));
             g2.drawLine(contentX, cardY + 44, contentX + contentW - 10, cardY + 44);
 
-            // Resposta em caligrafia limpa
+            // Resposta em caligrafia limpa – todas as linhas (sem truncar)
             g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 16.5f));
             g2.setColor(new Color(75, 65, 60));
-            FontMetrics fmResp = g2.getFontMetrics();
-            List<String> linhas = quebraTexto(resposta, fmResp, contentW);
             int textY = cardY + 62;
-            for (int l = 0; l < Math.min(2, linhas.size()); l++) {
+            for (int l = 0; l < linhas.size(); l++) {
                 g2.drawString(linhas.get(l), contentX, textY + l * 18);
             }
 
