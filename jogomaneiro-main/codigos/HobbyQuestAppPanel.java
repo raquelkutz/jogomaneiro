@@ -3491,15 +3491,15 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.drawLine(centerX + 35, hY + 44, centerX + centerW - 35, hY + 44);
         g2.setStroke(new BasicStroke(1.5f));
 
-        // Layout vertical distribuído para as 3 barras
-        int availableHeight = hH - 64;
+        // Layout vertical distribuído para as 3 seções de hobbies
+        int availableHeight = hH - 60;
         int barSlotH = availableHeight / 3;
         int barAreaW = centerW - 60;
         int barStartX = centerX + 30;
 
-        desenharBarraHobbyRica(g2, barStartX, hY + 54, barAreaW, "LEITURA", "N\u00edvel " + nivelLeitura, xpLeitura % 100, 100, new Color(90, 165, 215), new Color(230, 245, 255));
-        desenharBarraHobbyRica(g2, barStartX, hY + 54 + barSlotH, barAreaW, "ARTE", "N\u00edvel " + nivelArte, xpArte % 100, 100, COLOR_PILL_ARTE, new Color(255, 240, 246));
-        desenharBarraHobbyRica(g2, barStartX, hY + 54 + barSlotH * 2, barAreaW, "FITNESS", "N\u00edvel " + nivelFitness, xpFitness % 100, 100, new Color(135, 195, 60), new Color(245, 253, 235));
+        desenharBarraHobbyRica(g2, barStartX, hY + 54, barAreaW, "LEITURA", "N\u00edvel " + nivelLeitura, xpLeitura % 100, 100, new Color(90, 165, 215), new Color(230, 245, 255), "Meta ativa: Leia 10 páginas por dia", "\uD83D\uDCD6 15 XP acumulados");
+        desenharBarraHobbyRica(g2, barStartX, hY + 54 + barSlotH, barAreaW, "ARTE", "N\u00edvel " + nivelArte, xpArte % 100, 100, COLOR_PILL_ARTE, new Color(255, 240, 246), "Meta ativa: Pratique desenho por 20 minutos", "\uD83C\uDFA8 10 XP acumulados");
+        desenharBarraHobbyRica(g2, barStartX, hY + 54 + barSlotH * 2, barAreaW, "FITNESS", "N\u00edvel " + nivelFitness, xpFitness % 100, 100, new Color(135, 195, 60), new Color(245, 253, 235), "Meta ativa: Caminhada ou treino do dia", "\uD83C\uDFC3 0 XP acumulados");
     }
 
     /** Coluna de stat enriquecida com mini ícone e glow pulsante */
@@ -3531,8 +3531,8 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.drawLine(x + w - 1, y - 30, x + w - 1, y + 28);
     }
 
-    /** Barra de hobby enriquecida com gradiente, cápsula e shimmer */
-    private void desenharBarraHobbyRica(Graphics2D g2, int x, int y, int w, String nome, String nivel, int atual, int max, Color fillCor, Color pillBg) {
+    /** Barra de hobby enriquecida com gradiente, cápsula, meta detalhada e shimmer */
+    private void desenharBarraHobbyRica(Graphics2D g2, int x, int y, int w, String nome, String nivel, int atual, int max, Color fillCor, Color pillBg, String dicaOuMeta, String subStatus) {
         // Tag/Pill fofa com o nome da categoria à esquerda
         g2.setFont(fontCabin.deriveFont(Font.BOLD, 13f));
         FontMetrics fmN = g2.getFontMetrics();
@@ -3562,13 +3562,13 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         // XP atual/max entre o nome e o badge
         String xpTxt = atual + " / " + max + " XP";
         g2.setFont(fontCabin.deriveFont(Font.BOLD, 12f));
-        g2.setColor(new Color(120, 125, 135));
+        g2.setColor(new Color(110, 115, 125));
         FontMetrics fmXp = g2.getFontMetrics();
         g2.drawString(xpTxt, nvX - fmXp.stringWidth(xpTxt) - 14, y + 14);
 
         // Barra de progresso com design arredondado e borda fofa
-        int barY = y + pillH + 6;
-        int barH = 18;
+        int barY = y + pillH + 5;
+        int barH = 16;
 
         // Fundo da barra
         g2.setColor(new Color(230, 235, 242));
@@ -3578,7 +3578,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.drawRoundRect(x, barY, w, barH, barH, barH);
 
         // Preenchimento com gradiente de cor suave
-        int fw = (int) (w * Math.max(0.05, Math.min(1.0, (double) atual / max)));
+        int fw = (int) (w * Math.max(0.04, Math.min(1.0, (double) atual / max)));
         Color fillTop = new Color(
             Math.min(255, fillCor.getRed() + 35),
             Math.min(255, fillCor.getGreen() + 35),
@@ -3614,6 +3614,29 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         if (fw > 10) {
             desenharBrilhoCintilante(g2, x + fw, barY + barH / 2, 4, Color.WHITE);
         }
+
+        // ── DETALHES EXTRAS PARA PREENCHER O ESPAÇO ENTRE AS LINHAS ──
+        int detY = barY + barH + 15;
+
+        // Marcador/ícone de check ou estrela fofo
+        desenharEstrela(g2, x + 5, detY - 4, 5, 0);
+
+        // Texto da meta / atividade recomendada
+        g2.setFont(fontCabin.deriveFont(Font.ITALIC, 12f));
+        g2.setColor(new Color(95, 100, 110));
+        g2.drawString(dicaOuMeta, x + 16, detY);
+
+        // Status secundário à direita (ex: XP acumulado, taxa de conclusão)
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 11f));
+        g2.setColor(fillCor.darker());
+        FontMetrics fmSub = g2.getFontMetrics();
+        g2.drawString(subStatus, x + w - fmSub.stringWidth(subStatus), detY);
+
+        // Linha pontilhada delicada de separação no final do slot
+        g2.setColor(new Color(215, 225, 238, 120));
+        g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 4}, 0));
+        g2.drawLine(x, detY + 10, x + w, detY + 10);
+        g2.setStroke(new BasicStroke(1.5f));
     }
 
     private void desenharWashiTape(Graphics2D g2, int x, int y, int w, int h, Color cor) {
