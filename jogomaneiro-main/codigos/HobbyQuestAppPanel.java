@@ -181,7 +181,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     private String[] avatarNomes = {"Gabi", "Victor", "Nicollas", "Quel", "Camiz", "May", "Ivi"};
     private String[] avatarArquivos = {
         "gabi_personagem-removebg-preview.png",
-        "victor_personagem.png",
+        "victor_portrait.png",
         "portrait_nicollas-removebg-preview.png",
         "quel (1).png",
         "camiz (1).png",
@@ -189,6 +189,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         "ivi_portrait.png"
     };
     private BufferedImage[] avatarImagens = new BufferedImage[7];
+    private Rectangle[] avatarLimites = new Rectangle[7];
     private int avatarSelecionado = 0;
     private BufferedImage imgFundoCaderno = null;
     private BufferedImage imgBtnEntrar = null;
@@ -340,12 +341,80 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     private void carregarAvatares() {
         for (int i = 0; i < avatarArquivos.length; i++) {
             try {
-                File f = new File(JogoAudrey.resolvePath(avatarArquivos[i]));
-                if (f.exists()) {
-                    avatarImagens[i] = ImageIO.read(f);
+                String p = JogoAudrey.resolvePath(avatarArquivos[i]);
+                if (p != null) {
+                    File f = new File(p);
+                    if (f.exists()) {
+                        avatarImagens[i] = ImageIO.read(f);
+                        avatarLimites[i] = calcularLimitesConteudo(avatarImagens[i]);
+                    }
                 }
             } catch (Exception ignored) {}
         }
+    }
+
+    private Rectangle calcularLimitesConteudo(BufferedImage img) {
+        if (img == null) return null;
+        int w = img.getWidth();
+        int h = img.getHeight();
+        int minX = w, maxX = 0, minY = h, maxY = 0;
+        boolean found = false;
+        for (int y = 0; y < h; y += 2) {
+            for (int x = 0; x < w; x += 2) {
+                int rgb = img.getRGB(x, y);
+                int a = (rgb >> 24) & 0xFF;
+                int r = (rgb >> 16) & 0xFF;
+                int g = (rgb >> 8) & 0xFF;
+                int b = rgb & 0xFF;
+                if (a > 25 && (r < 250 || g < 250 || b < 250)) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                    found = true;
+                }
+            }
+        }
+        if (!found) return new Rectangle(0, 0, w, h);
+        return new Rectangle(minX, minY, Math.max(1, maxX - minX), Math.max(1, maxY - minY));
+    }
+
+    private void desenharAvatarProporcional(Graphics2D g2, int index, int destX, int destY, int destW, int destH, boolean isCircle) {
+        if (index < 0 || index >= avatarImagens.length || avatarImagens[index] == null) return;
+        BufferedImage img = avatarImagens[index];
+        Rectangle b = (avatarLimites != null && index < avatarLimites.length) ? avatarLimites[index] : null;
+        if (b == null) {
+            b = new Rectangle(0, 0, img.getWidth(), img.getHeight());
+        }
+
+        // Foco no rosto/cabeça: enquadramento proporcional e centralizado
+        double boxSize = Math.max(b.width, b.height * 0.88);
+        double srcX = b.x + (b.width - boxSize) / 2.0;
+        double srcY = b.y - (boxSize * 0.04);
+
+        if (srcX < 0) srcX = 0;
+        if (srcY < 0) srcY = 0;
+        if (srcX + boxSize > img.getWidth()) boxSize = img.getWidth() - srcX;
+        if (srcY + boxSize > img.getHeight()) boxSize = img.getHeight() - srcY;
+
+        Shape oldClip = g2.getClip();
+        Object oldHint = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+        if (isCircle) {
+            g2.setClip(new Ellipse2D.Float(destX, destY, destW, destH));
+        } else {
+            g2.setClip(new Rectangle(destX, destY, destW, destH));
+        }
+
+        g2.drawImage(img,
+            destX, destY, destX + destW, destY + destH,
+            (int)srcX, (int)srcY, (int)(srcX + boxSize), (int)(srcY + boxSize),
+            null
+        );
+
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldHint != null ? oldHint : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g2.setClip(oldClip);
     }
 
     private void inicializarCamposLogin() {
@@ -3993,7 +4062,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.fillRect(11, 11, fotoW, fotoH);
 
         if (avatarImagens[avatarSelecionado] != null) {
-            g2.drawImage(avatarImagens[avatarSelecionado], 11, 11, fotoW, fotoH, null);
+            desenharAvatarProporcional(g2, avatarSelecionado, 11, 11, fotoW, fotoH, false);
         } else {
             g2.setColor(COLOR_PURPLE_BADGE);
             g2.fillOval(fotoW / 2 - 25 + 11, fotoH / 2 - 25 + 11, 50, 50);
@@ -4073,11 +4142,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             g2.drawOval(ab.x, abY, ab.width, ab.height);
 
             if (avatarImagens[i] != null) {
-                // Clip circular
-                Shape oldClip = g2.getClip();
-                g2.setClip(new Ellipse2D.Float(ab.x + 3, abY + 3, ab.width - 6, ab.height - 6));
-                g2.drawImage(avatarImagens[i], ab.x + 3, abY + 3, ab.width - 6, ab.height - 6, null);
-                g2.setClip(oldClip);
+                desenharAvatarProporcional(g2, i, ab.x + 3, abY + 3, ab.width - 6, ab.height - 6, true);
             }
 
             // Estrelinha no avatar selecionado
