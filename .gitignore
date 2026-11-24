@@ -1,5 +1,7 @@
 *.class
+*.db
 savegame.db
+bin/
 .vscode/
 *.code-workspace
 build/
