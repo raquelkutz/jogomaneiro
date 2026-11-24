@@ -1094,24 +1094,24 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         }
 
         int btnPerfilW = Math.min(CONTAINER_W - 60, 480);
-        btnTrocarNome.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 236, btnPerfilW, 36);
+        btnTrocarNome.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 285, btnPerfilW, 36);
 
         int cardRowW = Math.min(CONTAINER_W - 60, 520);
         int cardRowX = cx + (CONTAINER_W - cardRowW) / 2;
         int colItemW = (cardRowW - 20) / 2;
-        btnAbrirConquistas.setBounds(cardRowX + colItemW + 20, 410, colItemW, 44);
-        btnLogout.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 468, btnPerfilW, 38);
+        btnAbrirConquistas.setBounds(cardRowX + colItemW + 20, 450, colItemW, 44);
+        btnLogout.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 506, btnPerfilW, 38);
 
         int avatarGap = 10;
         int avatarSize = 50;
         int avatarTotalW = 7 * avatarSize + 6 * avatarGap;
         int avatarStartX = cx + (CONTAINER_W - avatarTotalW) / 2;
         for (int i = 0; i < 7; i++) {
-            avatarBotoes[i].setBounds(avatarStartX + i * (avatarSize + avatarGap), 302, avatarSize, avatarSize);
+            avatarBotoes[i].setBounds(avatarStartX + i * (avatarSize + avatarGap), 332, avatarSize, avatarSize);
         }
 
         int uploadW = Math.min(CONTAINER_W - 60, 260);
-        btnUploadFoto.setBounds(cx + (CONTAINER_W - uploadW) / 2, 362, uploadW, 34);
+        btnUploadFoto.setBounds(cx + (CONTAINER_W - uploadW) / 2, 394, uploadW, 34);
     }
 
     // ==========================================
@@ -4047,12 +4047,12 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
 
         // ── Polaroid flutuante com washi tape ──
         AffineTransform old = g2.getTransform();
-        int polW = 126;
-        int polH = 148;
+        int polW = 182;
+        int polH = 214;
         int polX = headCX - polW / 2;
         // Flutuação suave do polaroid
         int floatPol = (int)(Math.sin(animTicks * 2.0) * 2.5);
-        g2.translate(polX, 74 + floatPol);
+        g2.translate(polX, 58 + floatPol);
         g2.rotate(Math.toRadians(-2));
 
         // Aura luminosa ao redor do polaroid
