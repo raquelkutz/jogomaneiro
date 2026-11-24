@@ -230,6 +230,9 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     private Rectangle btnUploadFoto = new Rectangle();
     private BufferedImage fotoCustomizada = null;
     private Rectangle avatarLimiteCustom = null;
+    // Overlay de conquistas
+    private boolean mostrandoConquistas = false;
+    private Rectangle btnFecharConquistas = new Rectangle();
 
     // Hover
     private boolean hoverIniciar = false;
@@ -983,6 +986,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         int h = getHeight();
         CONTAINER_W = getContainerW();
         int cx = (w - CONTAINER_W) / 2;
+        sincronizarNiveis();
 
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1052,6 +1056,18 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         if (telaAtual <= 4) {
             desenharBarraNavegacao(g2, cx, w, h);
         }
+
+        // Overlay de conquistas (desenhado por cima de tudo)
+        if (mostrandoConquistas) {
+            desenharOverlayConquistas(g2, w, h);
+        }
+    }
+
+    /** Mantém os níveis coerentes com o XP acumulado (100 XP por nível). */
+    private void sincronizarNiveis() {
+        nivelLeitura = 1 + Math.max(0, xpLeitura) / 100;
+        nivelArte = 1 + Math.max(0, xpArte) / 100;
+        nivelFitness = 1 + Math.max(0, xpFitness) / 100;
     }
 
     private void atualizarGeometriaRelativa(int cx, int w, int h) {
@@ -1073,19 +1089,22 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         btnOlhoSenha.setBounds(eyeX, layout.inputY(1) + 6, eyeWidth, eyeHeight);
         btnOlhoConfirmaSenha.setBounds(eyeX, layout.inputY(3) + 6, eyeWidth, eyeHeight);
 
-        // Botão INICIAR JORNADA — proporcional à tela
-        int jornadaW = Math.min(CONTAINER_W - 80, 750);
-        btnIniciarJornada.setBounds(cx + (CONTAINER_W - jornadaW) / 2, 140, jornadaW, 76);
+        // Botão INICIAR JORNADA — proporcional à tela (largura máxima confortável)
+        int jornadaW = Math.min(CONTAINER_W - 80, 620);
+        btnIniciarJornada.setBounds(cx + (CONTAINER_W - jornadaW) / 2, 146, jornadaW, 72);
 
-        // Cards de hobby — 3 colunas proporcionais preenchendo o container
-        int gridGap = 24;
-        int gridW = CONTAINER_W - 40;
-        int gridX = cx + 20;
-        int cardW = (gridW - gridGap * 2) / 3;
-        int cardH = Math.min(260, Math.max(160, (int)(cardW * 0.52f)));
-        cardArte.setBounds(gridX, 245, cardW, cardH);
-        cardLeitura.setBounds(gridX + cardW + gridGap, 245, cardW, cardH);
-        cardFitness.setBounds(gridX + (cardW + gridGap) * 2, 245, cardW, cardH);
+        // Cards de hobby — grid centralizada com largura máxima (evita cards gigantes em telas grandes)
+        int gridGap = 22;
+        int gridMaxW = Math.min(CONTAINER_W - 40, 960);
+        int cardW = Math.min((gridMaxW - gridGap * 2) / 3, 300);
+        int cardH = Math.max(196, Math.min(272, (int)(cardW * 0.80f) + Math.max(0, (h - 780) / 12)));
+        cardH = Math.min(cardH, Math.max(150, (h - 78) - 252 - 110));
+        int totalGridW = cardW * 3 + gridGap * 2;
+        int gridX = cx + (CONTAINER_W - totalGridW) / 2;
+        int gridY = 252;
+        cardArte.setBounds(gridX, gridY, cardW, cardH);
+        cardLeitura.setBounds(gridX + cardW + gridGap, gridY, cardW, cardH);
+        cardFitness.setBounds(gridX + (cardW + gridGap) * 2, gridY, cardW, cardH);
 
         // Nav bar — proporcional à largura total da janela
         int navTabW = w / 5;
@@ -1686,7 +1705,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         Graphics2D fita = (Graphics2D)g2.create();
         fita.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         fita.translate(x + w / 2.0, y + h / 2.0);
-        fita.rotate(angulo);
+        fita.rotate(Math.toRadians(angulo));
         fita.translate(-w / 2.0, -h / 2.0);
         fita.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.78f));
         fita.setColor(new Color(80, 65, 50, 25));
@@ -2965,17 +2984,23 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.setColor(COLOR_GREEN_TITLE);
         g2.drawString(titulo, tx, 68);
 
-        // Subtítulo em itálico
+        // Saudação personalizada em itálico
+        String primeiroNome = (nomeJogador != null && !nomeJogador.trim().isEmpty())
+                ? nomeJogador.trim() : "Aventureiro";
+        if (primeiroNome.length() > 1) {
+            primeiroNome = Character.toUpperCase(primeiroNome.charAt(0)) + primeiroNome.substring(1);
+        }
         g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 22f));
         g2.setColor(new Color(70, 70, 70));
-        String sub = "Bem-vindo de volta! \u2728";
         FontMetrics fmS = g2.getFontMetrics();
+        String sub = encurtarTexto("Bem-vindo de volta, " + primeiroNome + "!", fmS, CONTAINER_W - 180);
         int subX = cx + (CONTAINER_W - fmS.stringWidth(sub)) / 2;
         g2.drawString(sub, subX, 105);
 
         // Enfeites ao lado do subtítulo (notas musicais e coraçãozinho)
         desenharCoracaoRabisco(g2, subX - 26, 102, 12, new Color(248, 160, 180, 190));
-        desenharNotasMusicais(g2, subX + fmS.stringWidth(sub) + 16, 98, new Color(175, 145, 215, 190));
+        desenharBrilhoCintilante(g2, subX + fmS.stringWidth(sub) + 14, 96, 8, new Color(255, 215, 75));
+        desenharNotasMusicais(g2, subX + fmS.stringWidth(sub) + 26, 98, new Color(175, 145, 215, 190));
 
         // Botão "INICIAR JORNADA" — gradiente verde vibrante
         int bx = btnIniciarJornada.x;
@@ -3030,7 +3055,8 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.setFont(fontCabin.deriveFont(28f));
         FontMetrics fmB = g2.getFontMetrics();
         int textX = bx + (bw - fmB.stringWidth("INICIAR JORNADA")) / 2;
-        g2.drawString("INICIAR JORNADA", textX, by + 46);
+        int textY = by + (bh - fmB.getHeight()) / 2 + fmB.getAscent();
+        g2.drawString("INICIAR JORNADA", textX, textY);
 
         // Efeito shimmer diagonal animado sobre o botão
         int shimmerPos = (int)(animTicks * 4.5) % (bw + 80) - 40;
@@ -3051,53 +3077,99 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         desenharCardHobby(g2, cardLeitura, "\ud83d\udcd6", "LEITURA", "Livros e mang\u00e1s", 1);
         desenharCardHobby(g2, cardFitness, "\ud83c\udfcb\ufe0f", "FITNESS", "Exerc\u00edcios di\u00e1rios", 2);
 
-        // Enfeites artesanais ao redor dos cards na Home
-        desenharPlantinhaSuculenta(g2, cx + 8, cardArte.y + cardArte.height - 24, 25);
-        desenharMiniLapis(g2, cx + 22, cardArte.y + cardArte.height + 14, -38);
-        desenharXicaraFofa(g2, cx + CONTAINER_W - 44, cardFitness.y + cardFitness.height - 24, 30, 26);
-        desenharRaminhoFolhas(g2, cx + CONTAINER_W - 22, cardFitness.y + cardFitness.height + 10, 24);
-        desenharPetalaSolta(g2, cardArte.x + cardArte.width + 12, cardArte.y + cardArte.height / 2 - 10, 6, new Color(255, 195, 210), 25);
-        desenharBrilhoCintilante(g2, cardLeitura.x + cardLeitura.width + 12, cardLeitura.y + cardLeitura.height / 2 - 10, 7, new Color(255, 215, 75));
+        // Enfeites artesanais abaixo dos cards (sem cobrir o conteúdo)
+        int cardsBottom = cardArte.y + cardArte.height;
+        desenharPlantinhaSuculenta(g2, cardArte.x + 2, cardsBottom + 3, 20);
+        desenharMiniLapis(g2, cardArte.x + 30, cardsBottom + 16, -38);
+        desenharXicaraFofa(g2, cardFitness.x + cardFitness.width - 32, cardsBottom + 3, 26, 22);
+        desenharRaminhoFolhas(g2, cardFitness.x + cardFitness.width - 72, cardsBottom + 12, 18);
+        desenharPetalaSolta(g2, cardArte.x + cardArte.width + 11, cardArte.y + cardArte.height / 2 - 10, 6, new Color(255, 195, 210), 25);
+        desenharBrilhoCintilante(g2, cardLeitura.x + cardLeitura.width + 11, cardLeitura.y + cardLeitura.height / 2 - 10, 7, new Color(255, 215, 75));
 
-        // ── Bloco de Anotações Bullet Journal "Dica do Dia" ──
-        int noteY = cardArte.y + cardArte.height + 34;
-        int maxNavY = h - 75;
-        if (noteY + 65 <= maxNavY) {
-            int noteW = Math.min(680, (int)(CONTAINER_W * 0.76f));
-            int noteH = Math.min(80, maxNavY - noteY - 10);
-            int noteX = cx + (CONTAINER_W - noteW) / 2;
+        // ── Cartão "Dica do Dia" estilo bullet journal ──
+        int maxNavY = h - 92;
+        int noteW = Math.min(CONTAINER_W - 60, 720);
+        int noteX = cx + (CONTAINER_W - noteW) / 2;
 
+        String[] dicas = {
+            "Reserve 15 minutos para seu hobby e veja sua criatividade florescer!",
+            "Pequenos passos todos os dias constroem grandes conquistas.",
+            "Cada rabisco revela um pouco mais da sua imaginação.",
+            "Alongue-se, respire fundo e volte com a mente renovada.",
+            "Leia algumas páginas hoje: toda aventura começa assim.",
+            "N\u00e3o existe arte errada, s\u00f3 o seu jeito \u00fanico de ver o mundo."
+        };
+        int diaAno = java.time.LocalDate.now().getDayOfYear();
+        String tipMsg = dicas[diaAno % dicas.length];
+
+        Font tipFont = (fontCaveat != null ? fontCaveat : new Font("SansSerif", Font.ITALIC, 18))
+                .deriveFont(Font.PLAIN, 18f);
+        g2.setFont(tipFont);
+        FontMetrics fmTip = g2.getFontMetrics();
+        List<String> linhasTip = quebraTexto(tipMsg, fmTip, noteW - 96);
+        int maxLinhas = 2;
+        int noteH = 60 + Math.min(maxLinhas, Math.max(1, linhasTip.size())) * 20;
+
+        // Centraliza o cartão no espaço livre entre os cards e a barra de navegação
+        int navTop = h - 78;
+        int noteY = cardsBottom + 26;
+        int espacoLivre = (navTop - 14) - noteY - noteH;
+        if (espacoLivre > 0) noteY += espacoLivre / 2;
+        if (noteY + noteH > maxNavY) noteY = maxNavY - noteH;
+
+        if (noteY >= cardsBottom + 14 && noteY + noteH <= maxNavY) {
             // Sombra suave
             g2.setColor(new Color(0, 0, 0, 16));
-            g2.fillRoundRect(noteX + 3, noteY + 4, noteW, noteH, 16, 16);
+            g2.fillRoundRect(noteX + 3, noteY + 4, noteW, noteH, 18, 18);
 
-            // Papel creme delicado
-            g2.setColor(new Color(255, 253, 245));
-            g2.fillRoundRect(noteX, noteY, noteW, noteH, 16, 16);
+            // Papel creme delicado com gradiente
+            GradientPaint paperGrad = new GradientPaint(
+                noteX, noteY, new Color(255, 254, 247),
+                noteX, noteY + noteH, new Color(255, 250, 236));
+            g2.setPaint(paperGrad);
+            g2.fillRoundRect(noteX, noteY, noteW, noteH, 18, 18);
+
+            // Faixa de destaque dourada na lateral esquerda
+            Shape clipNote = g2.getClip();
+            g2.setClip(new RoundRectangle2D.Float(noteX, noteY, noteW, noteH, 18, 18));
+            g2.setColor(new Color(226, 183, 64, 200));
+            g2.fillRect(noteX, noteY, 6, noteH);
+            g2.setClip(clipNote);
 
             // Borda pontilhada costurada
             g2.setColor(new Color(220, 205, 180));
             g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
-            g2.drawRoundRect(noteX + 4, noteY + 4, noteW - 8, noteH - 8, 12, 12);
+            g2.drawRoundRect(noteX + 5, noteY + 5, noteW - 10, noteH - 10, 14, 14);
 
-            // Washi tape prendendo o topo da anotação
+            // Washi tapes prendendo o topo da anotação
             desenharWashiTapePoas(g2, noteX + 24, noteY - 7, 52, 14, new Color(255, 215, 140, 220), -5);
             desenharFitaScrapbook(g2, noteX + noteW - 74, noteY - 7, 50, 14, new Color(248, 175, 192, 220), 4);
 
-            // Ícone e mensagem inspiradora em estilo caligrafia
+            // Aspas decorativas
+            g2.setColor(new Color(226, 183, 64, 110));
+            g2.setFont(fontTitulo.deriveFont(38f));
+            g2.drawString("\u201C", noteX + 20, noteY + 34);
+
+            // Título da dica
             g2.setColor(new Color(90, 80, 65));
             g2.setFont(fontCaveat != null ? fontCaveat.deriveFont(Font.BOLD, 19f) : new Font("SansSerif", Font.BOLD, 18));
-            String tipTitle = "\u2728 Dica de Hoje:";
-            g2.drawString(tipTitle, noteX + 22, noteY + noteH / 2 - 4);
+            g2.drawString("\u2728 Dica de Hoje", noteX + 48, noteY + 28);
 
+            // Mensagem inspiradora (quebra automática, até 2 linhas)
             g2.setColor(new Color(110, 100, 85));
-            g2.setFont(fontCaveat != null ? fontCaveat.deriveFont(Font.PLAIN, 18f) : new Font("SansSerif", Font.PLAIN, 16));
-            String tipMsg = "Reserve 15 minutos para seu hobby e veja sua criatividade florescer!";
-            g2.drawString(tipMsg, noteX + 22, noteY + noteH / 2 + 18);
+            g2.setFont(tipFont);
+            int ly = noteY + 50;
+            for (int i = 0; i < linhasTip.size() && i < maxLinhas; i++) {
+                String linha = linhasTip.get(i);
+                if (i == maxLinhas - 1 && linhasTip.size() > maxLinhas) linha = linha + "...";
+                g2.drawString(linha, noteX + 48, ly);
+                ly += 20;
+            }
 
-            // Estrelinhas e coraçõezinhos decorando o cartão
-            desenharBrilhoCintilante(g2, noteX + noteW - 25, noteY + noteH / 2, 8, new Color(255, 215, 75));
-            desenharCoracaoRabisco(g2, noteX + noteW - 48, noteY + noteH / 2 - 6, 10, new Color(245, 150, 170, 180));
+            // Enfeites no canto direito do cartão
+            desenharBrilhoCintilante(g2, noteX + noteW - 28, noteY + 24, 8, new Color(255, 215, 75));
+            desenharEstrela(g2, noteX + noteW - 52, noteY + 20, 7, animTicks * 1.1 % 360);
+            desenharCoracaoRabisco(g2, noteX + noteW - 78, noteY + noteH - 22, 10, new Color(245, 150, 170, 180));
         }
     }
 
@@ -3188,44 +3260,75 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             g2.fillRoundRect(x, y, w, h, 22, 22);
         }
 
-        // Ícone grande centralizado — tamanho proporcional
-        int iconSize = Math.min(48, Math.max(32, w / 5));
+        // ── Ícone em selo circular ──
+        int badgeR = Math.min(30, Math.max(24, w / 9));
+        int badgeCX = x + w / 2;
+        int badgeCY = y + 54;
+        g2.setColor(new Color(255, 255, 255, 110));
+        g2.fillOval(badgeCX - badgeR - 4, badgeCY - badgeR - 4, (badgeR + 4) * 2, (badgeR + 4) * 2);
+        g2.setColor(new Color(255, 255, 255, 225));
+        g2.fillOval(badgeCX - badgeR, badgeCY - badgeR, badgeR * 2, badgeR * 2);
+        g2.setColor(corBorda);
+        g2.setStroke(new BasicStroke(1.6f));
+        g2.drawOval(badgeCX - badgeR, badgeCY - badgeR, badgeR * 2, badgeR * 2);
+
+        int iconSize = Math.min(34, Math.max(26, badgeR));
         g2.setFont(new Font("SansSerif", Font.PLAIN, iconSize));
         FontMetrics fmI = g2.getFontMetrics();
         int iconW = fmI.stringWidth(icone);
-        g2.drawString(icone, x + (w - iconW) / 2, y + h / 2 - 14);
+        int iconBaseline = badgeCY + (fmI.getAscent() - fmI.getDescent()) / 2;
+        g2.drawString(icone, badgeCX - iconW / 2, iconBaseline);
 
-        // Título com cor do hobby
+        // ── Título com cor do hobby ──
         g2.setColor(corTitulo);
-        float titleSize = Math.min(24f, Math.max(16f, w * 0.1f));
-        g2.setFont(fontCabin.deriveFont(titleSize));
+        float titleSize = Math.min(23f, Math.max(17f, w * 0.085f));
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, titleSize));
         FontMetrics fmT = g2.getFontMetrics();
-        g2.drawString(titulo, x + (w - fmT.stringWidth(titulo)) / 2, y + h / 2 + 16);
+        g2.drawString(titulo, x + (w - fmT.stringWidth(titulo)) / 2, y + 108);
 
-        // Descrição em cinza escuro
+        // ── Descrição ──
         g2.setFont(fontCabin.deriveFont(13f));
-        g2.setColor(new Color(80, 75, 55));
+        g2.setColor(new Color(90, 82, 62));
         FontMetrics fmD = g2.getFontMetrics();
-        g2.drawString(desc, x + (w - fmD.stringWidth(desc)) / 2, y + h / 2 + 36);
+        g2.drawString(desc, x + (w - fmD.stringWidth(desc)) / 2, y + 130);
 
-        // Badge de Nível e XP delicada no rodapé do card
-        int badgeW = Math.min(w - 36, 132);
-        int badgeH = 22;
-        int badgeX = x + (w - badgeW) / 2;
-        int badgeY = y + h - badgeH - 12;
-        g2.setColor(new Color(255, 255, 255, 190));
-        g2.fillRoundRect(badgeX, badgeY, badgeW, badgeH, 11, 11);
-        g2.setColor(corBorda);
-        g2.setStroke(new BasicStroke(0.9f));
-        g2.drawRoundRect(badgeX, badgeY, badgeW, badgeH, 11, 11);
-
-        g2.setFont(fontCabin.deriveFont(Font.BOLD, 11.5f));
-        g2.setColor(corTitulo);
+        // ── Progresso do hobby (nível + XP) ──
         int nv = (idx == 0) ? nivelArte : (idx == 1) ? nivelLeitura : nivelFitness;
         int xp = (idx == 0) ? xpArte : (idx == 1) ? xpLeitura : xpFitness;
-        String xpTxt = "⭐ Nv." + nv + " • " + xp + " XP";
+        float progresso = Math.min(1f, (xp % 100) / 100f);
+
+        int barX = x + 20;
+        int barW = w - 40;
+        int barY = y + h - 30;
+        int barH = 9;
+
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 12f));
+        g2.setColor(corTitulo);
+        g2.drawString("Nível " + nv, barX, barY - 9);
+        String xpTxt = xp + " XP";
         FontMetrics fmX = g2.getFontMetrics();
-        g2.drawString(xpTxt, badgeX + (badgeW - fmX.stringWidth(xpTxt)) / 2, badgeY + 15);
+        g2.setColor(new Color(110, 100, 80));
+        g2.drawString(xpTxt, barX + barW - fmX.stringWidth(xpTxt), barY - 9);
+
+        // Trilha da barra
+        g2.setColor(new Color(255, 255, 255, 190));
+        g2.fillRoundRect(barX, barY, barW, barH, barH, barH);
+        g2.setColor(new Color(corBorda.getRed(), corBorda.getGreen(), corBorda.getBlue(), 120));
+        g2.setStroke(new BasicStroke(1f));
+        g2.drawRoundRect(barX, barY, barW, barH, barH, barH);
+
+        // Preenchimento com gradiente do hobby
+        int fillW = Math.max(0, (int)(barW * progresso));
+        if (fillW > 0) {
+            Shape oldClipBar = g2.getClip();
+            g2.setClip(new RoundRectangle2D.Float(barX, barY, barW, barH, barH, barH));
+            GradientPaint fillGrad = new GradientPaint(barX, barY, corAccent, barX + barW, barY, corTitulo);
+            g2.setPaint(fillGrad);
+            g2.fillRoundRect(barX, barY, fillW, barH, barH, barH);
+            g2.setColor(new Color(255, 255, 255, 90));
+            g2.fillRoundRect(barX + 1, barY + 1, Math.max(0, fillW - 2), barH / 2, barH, barH);
+            g2.setClip(oldClipBar);
+        }
 
         if (cardOld != null) g2.setTransform(cardOld);
     }
@@ -3351,9 +3454,9 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         desenharBrilhoCintilante(g2, rX + (rW + fmH.stringWidth("Meus Hobbies")) / 2 + 20, hY + 30, 7, new Color(140, 185, 240));
 
         // Barras de progresso com gradiente animado
-        desenharBarraHobbyRica(g2, rX + 22, hY + 58, rW - 44, "\uD83D\uDCD6 Leitura", "Nível " + nivelLeitura, xpLeitura, 100, new Color(100, 170, 210));
-        desenharBarraHobbyRica(g2, rX + 22, hY + 112, rW - 44, "\uD83C\uDFA8 Arte", "Nível " + nivelArte, xpArte, 100, COLOR_PILL_ARTE);
-        desenharBarraHobbyRica(g2, rX + 22, hY + 166, rW - 44, "\uD83C\uDFCB\uFE0F Fitness", "Nível " + nivelFitness, xpFitness, 100, COLOR_PILL_FITNESS);
+        desenharBarraHobbyRica(g2, rX + 22, hY + 58, rW - 44, "\uD83D\uDCD6 Leitura", "Nível " + nivelLeitura, xpLeitura % 100, 100, new Color(100, 170, 210));
+        desenharBarraHobbyRica(g2, rX + 22, hY + 112, rW - 44, "\uD83C\uDFA8 Arte", "Nível " + nivelArte, xpArte % 100, 100, COLOR_PILL_ARTE);
+        desenharBarraHobbyRica(g2, rX + 22, hY + 166, rW - 44, "\uD83C\uDFCB\uFE0F Fitness", "Nível " + nivelFitness, xpFitness % 100, 100, COLOR_PILL_FITNESS);
     }
 
     /** Coluna de stat enriquecida com mini ícone e glow pulsante */
@@ -3836,158 +3939,259 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     }
 
     // ==========================================
-    // 5. TELA AJUDA
+    // 5. TELA AJUDA (ESTILO SCRAPBOOK COZY IGUAL AO PERFIL)
     // ==========================================
     private void desenharAjuda(Graphics2D g2, int cx, int w, int h) {
-        // Fundo amarelado extra para a tela de ajuda com gradiente
-        GradientPaint ajudaBg = new GradientPaint(cx, 0, new Color(255, 253, 230), cx, h - 78, new Color(252, 246, 210));
+        // Fundo do caderno estilo scrapbook
+        GradientPaint ajudaBg = new GradientPaint(cx, 0, new Color(255, 254, 240), cx, h - 78, new Color(255, 250, 226));
         g2.setPaint(ajudaBg);
         g2.fillRect(cx, 0, CONTAINER_W, h - 78);
 
-        // Re-desenhar linhas do caderno por cima do fundo amarelo
-        g2.setColor(new Color(195, 215, 230, 70));
+        // Linhas suaves de caderno pautado
+        g2.setColor(new Color(195, 215, 230, 65));
         g2.setStroke(new BasicStroke(0.6f));
-        for (int y = 40; y < h; y += 34) {
+        for (int y = 40; y < h - 78; y += 32) {
             g2.drawLine(cx, y, cx + CONTAINER_W, y);
         }
 
-        // Enfeites scrapbook nos cantos do fundo da ajuda
-        desenharFlorComFolhas(g2, cx + 20, 20, 12, new Color(255, 185, 200), false, 0.3);
-        desenharFlorComFolhas(g2, cx + CONTAINER_W - 26, 22, 12, new Color(185, 220, 185), false, -0.3);
-        desenharBrilhoCintilante(g2, cx + 50, 32, 7, new Color(255, 215, 75));
-        desenharBrilhoCintilante(g2, cx + CONTAINER_W - 56, 32, 7, new Color(255, 215, 75));
+        // Enfeites scrapbook florais e estrelinhas nos cantos
+        desenharFlorComFolhas(g2, cx + 24, 22, 13, new Color(255, 185, 215), false, 0.35);
+        desenharFlorComFolhas(g2, cx + CONTAINER_W - 28, 24, 13, new Color(185, 225, 195), false, -0.35);
+        desenharBrilhoCintilante(g2, cx + 58, 32, 8, new Color(255, 215, 75));
+        desenharBrilhoCintilante(g2, cx + CONTAINER_W - 62, 32, 8, new Color(255, 215, 75));
 
-        // Header: ❓ AJUDA (com círculo dourado estilizado atrás do ícone)
-        int headerCX = cx + CONTAINER_W / 2;
-        int iconCircleX = headerCX - 90;
-
-        // Aura dourada pulsante ao redor do círculo de ícone
-        float glow = (float)(0.7 + 0.3 * Math.sin(animTicks * 2.5));
-        g2.setColor(new Color(255, 230, 50, (int)(40 * glow)));
-        g2.fillOval(iconCircleX - 6, 12, 54, 54);
-
-        g2.setColor(COLOR_GOLD_STAR);
-        g2.fillOval(iconCircleX, 18, 42, 42);
-        // Brilho no círculo
-        g2.setColor(new Color(255, 255, 200, 120));
-        g2.fillOval(iconCircleX + 6, 20, 20, 16);
-
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("SansSerif", Font.BOLD, 24));
-        g2.drawString("?", iconCircleX + 13, 47);
-
-        // Título AJUDA com outline e cor
-        g2.setFont(fontTitulo.deriveFont(44f));
+        // ── Título estilizado estilo "MEU PERFIL" ──
+        int headCX = cx + CONTAINER_W / 2;
+        g2.setFont(fontTitulo.deriveFont(42f));
         FontMetrics fmTit = g2.getFontMetrics();
-        int titleX = iconCircleX + 50;
+        String titulo = "AJUDA & DICAS";
+        int titX = headCX - fmTit.stringWidth(titulo) / 2;
+
+        // Aura suave pulsante atrás do título
+        float glow = (float)(0.7 + 0.3 * Math.sin(animTicks * 2.0));
+        g2.setColor(new Color(255, 220, 100, (int)(38 * glow)));
+        g2.fillRoundRect(titX - 18, 14, fmTit.stringWidth(titulo) + 36, 50, 24, 24);
+
+        // Outline branco
         g2.setColor(Color.WHITE);
-        for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) {
-            if (dx!=0||dy!=0) g2.drawString("AJUDA", titleX + dx, 58 + dy);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx != 0 || dy != 0) g2.drawString(titulo, titX + dx, 54 + dy);
+            }
         }
-        g2.setColor(new Color(90, 70, 30));
-        g2.drawString("AJUDA", titleX, 58);
+        g2.setColor(new Color(175, 115, 30));
+        g2.drawString(titulo, titX, 54);
 
-        // Estrelinhas ao lado do título AJUDA
-        desenharEstrela(g2, iconCircleX - 24, 38, 10, animTicks * 1.5 % 360);
-        desenharEstrela(g2, titleX + fmTit.stringWidth("AJUDA") + 24, 36, 10, -(animTicks * 1.5 % 360));
+        // Enfeites ao lado do título (iguais ao perfil)
+        desenharBrilhoCintilante(g2, titX - 22, 40, 10, new Color(255, 215, 75));
+        desenharEstrela(g2, titX - 44, 38, 11, animTicks * 1.4 % 360);
+        desenharFlorComFolhas(g2, titX - 74, 48, 12, new Color(255, 200, 120), false, 0.4);
+        desenharBrilhoCintilante(g2, titX + fmTit.stringWidth(titulo) + 22, 40, 10, new Color(255, 215, 75));
+        desenharEstrela(g2, titX + fmTit.stringWidth(titulo) + 44, 38, 11, -(animTicks * 1.4 % 360));
+        desenharFlorComFolhas(g2, titX + fmTit.stringWidth(titulo) + 74, 48, 12, new Color(185, 220, 245), false, -0.4);
 
-        // Washi tapes decorando abaixo do header
-        desenharWashiTapePoas(g2, cx + 20, 70, 60, 14, new Color(255, 215, 140, 200), -3);
-        desenharFitaScrapbook(g2, cx + CONTAINER_W - 80, 70, 60, 14, new Color(255, 185, 200, 200), 3);
+        // Washi tapes decorando abaixo do título
+        desenharWashiTapePoas(g2, titX - 10, 60, 50, 13, new Color(255, 215, 140, 210), -3);
+        desenharFitaScrapbook(g2, titX + fmTit.stringWidth(titulo) - 40, 60, 50, 13, new Color(200, 185, 240, 210), 3);
 
-        // FAQs com cards aprimorados
+        // ── Card de Apresentação / Guia (igual ao estilo do botão Nome do perfil) ──
+        int centerW = Math.min(CONTAINER_W - 60, 520);
+        int centerX = cx + (CONTAINER_W - centerW) / 2;
+
+        int bannerY = 82;
+        int bannerH = 36;
+        // Sombra
+        g2.setColor(new Color(0, 0, 0, 12));
+        g2.fillRoundRect(centerX + 2, bannerY + 3, centerW, bannerH, 16, 16);
+        // Gradiente creme quente
+        GradientPaint banGrad = new GradientPaint(centerX, bannerY, new Color(255, 253, 220), centerX, bannerY + bannerH, new Color(255, 245, 185));
+        g2.setPaint(banGrad);
+        g2.fillRoundRect(centerX, bannerY, centerW, bannerH, 16, 16);
+        // Borda
+        g2.setColor(new Color(230, 190, 90));
+        g2.setStroke(new BasicStroke(1.3f));
+        g2.drawRoundRect(centerX, bannerY, centerW, bannerH, 16, 16);
+        // Costura interna
+        g2.setColor(new Color(210, 170, 70, 90));
+        g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 3}, 0));
+        g2.drawRoundRect(centerX + 4, bannerY + 4, centerW - 8, bannerH - 8, 12, 12);
+        // Texto
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 13f));
+        g2.setColor(new Color(110, 75, 20));
+        String txtBanner = "\uD83D\uDCA1 Tire suas d\u00favidas e aproveite ao m\u00e1ximo sua jornada!";
+        FontMetrics fmB = g2.getFontMetrics();
+        g2.drawString(txtBanner, centerX + (centerW - fmB.stringWidth(txtBanner)) / 2, bannerY + 23);
+        desenharBrilhoCintilante(g2, centerX + centerW - 18, bannerY + 14, 6, new Color(255, 215, 75));
+        desenharBrilhoCintilante(g2, centerX + 18, bannerY + 14, 6, new Color(255, 215, 75));
+
+        // ── 3 Cards de FAQ estilizados como Scrapbook (largura proporcional centralizada) ──
         String[][] faqs = {
-            {"COMO ADICIONO UMA NOVA META?", "V\u00e1 at\u00e9 a aba \"Objetivos\", digite sua nova meta na caixinha tracejada de qualquer categoria e clique no bot\u00e3o \"+\" ou aperte Enter."},
-            {"ONDE VEJO MINHAS CONQUISTAS?", "Basta clicar no bot\u00e3o \"Perfil\" (o bonequinho no menu inferior). Suas medalhas estar\u00e3o listadas l\u00e1!"},
-            {"COMO GANHO MAIS N\u00cdVEIS?", "Complete as metas na aba \"Objetivos\" e fa\u00e7a o check-in di\u00e1rio. O seu progresso vai encher as barras de cada hobby!"}
+            {"COMO ADICIONO UMA NOVA META?", "V\u00e1 at\u00e9 a aba 'Objetivos', digite sua nova meta na caixinha tracejada e clique no '+' ou aperte Enter no teclado.", "\uD83C\uDFAF", "METAS & MISS\u00d5ES"},
+            {"ONDE VEJO MINHAS CONQUISTAS?", "Basta clicar em 'Perfil' no menu inferior e tocar no bot\u00e3o 'CONQUISTAS' para conferir todas as suas medalhas!", "\uD83C\uDFC6", "CONQUISTAS & MEDALHAS"},
+            {"COMO GANHO MAIS N\u00cdVEIS E XP?", "Complete suas tarefas na aba 'Objetivos' e fa\u00e7a o check-in di\u00e1rio. O progresso enche as barras de cada hobby!", "\uD83D\uDCC8", "N\u00cdVEIS & PROGRESSO"}
         };
-        Color[] faqColors = {
-            new Color(220, 235, 255), // azul claro — 1a pergunta
-            new Color(240, 255, 235), // verde claro — 2a pergunta
-            new Color(255, 240, 230), // pêssego — 3a pergunta
+
+        Color[] cardBg1 = {
+            new Color(248, 252, 255), // azul bebê
+            new Color(255, 253, 240), // creme dourado
+            new Color(246, 255, 248)  // verde menta
         };
-        Color[] faqBordas = {
-            new Color(165, 195, 230),
-            new Color(155, 210, 175),
-            new Color(230, 185, 160),
+        Color[] cardBg2 = {
+            new Color(228, 240, 255),
+            new Color(255, 245, 215),
+            new Color(230, 252, 236)
         };
-        String[] faqPins = {"\uD83D\uDCCC", "\uD83D\uDCCC", "\uD83D\uDCCC"};
+        Color[] bordas = {
+            new Color(160, 195, 235),
+            new Color(235, 195, 115),
+            new Color(150, 215, 175)
+        };
+        Color[] titulos = {
+            new Color(40, 95, 165),
+            new Color(160, 100, 25),
+            new Color(45, 125, 75)
+        };
 
-        int fY = 100;
-        int fW = Math.min(CONTAINER_W - 40, 1100);
-        int fX = cx + (CONTAINER_W - fW) / 2;
+        int cardY = 126;
+        int cardH = 88;
+        int gap = 10;
 
-        for (int fi = 0; fi < faqs.length; fi++) {
-            String[] faq = faqs[fi];
-            int fH = 128;
+        for (int i = 0; i < faqs.length; i++) {
+            String pergunta = faqs[i][0];
+            String resposta = faqs[i][1];
+            String emoji = faqs[i][2];
+            String tag = faqs[i][3];
 
-            // Sombra multicamadas
-            g2.setColor(new Color(0, 0, 0, 10));
-            g2.fillRoundRect(fX + 4, fY + 5, fW, fH, 18, 18);
-            g2.setColor(new Color(0, 0, 0, 7));
-            g2.fillRoundRect(fX + 2, fY + 2, fW, fH, 18, 18);
+            // Sombra suave multicamada
+            g2.setColor(new Color(0, 0, 0, 12));
+            g2.fillRoundRect(centerX + 3, cardY + 4, centerW, cardH, 20, 20);
+            g2.setColor(new Color(0, 0, 0, 8));
+            g2.fillRoundRect(centerX + 1, cardY + 2, centerW, cardH, 20, 20);
 
-            // Card com cor por categoria
-            GradientPaint cardGrad = new GradientPaint(fX, fY, Color.WHITE, fX, fY + fH, faqColors[fi]);
-            g2.setPaint(cardGrad);
-            g2.fillRoundRect(fX, fY, fW, fH, 18, 18);
+            // Fundo gradiente pastel
+            GradientPaint cGrad = new GradientPaint(centerX, cardY, cardBg1[i], centerX, cardY + cardH, cardBg2[i]);
+            g2.setPaint(cGrad);
+            g2.fillRoundRect(centerX, cardY, centerW, cardH, 20, 20);
 
-            // Faixinha colorida lateral esquerda
-            Shape oldClip = g2.getClip();
-            g2.setClip(new java.awt.geom.RoundRectangle2D.Float(fX, fY, 8, fH, 18, 18));
-            g2.setColor(faqBordas[fi]);
-            g2.fillRect(fX, fY, 8, fH);
-            g2.setClip(oldClip);
+            // Borda elegante
+            g2.setColor(bordas[i]);
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.drawRoundRect(centerX, cardY, centerW, cardH, 20, 20);
 
-            // Borda tracejada
-            g2.setColor(faqBordas[fi]);
-            g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{5, 4}, 0));
-            g2.drawRoundRect(fX, fY, fW, fH, 18, 18);
+            // Costura pontilhada interna (estilo scrapbook)
+            g2.setColor(new Color(bordas[i].getRed(), bordas[i].getGreen(), bordas[i].getBlue(), 90));
+            g2.setStroke(new BasicStroke(0.9f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
+            g2.drawRoundRect(centerX + 5, cardY + 5, centerW - 10, cardH - 10, 16, 16);
 
-            // Costura interna
-            g2.setColor(new Color(faqBordas[fi].getRed(), faqBordas[fi].getGreen(), faqBordas[fi].getBlue(), 80));
-            g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 4}, 0));
-            g2.drawRoundRect(fX + 10, fY + 5, fW - 20, fH - 10, 12, 12);
-
-            // Alfinete vermelho 3D (método existente)
-            desenharAlfinete3D(g2, fX + 20, fY - 8);
-
-            // Brilho cintilante no canto do alfinete
-            desenharBrilhoCintilante(g2, fX + 36, fY - 4, 5, new Color(255, 200, 80));
-
-            // Número do FAQ (badge de índice)
-            int badgeR = 14;
-            g2.setColor(faqBordas[fi]);
-            g2.fillOval(fX + fW - badgeR * 2 - 12, fY + fH / 2 - badgeR, badgeR * 2, badgeR * 2);
-            g2.setColor(Color.WHITE);
-            g2.setFont(fontCabin.deriveFont(Font.BOLD, 13f));
-            g2.drawString("" + (fi + 1), fX + fW - badgeR - 7, fY + fH / 2 + 5);
-
-            // Pergunta (título bold)
-            g2.setColor(new Color(35, 65, 135));
-            g2.setFont(fontCabin.deriveFont(Font.BOLD, 16f));
-            g2.drawString(faq[0], fX + 36, fY + 30);
-
-            // Linha decorativa abaixo da pergunta
-            g2.setColor(new Color(faqBordas[fi].getRed(), faqBordas[fi].getGreen(), faqBordas[fi].getBlue(), 150));
-            g2.setStroke(new BasicStroke(1.0f));
-            g2.drawLine(fX + 36, fY + 36, fX + fW - 60, fY + 36);
-
-            // Resposta em itálico (caligrafia)
-            g2.setColor(new Color(65, 65, 65));
-            g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 17f));
-
-            // Quebra de texto automática
-            FontMetrics fmResp = g2.getFontMetrics();
-            int maxW = fW - 72;
-            List<String> linhas = quebraTexto(faq[1], fmResp, maxW);
-            int ly = fY + 56;
-            for (String linha : linhas) {
-                g2.drawString(linha, fX + 36, ly);
-                ly += 22;
+            // Fita washi tape decorativa no cantinho superior esquerdo
+            if (i == 0) {
+                desenharWashiTapePoas(g2, centerX + 12, cardY - 6, 42, 12, new Color(180, 210, 255, 220), -2);
+            } else if (i == 1) {
+                desenharFitaScrapbook(g2, centerX + 12, cardY - 6, 42, 12, new Color(255, 220, 140, 220), 2);
+            } else {
+                desenharWashiTapePoas(g2, centerX + 12, cardY - 6, 42, 12, new Color(190, 240, 205, 220), -2);
             }
 
-            fY += fH + 18;
+            // Ícone circular (Selo Scrapbook)
+            int seloX = centerX + 18;
+            int seloY = cardY + cardH / 2 - 20;
+            int seloSize = 40;
+            // Sombra do selo
+            g2.setColor(new Color(0, 0, 0, 10));
+            g2.fillOval(seloX + 1, seloY + 2, seloSize, seloSize);
+            // Fundo branco do selo
+            g2.setColor(Color.WHITE);
+            g2.fillOval(seloX, seloY, seloSize, seloSize);
+            // Borda do selo
+            g2.setColor(bordas[i]);
+            g2.setStroke(new BasicStroke(1.3f));
+            g2.drawOval(seloX, seloY, seloSize, seloSize);
+            // Emoji centralizado
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 20));
+            FontMetrics fmE = g2.getFontMetrics();
+            g2.drawString(emoji, seloX + (seloSize - fmE.stringWidth(emoji)) / 2, seloY + seloSize / 2 + 7);
+
+            // Conteúdo textual
+            int contentX = seloX + seloSize + 14;
+            int contentW = centerW - (contentX - centerX) - 18;
+
+            // Mini Badge de Categoria
+            g2.setFont(fontCabin.deriveFont(Font.BOLD, 10f));
+            g2.setColor(titulos[i]);
+            g2.drawString("\u2605 " + tag, contentX, cardY + 21);
+
+            // Pergunta (Título)
+            g2.setFont(fontCabin.deriveFont(Font.BOLD, 13.5f));
+            g2.setColor(new Color(50, 45, 40));
+            g2.drawString(pergunta, contentX, cardY + 38);
+
+            // Linha decorativa
+            g2.setColor(new Color(bordas[i].getRed(), bordas[i].getGreen(), bordas[i].getBlue(), 120));
+            g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 3}, 0));
+            g2.drawLine(contentX, cardY + 44, contentX + contentW - 10, cardY + 44);
+
+            // Resposta em caligrafia limpa
+            g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 16.5f));
+            g2.setColor(new Color(75, 65, 60));
+            FontMetrics fmResp = g2.getFontMetrics();
+            List<String> linhas = quebraTexto(resposta, fmResp, contentW);
+            int textY = cardY + 62;
+            for (int l = 0; l < Math.min(2, linhas.size()); l++) {
+                g2.drawString(linhas.get(l), contentX, textY + l * 18);
+            }
+
+            // Estrelinha brilhante no canto superior direito do card
+            desenharBrilhoCintilante(g2, centerX + centerW - 18, cardY + 16, 5, new Color(255, 215, 75));
+
+            cardY += cardH + gap;
+        }
+
+        // ── Nota Scrapbook "Dica de Ouro" (Post-It inferior com washi tape) ──
+        int noteY = cardY + 2;
+        int noteH = 58;
+
+        if (noteY + noteH <= h - 84) {
+            // Sombra
+            g2.setColor(new Color(0, 0, 0, 10));
+            g2.fillRoundRect(centerX + 3, noteY + 3, centerW, noteH, 16, 16);
+
+            // Fundo amarelo post-it
+            GradientPaint postGrad = new GradientPaint(centerX, noteY, new Color(255, 252, 230), centerX, noteY + noteH, COLOR_POSTIT_YELLOW);
+            g2.setPaint(postGrad);
+            g2.fillRoundRect(centerX, noteY, centerW, noteH, 16, 16);
+
+            // Borda pontilhada
+            g2.setColor(new Color(220, 185, 95));
+            g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
+            g2.drawRoundRect(centerX, noteY, centerW, noteH, 16, 16);
+
+            // Fita washi tape central segurando o post-it
+            desenharFitaScrapbook(g2, centerX + centerW / 2 - 32, noteY - 7, 64, 15, new Color(255, 210, 140, 210), -1);
+
+            // Ícone da lâmpada
+            int lampCX = centerX + 32;
+            int lampCY = noteY + noteH / 2;
+            g2.setColor(Color.WHITE);
+            g2.fillOval(lampCX - 16, lampCY - 16, 32, 32);
+            g2.setColor(new Color(230, 190, 80));
+            g2.setStroke(new BasicStroke(1.2f));
+            g2.drawOval(lampCX - 16, lampCY - 16, 32, 32);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 18));
+            FontMetrics fmLamp = g2.getFontMetrics();
+            String lamp = "\uD83D\uDCA1";
+            g2.drawString(lamp, lampCX - fmLamp.stringWidth(lamp) / 2, lampCY + 6);
+
+            // Texto da dica
+            g2.setFont(fontCabin.deriveFont(Font.BOLD, 11.5f));
+            g2.setColor(new Color(145, 95, 20));
+            g2.drawString("DICA DE OURO DO HOBBY QUEST", centerX + 58, noteY + 22);
+
+            g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 15f));
+            g2.setColor(new Color(85, 65, 35));
+            String dicaTexto = "Acesse todos os dias para manter sua ofensiva e desbloquear conquistas!";
+            g2.drawString(dicaTexto, centerX + 58, noteY + 42);
+
+            desenharBrilhoCintilante(g2, centerX + centerW - 20, noteY + noteH / 2, 6, new Color(255, 210, 70));
         }
     }
 
@@ -4007,6 +4211,19 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         }
         if (linhaAtual.length() > 0) linhas.add(linhaAtual.toString());
         return linhas;
+    }
+
+    /** Encurta um texto com reticências para caber em uma largura máxima. */
+    private String encurtarTexto(String texto, FontMetrics fm, int maxW) {
+        if (texto == null || fm.stringWidth(texto) <= maxW) return texto;
+        String reticencias = "...";
+        int limite = maxW - fm.stringWidth(reticencias);
+        StringBuilder sb = new StringBuilder();
+        for (char c : texto.toCharArray()) {
+            if (fm.stringWidth(sb.toString() + c) > limite) break;
+            sb.append(c);
+        }
+        return sb + reticencias;
     }
 
     // ==========================================
@@ -4266,6 +4483,149 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     }
 
     // ==========================================
+    // OVERLAY CONQUISTAS
+    // ==========================================
+    private void desenharOverlayConquistas(Graphics2D g2, int w, int h) {
+        // Fundo escurecido semitransparente
+        g2.setColor(new Color(0, 0, 0, 140));
+        g2.fillRect(0, 0, w, h);
+
+        // Card central estilo scrapbook
+        int cW = Math.min(w - 60, 480);
+        int cH = 340;
+        int cX = (w - cW) / 2;
+        int cY = (h - cH) / 2 - 20;
+
+        // Sombra do card
+        g2.setColor(new Color(0, 0, 0, 60));
+        g2.fillRoundRect(cX + 6, cY + 8, cW, cH, 24, 24);
+
+        // Fundo do card — papel creme
+        GradientPaint cardBg = new GradientPaint(cX, cY, new Color(255, 253, 240), cX, cY + cH, new Color(255, 248, 220));
+        g2.setPaint(cardBg);
+        g2.fillRoundRect(cX, cY, cW, cH, 24, 24);
+
+        // Borda pontilhada decorativa
+        g2.setColor(new Color(200, 180, 140, 180));
+        g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
+            0, new float[]{6, 5}, 0));
+        g2.drawRoundRect(cX + 8, cY + 8, cW - 16, cH - 16, 18, 18);
+        g2.setStroke(new BasicStroke(1f));
+
+        // Washi tape no topo
+        g2.setColor(new Color(255, 200, 100, 180));
+        g2.fillRoundRect(cX + cW / 2 - 40, cY - 10, 80, 20, 8, 8);
+        g2.setColor(new Color(255, 170, 60, 100));
+        for (int px = cX + cW / 2 - 38; px < cX + cW / 2 + 40; px += 10) {
+            g2.fillOval(px, cY - 7, 6, 6);
+        }
+
+        // Título "🏆 Conquistas"
+        g2.setFont(fontTitulo.deriveFont(Font.BOLD, 22f));
+        g2.setColor(new Color(120, 80, 20));
+        String titulo = "\uD83C\uDFC6 Conquistas";
+        FontMetrics fmT = g2.getFontMetrics();
+        g2.drawString(titulo, cX + (cW - fmT.stringWidth(titulo)) / 2, cY + 50);
+
+        // Linha separadora decorativa
+        g2.setColor(new Color(220, 190, 130, 180));
+        g2.setStroke(new BasicStroke(1.5f));
+        g2.drawLine(cX + 24, cY + 60, cX + cW - 24, cY + 60);
+        g2.setStroke(new BasicStroke(1f));
+
+        // Itens de conquistas
+        String[][] itens = {
+            {"\u2B50", "Primeira Jornada", "Desbloqueada!", "1"},
+            {"\uD83D\uDCDA", "Leitora \u00c1vida", "XP: " + xpLeitura + " / 100", String.valueOf(xpLeitura)},
+            {"\uD83C\uDFA8", "Artista Criativa", "XP: " + xpArte + " / 100", String.valueOf(xpArte)},
+            {"\uD83C\uDFCB\uFE0F", "Atleta Focada", "XP: " + xpFitness + " / 100", String.valueOf(xpFitness)}
+        };
+
+        int itemX = cX + 24;
+        int itemY = cY + 80;
+        int itemH = 50;
+        int barMaxW = cW - 120;
+
+        for (String[] item : itens) {
+            String emoji = item[0];
+            String nome  = item[1];
+            String desc  = item[2];
+            int xp = 0;
+            try { xp = Integer.parseInt(item[3]); } catch (Exception ignored) {}
+            boolean desbloqueada = xp > 0 || item[3].equals("1");
+
+            // Fundo do item
+            g2.setColor(desbloqueada ? new Color(255, 245, 200, 180) : new Color(230, 230, 230, 120));
+            g2.fillRoundRect(itemX, itemY, cW - 48, itemH - 4, 12, 12);
+            if (desbloqueada) {
+                g2.setColor(new Color(220, 180, 80, 120));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawRoundRect(itemX, itemY, cW - 48, itemH - 4, 12, 12);
+            }
+
+            // Emoji
+            g2.setFont(fontCabin.deriveFont(20f));
+            g2.setColor(new Color(80, 60, 20));
+            g2.drawString(emoji, itemX + 10, itemY + 30);
+
+            // Nome
+            g2.setFont(fontCabin.deriveFont(Font.BOLD, 13f));
+            g2.setColor(desbloqueada ? new Color(100, 65, 10) : new Color(140, 140, 140));
+            g2.drawString(nome, itemX + 44, itemY + 18);
+
+            // Barra de progresso (só para itens com XP)
+            if (!item[3].equals("1")) {
+                int barW = (int)(barMaxW * Math.min(xp, 100) / 100.0);
+                // Trilha
+                g2.setColor(new Color(200, 190, 170, 180));
+                g2.fillRoundRect(itemX + 44, itemY + 24, barMaxW, 10, 6, 6);
+                // Preenchimento
+                if (barW > 0) {
+                    GradientPaint barGrad = new GradientPaint(itemX + 44, itemY + 24,
+                        new Color(255, 180, 60), itemX + 44 + barW, itemY + 24, new Color(255, 120, 80));
+                    g2.setPaint(barGrad);
+                    g2.fillRoundRect(itemX + 44, itemY + 24, barW, 10, 6, 6);
+                }
+                // Texto %
+                g2.setFont(fontCabin.deriveFont(10f));
+                g2.setColor(new Color(100, 70, 20));
+                g2.drawString(desc, itemX + 44 + barMaxW + 6, itemY + 33);
+            } else {
+                // Badge "✓ Conquistada"
+                g2.setColor(new Color(80, 170, 80));
+                g2.fillRoundRect(itemX + 44, itemY + 24, 90, 12, 6, 6);
+                g2.setFont(fontCabin.deriveFont(Font.BOLD, 10f));
+                g2.setColor(Color.WHITE);
+                g2.drawString("\u2713 Conquistada!", itemX + 48, itemY + 34);
+            }
+
+            itemY += itemH;
+        }
+
+        // Botão fechar — X no canto
+        int bFX = cX + cW - 36;
+        int bFY = cY + 10;
+        int bFSz = 26;
+        btnFecharConquistas.setBounds(bFX, bFY, bFSz, bFSz);
+        g2.setColor(new Color(220, 90, 70));
+        g2.fillOval(bFX, bFY, bFSz, bFSz);
+        g2.setColor(new Color(180, 50, 30));
+        g2.setStroke(new BasicStroke(1.5f));
+        g2.drawOval(bFX, bFY, bFSz, bFSz);
+        g2.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(Color.WHITE);
+        g2.drawLine(bFX + 7, bFY + 7, bFX + bFSz - 7, bFY + bFSz - 7);
+        g2.drawLine(bFX + bFSz - 7, bFY + 7, bFX + 7, bFY + bFSz - 7);
+        g2.setStroke(new BasicStroke(1f));
+
+        // Decorações de fundo do card
+        g2.setColor(new Color(255, 200, 100, 60));
+        g2.fillOval(cX + cW - 30, cY + cH - 30, 25, 25);
+        g2.setColor(new Color(180, 220, 180, 60));
+        g2.fillOval(cX + 10, cY + cH - 25, 18, 18);
+    }
+
+    // ==========================================
     // BARRA DE NAVEGAÇÃO INFERIOR
     // ==========================================
     private void desenharBarraNavegacao(Graphics2D g2, int cx, int w, int h) {
@@ -4483,6 +4843,13 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     public void mouseClicked(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
+
+        // Overlay de conquistas: qualquer clique fecha
+        if (mostrandoConquistas) {
+            mostrandoConquistas = false;
+            repaint();
+            return;
+        }
 
         if (!estaLogado) {
             // Botão de olho para mostrar/ocultar senha
@@ -4736,13 +5103,8 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             }
             if (btnAbrirConquistas.contains(x, y)) {
                 iniciarAnimacaoClique(btnAbrirConquistas);
-                JOptionPane.showMessageDialog(this,
-                    "🏆 Suas Conquistas:\n" +
-                    "⭐ Primeira Jornada (Desbloqueado)\n" +
-                    "📖 Leitor Ávido (XP: " + xpLeitura + "/100)\n" +
-                    "🎨 Artista Criativo (XP: " + xpArte + "/100)\n" +
-                    "🏋️ Atleta Focado (XP: " + xpFitness + "/100)",
-                    "Conquistas Hobby Quest", JOptionPane.INFORMATION_MESSAGE);
+                mostrandoConquistas = true;
+                repaint();
                 return;
             }
             if (btnLogout.contains(x, y)) {
