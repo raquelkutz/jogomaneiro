@@ -387,28 +387,43 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             b = new Rectangle(0, 0, img.getWidth(), img.getHeight());
         }
 
-        // Foco no rosto/cabeça: enquadramento proporcional e centralizado
+        // Foco no rosto/cabeça: enquadramento proporcional perfeitamente quadrado (1:1)
         double boxSize = Math.max(b.width, b.height * 0.88);
+        boxSize = Math.min(boxSize, Math.min(img.getWidth(), img.getHeight()));
+
         double srcX = b.x + (b.width - boxSize) / 2.0;
         double srcY = b.y - (boxSize * 0.04);
 
         if (srcX < 0) srcX = 0;
         if (srcY < 0) srcY = 0;
-        if (srcX + boxSize > img.getWidth()) boxSize = img.getWidth() - srcX;
-        if (srcY + boxSize > img.getHeight()) boxSize = img.getHeight() - srcY;
+        if (srcX + boxSize > img.getWidth()) srcX = Math.max(0, img.getWidth() - boxSize);
+        if (srcY + boxSize > img.getHeight()) srcY = Math.max(0, img.getHeight() - boxSize);
+
+        // Garantir que a área de destino seja perfeitamente quadrada para manter proporção 1:1 exata
+        int finalDestX = destX;
+        int finalDestY = destY;
+        int finalDestW = destW;
+        int finalDestH = destH;
+        if (destW != destH) {
+            int minDim = Math.min(destW, destH);
+            finalDestX = destX + (destW - minDim) / 2;
+            finalDestY = destY + (destH - minDim) / 2;
+            finalDestW = minDim;
+            finalDestH = minDim;
+        }
 
         Shape oldClip = g2.getClip();
         Object oldHint = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         if (isCircle) {
-            g2.setClip(new Ellipse2D.Float(destX, destY, destW, destH));
+            g2.setClip(new Ellipse2D.Float(finalDestX, finalDestY, finalDestW, finalDestH));
         } else {
-            g2.setClip(new Rectangle(destX, destY, destW, destH));
+            g2.setClip(new Rectangle(finalDestX, finalDestY, finalDestW, finalDestH));
         }
 
         g2.drawImage(img,
-            destX, destY, destX + destW, destY + destH,
+            finalDestX, finalDestY, finalDestX + finalDestW, finalDestY + finalDestH,
             (int)srcX, (int)srcY, (int)(srcX + boxSize), (int)(srcY + boxSize),
             null
         );
