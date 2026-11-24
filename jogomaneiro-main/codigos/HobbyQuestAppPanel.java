@@ -227,6 +227,9 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     private Rectangle btnTrocarNome = new Rectangle();
     private Rectangle btnLogout = new Rectangle();
     private Rectangle[] avatarBotoes = new Rectangle[7];
+    private Rectangle btnUploadFoto = new Rectangle();
+    private BufferedImage fotoCustomizada = null;
+    private Rectangle avatarLimiteCustom = null;
 
     // Hover
     private boolean hoverIniciar = false;
@@ -1096,8 +1099,8 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         int cardRowW = Math.min(CONTAINER_W - 60, 520);
         int cardRowX = cx + (CONTAINER_W - cardRowW) / 2;
         int colItemW = (cardRowW - 20) / 2;
-        btnAbrirConquistas.setBounds(cardRowX + colItemW + 20, 368, colItemW, 44);
-        btnLogout.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 428, btnPerfilW, 38);
+        btnAbrirConquistas.setBounds(cardRowX + colItemW + 20, 410, colItemW, 44);
+        btnLogout.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 468, btnPerfilW, 38);
 
         int avatarGap = 10;
         int avatarSize = 50;
@@ -1106,6 +1109,9 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         for (int i = 0; i < 7; i++) {
             avatarBotoes[i].setBounds(avatarStartX + i * (avatarSize + avatarGap), 302, avatarSize, avatarSize);
         }
+
+        int uploadW = Math.min(CONTAINER_W - 60, 260);
+        btnUploadFoto.setBounds(cx + (CONTAINER_W - uploadW) / 2, 362, uploadW, 34);
     }
 
     // ==========================================
@@ -4076,7 +4082,22 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.setColor(new Color(240, 240, 248));
         g2.fillRect(11, 11, fotoW, fotoH);
 
-        if (avatarImagens[avatarSelecionado] != null) {
+        if (fotoCustomizada != null) {
+            // Foto do PC com smart cover crop
+            Rectangle b = avatarLimiteCustom;
+            if (b == null) b = new Rectangle(0, 0, fotoCustomizada.getWidth(), fotoCustomizada.getHeight());
+            double boxSize = Math.min(b.width, b.height);
+            double srcX = b.x + (b.width - boxSize) / 2.0;
+            double srcY = b.y;
+            if (srcX < 0) srcX = 0;
+            if (srcY + boxSize > fotoCustomizada.getHeight()) srcY = fotoCustomizada.getHeight() - boxSize;
+            Shape oldClip2 = g2.getClip();
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.setClip(new Rectangle(11, 11, fotoW, fotoH));
+            g2.drawImage(fotoCustomizada, 11, 11, 11 + fotoW, 11 + fotoH,
+                (int)srcX, (int)srcY, (int)(srcX + boxSize), (int)(srcY + boxSize), null);
+            g2.setClip(oldClip2);
+        } else if (avatarImagens[avatarSelecionado] != null) {
             desenharAvatarProporcional(g2, avatarSelecionado, 11, 11, fotoW, fotoH, false);
         } else {
             g2.setColor(COLOR_PURPLE_BADGE);
@@ -4164,6 +4185,31 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             if (sel) {
                 desenharBrilhoCintilante(g2, ab.x + ab.width - 2, abY, 6, new Color(255, 215, 75));
             }
+        }
+
+        // ── Botão "📷 Enviar minha foto" ──
+        {
+            int upX = btnUploadFoto.x, upY = btnUploadFoto.y, upW = btnUploadFoto.width, upH = btnUploadFoto.height;
+            // Sombra
+            g2.setColor(new Color(0, 0, 0, 12));
+            g2.fillRoundRect(upX + 2, upY + 3, upW, upH, 20, 20);
+            // Gradiente lilás
+            GradientPaint upGrad = new GradientPaint(upX, upY, new Color(230, 205, 255), upX, upY + upH, new Color(195, 165, 240));
+            g2.setPaint(upGrad);
+            g2.fillRoundRect(upX, upY, upW, upH, 20, 20);
+            // Brilho interno topo
+            g2.setColor(new Color(255, 255, 255, 60));
+            g2.fillRoundRect(upX + 3, upY + 2, upW - 6, upH / 2, 18, 18);
+            // Borda
+            g2.setColor(new Color(150, 110, 200));
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.drawRoundRect(upX, upY, upW, upH, 20, 20);
+            // Texto
+            g2.setFont(fontCabin.deriveFont(13f));
+            g2.setColor(new Color(60, 20, 90));
+            String txtUp = fotoCustomizada != null ? "\u274c Remover minha foto" : "\uD83D\uDCF7 Enviar minha foto";
+            FontMetrics fmUp = g2.getFontMetrics();
+            g2.drawString(txtUp, upX + (upW - fmUp.stringWidth(txtUp)) / 2, upY + upH / 2 + 5);
         }
 
         // ── Card de ofensiva e Botão Conquistas estilizados ──
@@ -4651,6 +4697,34 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
 
         // Perfil
         if (telaAtual == 4) {
+            if (btnUploadFoto.contains(x, y)) {
+                iniciarAnimacaoClique(btnUploadFoto);
+                if (fotoCustomizada != null) {
+                    fotoCustomizada = null;
+                    avatarLimiteCustom = null;
+                    repaint();
+                } else {
+                    JFileChooser chooser = new JFileChooser();
+                    chooser.setDialogTitle("Escolha sua foto de perfil");
+                    chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                        "Imagens (JPG, PNG, GIF, BMP)", "jpg", "jpeg", "png", "gif", "bmp"));
+                    int result = chooser.showOpenDialog(this);
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        try {
+                            BufferedImage loaded = ImageIO.read(chooser.getSelectedFile());
+                            if (loaded != null) {
+                                fotoCustomizada = loaded;
+                                avatarLimiteCustom = calcularLimitesConteudo(loaded);
+                                repaint();
+                            }
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(this,
+                                "N\u00e3o foi poss\u00edvel carregar a imagem.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+                return;
+            }
             if (btnTrocarNome.contains(x, y)) {
                 iniciarAnimacaoClique(btnTrocarNome);
                 String novo = JOptionPane.showInputDialog(this, "Digite seu novo nome de aventureiro:", nomeJogador);
