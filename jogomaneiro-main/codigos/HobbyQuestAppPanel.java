@@ -228,6 +228,7 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
     private Rectangle btnLogout = new Rectangle();
     private Rectangle[] avatarBotoes = new Rectangle[7];
     private Rectangle btnUploadFoto = new Rectangle();
+    private Rectangle polaroidFotoRect = new Rectangle();
     private BufferedImage fotoCustomizada = null;
     private Rectangle avatarLimiteCustom = null;
     // Overlay de conquistas
@@ -1113,24 +1114,24 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         }
 
         int btnPerfilW = Math.min(CONTAINER_W - 60, 480);
-        btnTrocarNome.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 285, btnPerfilW, 36);
+        btnTrocarNome.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 246, btnPerfilW, 36);
+
+        int avatarGap = 8;
+        int avatarSize = 46;
+        int avatarTotalW = 7 * avatarSize + 6 * avatarGap;
+        int avatarStartX = cx + (CONTAINER_W - avatarTotalW) / 2;
+        for (int i = 0; i < 7; i++) {
+            avatarBotoes[i].setBounds(avatarStartX + i * (avatarSize + avatarGap), 314, avatarSize, avatarSize);
+        }
+
+        int uploadW = Math.min(CONTAINER_W - 60, 310);
+        btnUploadFoto.setBounds(cx + (CONTAINER_W - uploadW) / 2, 372, uploadW, 34);
 
         int cardRowW = Math.min(CONTAINER_W - 60, 520);
         int cardRowX = cx + (CONTAINER_W - cardRowW) / 2;
         int colItemW = (cardRowW - 20) / 2;
-        btnAbrirConquistas.setBounds(cardRowX + colItemW + 20, 450, colItemW, 44);
-        btnLogout.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 506, btnPerfilW, 38);
-
-        int avatarGap = 10;
-        int avatarSize = 50;
-        int avatarTotalW = 7 * avatarSize + 6 * avatarGap;
-        int avatarStartX = cx + (CONTAINER_W - avatarTotalW) / 2;
-        for (int i = 0; i < 7; i++) {
-            avatarBotoes[i].setBounds(avatarStartX + i * (avatarSize + avatarGap), 332, avatarSize, avatarSize);
-        }
-
-        int uploadW = Math.min(CONTAINER_W - 60, 260);
-        btnUploadFoto.setBounds(cx + (CONTAINER_W - uploadW) / 2, 394, uploadW, 34);
+        btnAbrirConquistas.setBounds(cardRowX + colItemW + 20, 418, colItemW, 40);
+        btnLogout.setBounds(cx + (CONTAINER_W - btnPerfilW) / 2, 468, btnPerfilW, 36);
     }
 
     // ==========================================
@@ -4356,12 +4357,13 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
 
         // ── Polaroid flutuante com washi tape ──
         AffineTransform old = g2.getTransform();
-        int polW = 182;
-        int polH = 214;
+        int polW = 154;
+        int polH = 176;
         int polX = headCX - polW / 2;
         // Flutuação suave do polaroid
         int floatPol = (int)(Math.sin(animTicks * 2.0) * 2.5);
-        g2.translate(polX, 58 + floatPol);
+        polaroidFotoRect.setBounds(polX, 56 + floatPol, polW, polH);
+        g2.translate(polX, 56 + floatPol);
         g2.rotate(Math.toRadians(-2));
 
         // Aura luminosa ao redor do polaroid
@@ -4386,10 +4388,10 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
         g2.fillRect(0, 0, polW, 3);
 
         // Área da foto com cor de fundo pastel
-        int fotoW = polW - 22;
-        int fotoH = polH - 46;
+        int fotoW = polW - 20;
+        int fotoH = polH - 42;
         g2.setColor(new Color(240, 240, 248));
-        g2.fillRect(11, 11, fotoW, fotoH);
+        g2.fillRect(10, 10, fotoW, fotoH);
 
         if (fotoCustomizada != null) {
             // Foto do PC com smart cover crop
@@ -4402,71 +4404,94 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             if (srcY + boxSize > fotoCustomizada.getHeight()) srcY = fotoCustomizada.getHeight() - boxSize;
             Shape oldClip2 = g2.getClip();
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            g2.setClip(new Rectangle(11, 11, fotoW, fotoH));
-            g2.drawImage(fotoCustomizada, 11, 11, 11 + fotoW, 11 + fotoH,
+            g2.setClip(new Rectangle(10, 10, fotoW, fotoH));
+            g2.drawImage(fotoCustomizada, 10, 10, 10 + fotoW, 10 + fotoH,
                 (int)srcX, (int)srcY, (int)(srcX + boxSize), (int)(srcY + boxSize), null);
             g2.setClip(oldClip2);
         } else if (avatarImagens[avatarSelecionado] != null) {
-            desenharAvatarProporcional(g2, avatarSelecionado, 11, 11, fotoW, fotoH, false);
+            desenharAvatarProporcional(g2, avatarSelecionado, 10, 10, fotoW, fotoH, false);
         } else {
             g2.setColor(COLOR_PURPLE_BADGE);
-            g2.fillOval(fotoW / 2 - 25 + 11, fotoH / 2 - 25 + 11, 50, 50);
+            g2.fillOval(fotoW / 2 - 25 + 10, fotoH / 2 - 25 + 10, 50, 50);
             g2.setColor(Color.WHITE);
             g2.setFont(fontTitulo.deriveFont(32f));
-            g2.drawString("A", fotoW / 2 - 10 + 11, fotoH / 2 + 10 + 11);
+            g2.drawString("A", fotoW / 2 - 10 + 10, fotoH / 2 + 10 + 10);
         }
 
         // Mini estrelinhas decorando os cantos da foto
         g2.setColor(new Color(255, 215, 75, 180));
-        g2.fillOval(7, 7, 5, 5);
-        g2.fillOval(polW - 13, 8, 5, 5);
+        g2.fillOval(6, 6, 5, 5);
+        g2.fillOval(polW - 12, 7, 5, 5);
+
+        // Ícone de câmera delicado no cantinho da foto indicando que pode trocar
+        g2.setColor(new Color(0, 0, 0, 110));
+        g2.fillOval(fotoW - 16, fotoH - 16, 22, 22);
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        g2.drawString("📷", fotoW - 12, fotoH);
 
         // Nome abaixo da foto em caligrafia
-        g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 16f));
+        g2.setFont(fontCaveat.deriveFont(Font.ITALIC, 17f));
         g2.setColor(new Color(90, 70, 130));
         FontMetrics fmP = g2.getFontMetrics();
-        g2.drawString(nomeJogador, (polW - fmP.stringWidth(nomeJogador)) / 2, polH - 10);
+        g2.drawString(nomeJogador, (polW - fmP.stringWidth(nomeJogador)) / 2, polH - 9);
 
         // Washi tape colorida segurando o polaroid
-        desenharFitaScrapbook(g2, 18, -10, 90, 18, new Color(185, 185, 240, 190), 0);
+        desenharFitaScrapbook(g2, 16, -10, 80, 16, new Color(185, 185, 240, 190), 0);
 
         g2.setTransform(old);
 
-        // ── Botão Trocar Nome estilizado ──
+        // ── Card/Botão Trocar Nome estilizado ──
         int tnY = btnTrocarNome.y;
         // Sombra
         g2.setColor(new Color(0, 0, 0, 10));
         g2.fillRoundRect(btnTrocarNome.x + 2, tnY + 3, btnTrocarNome.width, btnTrocarNome.height, 16, 16);
-        // Fundo gradiente amarelo
-        GradientPaint tnGrad = new GradientPaint(btnTrocarNome.x, tnY, new Color(255, 253, 215), btnTrocarNome.x, tnY + btnTrocarNome.height, new Color(250, 240, 185));
+        // Fundo gradiente amarelo suave
+        GradientPaint tnGrad = new GradientPaint(btnTrocarNome.x, tnY, new Color(255, 253, 220), btnTrocarNome.x, tnY + btnTrocarNome.height, new Color(252, 242, 195));
         g2.setPaint(tnGrad);
         g2.fillRoundRect(btnTrocarNome.x, tnY, btnTrocarNome.width, btnTrocarNome.height, 16, 16);
         g2.setColor(COLOR_GOLD_STAR);
         g2.setStroke(new BasicStroke(1.5f));
         g2.drawRoundRect(btnTrocarNome.x, tnY, btnTrocarNome.width, btnTrocarNome.height, 16, 16);
         // Costura interna
-        g2.setColor(new Color(220, 200, 100, 100));
+        g2.setColor(new Color(220, 200, 100, 110));
         g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3, 3}, 0));
         g2.drawRoundRect(btnTrocarNome.x + 4, tnY + 4, btnTrocarNome.width - 8, btnTrocarNome.height - 8, 12, 12);
-        g2.setFont(fontCabin.deriveFont(15f));
-        g2.setColor(new Color(60, 50, 20));
-        g2.drawString("\u270F\uFE0F Nome: " + nomeJogador, btnTrocarNome.x + 25, tnY + 23);
-        // Estrelinha decorativa dentro do botão
-        desenharBrilhoCintilante(g2, btnTrocarNome.x + btnTrocarNome.width - 20, tnY + 14, 6, new Color(255, 200, 60));
+        
+        // Texto do Nome
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 15f));
+        g2.setColor(new Color(60, 50, 25));
+        g2.drawString("Nome de Usuário:  " + nomeJogador, btnTrocarNome.x + 18, tnY + 23);
+
+        // Mini botão fofo "✏️ Alterar" à direita do card
+        int editBtnW = 95, editBtnH = 24;
+        int editBtnX = btnTrocarNome.x + btnTrocarNome.width - editBtnW - 10;
+        int editBtnY = tnY + (btnTrocarNome.height - editBtnH) / 2;
+        g2.setColor(new Color(245, 215, 115));
+        g2.fillRoundRect(editBtnX, editBtnY, editBtnW, editBtnH, 12, 12);
+        g2.setColor(new Color(190, 150, 60));
+        g2.setStroke(new BasicStroke(1.0f));
+        g2.drawRoundRect(editBtnX, editBtnY, editBtnW, editBtnH, 12, 12);
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 12f));
+        g2.setColor(new Color(85, 60, 15));
+        g2.drawString("✏️ Alterar", editBtnX + 16, editBtnY + 16);
 
         // ── "Escolha seu Personagem" com decoração ──
-        int avatarTotalW = 7 * 50 + 6 * 10;
+        int avatarTotalW = 7 * 46 + 6 * 8;
         int avatarStartX = cx + (CONTAINER_W - avatarTotalW) / 2;
-        g2.setFont(fontCabin.deriveFont(Font.BOLD, 15f));
+        g2.setFont(fontCabin.deriveFont(Font.BOLD, 14f));
         g2.setColor(COLOR_GREEN_TITLE);
-        g2.drawString("Escolha seu Personagem:", avatarStartX, 296);
-        desenharBrilhoCintilante(g2, avatarStartX - 16, 290, 6, new Color(130, 200, 140));
+        String txtEscolha = "✦ Escolha seu Personagem ou Foto: ✦";
+        FontMetrics fmEsc = g2.getFontMetrics();
+        g2.drawString(txtEscolha, cx + (CONTAINER_W - fmEsc.stringWidth(txtEscolha)) / 2, 302);
+        desenharBrilhoCintilante(g2, cx + (CONTAINER_W - fmEsc.stringWidth(txtEscolha)) / 2 - 16, 298, 5, new Color(130, 200, 140));
+        desenharBrilhoCintilante(g2, cx + (CONTAINER_W + fmEsc.stringWidth(txtEscolha)) / 2 + 16, 298, 5, new Color(130, 200, 140));
 
         // Avatares em círculos com brilho no selecionado
         for (int i = 0; i < 7; i++) {
             Rectangle ab = avatarBotoes[i];
             int abY = ab.y;
-            boolean sel = (avatarSelecionado == i);
+            boolean sel = (avatarSelecionado == i && fotoCustomizada == null);
 
             // Brilho animado no avatar selecionado
             if (sel) {
@@ -4496,27 +4521,27 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             }
         }
 
-        // ── Botão "📷 Enviar minha foto" ──
+        // ── Botão "📷 Enviar minha foto / Escolher do PC" ──
         {
             int upX = btnUploadFoto.x, upY = btnUploadFoto.y, upW = btnUploadFoto.width, upH = btnUploadFoto.height;
             // Sombra
             g2.setColor(new Color(0, 0, 0, 12));
-            g2.fillRoundRect(upX + 2, upY + 3, upW, upH, 20, 20);
+            g2.fillRoundRect(upX + 2, upY + 3, upW, upH, 18, 18);
             // Gradiente lilás
-            GradientPaint upGrad = new GradientPaint(upX, upY, new Color(230, 205, 255), upX, upY + upH, new Color(195, 165, 240));
+            GradientPaint upGrad = new GradientPaint(upX, upY, new Color(235, 215, 255), upX, upY + upH, new Color(205, 175, 245));
             g2.setPaint(upGrad);
-            g2.fillRoundRect(upX, upY, upW, upH, 20, 20);
+            g2.fillRoundRect(upX, upY, upW, upH, 18, 18);
             // Brilho interno topo
             g2.setColor(new Color(255, 255, 255, 60));
-            g2.fillRoundRect(upX + 3, upY + 2, upW - 6, upH / 2, 18, 18);
+            g2.fillRoundRect(upX + 3, upY + 2, upW - 6, upH / 2, 16, 16);
             // Borda
-            g2.setColor(new Color(150, 110, 200));
-            g2.setStroke(new BasicStroke(1.5f));
-            g2.drawRoundRect(upX, upY, upW, upH, 20, 20);
+            g2.setColor(new Color(155, 115, 205));
+            g2.setStroke(new BasicStroke(1.4f));
+            g2.drawRoundRect(upX, upY, upW, upH, 18, 18);
             // Texto
-            g2.setFont(fontCabin.deriveFont(13f));
-            g2.setColor(new Color(60, 20, 90));
-            String txtUp = fotoCustomizada != null ? "\u274c Remover minha foto" : "\uD83D\uDCF7 Enviar minha foto";
+            g2.setFont(fontCabin.deriveFont(Font.BOLD, 13f));
+            g2.setColor(new Color(60, 20, 95));
+            String txtUp = fotoCustomizada != null ? "\u274c Remover minha foto (Voltar ao avatar)" : "\uD83D\uDCF7 Escolher foto do Computador";
             FontMetrics fmUp = g2.getFontMetrics();
             g2.drawString(txtUp, upX + (upW - fmUp.stringWidth(txtUp)) / 2, upY + upH / 2 + 5);
         }
@@ -5156,32 +5181,15 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
 
         // Perfil
         if (telaAtual == 4) {
+            // Clicar na foto polaroid também abre o seletor de foto
+            if (polaroidFotoRect.contains(x, y)) {
+                iniciarAnimacaoClique(polaroidFotoRect);
+                selecionarOuRemoverFotoPerfil();
+                return;
+            }
             if (btnUploadFoto.contains(x, y)) {
                 iniciarAnimacaoClique(btnUploadFoto);
-                if (fotoCustomizada != null) {
-                    fotoCustomizada = null;
-                    avatarLimiteCustom = null;
-                    repaint();
-                } else {
-                    JFileChooser chooser = new JFileChooser();
-                    chooser.setDialogTitle("Escolha sua foto de perfil");
-                    chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                        "Imagens (JPG, PNG, GIF, BMP)", "jpg", "jpeg", "png", "gif", "bmp"));
-                    int result = chooser.showOpenDialog(this);
-                    if (result == JFileChooser.APPROVE_OPTION) {
-                        try {
-                            BufferedImage loaded = ImageIO.read(chooser.getSelectedFile());
-                            if (loaded != null) {
-                                fotoCustomizada = loaded;
-                                avatarLimiteCustom = calcularLimitesConteudo(loaded);
-                                repaint();
-                            }
-                        } catch (Exception ex) {
-                            JOptionPane.showMessageDialog(this,
-                                "N\u00e3o foi poss\u00edvel carregar a imagem.", "Erro", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                }
+                selecionarOuRemoverFotoPerfil();
                 return;
             }
             if (btnTrocarNome.contains(x, y)) {
@@ -5213,8 +5221,42 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
                 if (avatarBotoes[i].contains(x, y)) {
                     iniciarAnimacaoClique(avatarBotoes[i]);
                     avatarSelecionado = i;
+                    fotoCustomizada = null;
+                    avatarLimiteCustom = null;
                     repaint();
                     return;
+                }
+            }
+        }
+    }
+
+    private void selecionarOuRemoverFotoPerfil() {
+        if (fotoCustomizada != null) {
+            int op = JOptionPane.showConfirmDialog(this,
+                "Deseja remover sua foto personalizada e voltar para o personagem?",
+                "Foto de Perfil", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (op == JOptionPane.YES_OPTION) {
+                fotoCustomizada = null;
+                avatarLimiteCustom = null;
+                repaint();
+            }
+        } else {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Escolha sua foto de perfil do computador");
+            chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Imagens (JPG, PNG, GIF, BMP)", "jpg", "jpeg", "png", "gif", "bmp"));
+            int result = chooser.showOpenDialog(this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                try {
+                    BufferedImage loaded = ImageIO.read(chooser.getSelectedFile());
+                    if (loaded != null) {
+                        fotoCustomizada = loaded;
+                        avatarLimiteCustom = calcularLimitesConteudo(loaded);
+                        repaint();
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this,
+                        "Não foi possível carregar a imagem.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -5270,6 +5312,21 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
                             hand = true;
                             break;
                         }
+                    }
+                }
+            }
+        }
+
+        // Feedback de cursor na tela de Perfil
+        if (telaAtual == 4) {
+            if (polaroidFotoRect.contains(x, y) || btnUploadFoto.contains(x, y) || btnTrocarNome.contains(x, y)
+                    || btnAbrirConquistas.contains(x, y) || btnLogout.contains(x, y)) {
+                hand = true;
+            } else {
+                for (int i = 0; i < 7; i++) {
+                    if (avatarBotoes[i] != null && avatarBotoes[i].contains(x, y)) {
+                        hand = true;
+                        break;
                     }
                 }
             }
