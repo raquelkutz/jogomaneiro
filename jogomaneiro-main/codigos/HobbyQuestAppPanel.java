@@ -4929,23 +4929,53 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
                 JOptionPane.showMessageDialog(this, "As senhas digitadas não coincidem!", "Hobby Quest", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            // Salvar no Banco de Dados de Usuários
+            if (BancoUsuarios.usuarioExiste(email)) {
+                JOptionPane.showMessageDialog(this, "Já existe uma conta cadastrada com este email!", "Hobby Quest", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            boolean cadastrado = BancoUsuarios.cadastrarUsuario(email, senha, nome);
+            if (!cadastrado) {
+                JOptionPane.showMessageDialog(this, "Erro ao criar conta no banco de dados.", "Hobby Quest", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             this.nomeJogador = nome;
             this.emailJogador = email;
             estaLogado = true;
             telaAtual = 0;
             atualizarVisibilidadeCampos();
             repaint();
+            JOptionPane.showMessageDialog(this, "Conta criada com sucesso! Bem-vindo(a), " + nome + "!", "Hobby Quest", JOptionPane.INFORMATION_MESSAGE);
         } else {
             if (email.isEmpty() || senha.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Digite seu email e senha para entrar!", "Hobby Quest", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (!email.contains("@")) {
-                this.nomeJogador = email;
-            } else {
-                this.nomeJogador = email.substring(0, email.indexOf('@'));
+
+            // Autenticar com o Banco de Dados
+            BancoUsuarios.DadosUsuario user = BancoUsuarios.autenticar(email, senha);
+            if (user == null) {
+                JOptionPane.showMessageDialog(this, "Email ou senha incorretos! Verifique suas credenciais.", "Hobby Quest", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-            this.emailJogador = email;
+
+            // Carregar dados salvos do usuário autenticado
+            this.nomeJogador = user.nome;
+            this.emailJogador = user.email;
+            this.avatarSelecionado = user.avatar;
+            this.totalXP = user.totalXP;
+            this.streakDias = user.streakDias;
+            this.totalDesafios = user.totalDesafios;
+            this.xpLeitura = user.xpLeitura;
+            this.nivelLeitura = user.nivelLeitura;
+            this.xpArte = user.xpArte;
+            this.nivelArte = user.nivelArte;
+            this.xpFitness = user.xpFitness;
+            this.nivelFitness = user.nivelFitness;
+
             estaLogado = true;
             telaAtual = 0;
             atualizarVisibilidadeCampos();
@@ -5194,9 +5224,12 @@ public class HobbyQuestAppPanel extends JPanel implements ActionListener, MouseL
             }
             if (btnTrocarNome.contains(x, y)) {
                 iniciarAnimacaoClique(btnTrocarNome);
-                String novo = JOptionPane.showInputDialog(this, "Digite seu novo nome de aventureiro:", nomeJogador);
+                String novo = DialogoAlterarNome.exibir(frame, nomeJogador, fontTitulo, fontCabin);
                 if (novo != null && !novo.trim().isEmpty()) {
                     nomeJogador = novo.trim();
+                    if (emailJogador != null && !emailJogador.isEmpty()) {
+                        BancoUsuarios.atualizarPerfil(emailJogador, nomeJogador, avatarSelecionado, null);
+                    }
                     repaint();
                 }
                 return;
