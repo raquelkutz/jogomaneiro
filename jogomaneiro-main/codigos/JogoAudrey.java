@@ -841,6 +841,16 @@ public class JogoAudrey extends JFrame {
     public static boolean modoDiretoJogo = false;
 
     public static void main(String[] args) {
+        // Ativar aceleração de hardware Direct3D e renderização acelerada no Windows
+        try {
+            System.setProperty("sun.java2d.d3d", "true");
+            System.setProperty("sun.java2d.ddforcevram", "true");
+            System.setProperty("sun.java2d.transaccel", "true");
+            System.setProperty("sun.java2d.translaccel", "true");
+            System.setProperty("awt.useSystemAAFontSettings", "on");
+            System.setProperty("swing.aatext", "true");
+        } catch (Exception ignored) {}
+
         if (args != null && args.length > 0 && "game".equalsIgnoreCase(args[0])) {
             modoDiretoJogo = true;
         }
